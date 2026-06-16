@@ -250,6 +250,15 @@ export const ADVANCED_CARDS = [
   { id: 'c_double_dmg',  icon: '🗡', name: 'Sharp Steel',      desc: '+25% damage permanently this run',              flag: 'sharpSteel' },
   { id: 'c_speed',       icon: '💨', name: 'Bloodrush',        desc: '+15% move speed + reload',                      flag: 'bloodrush' },
   { id: 'c_magnet',      icon: '🧲', name: 'Iron Pull',        desc: '+80% pickup range',                             flag: 'ironPull' },
+  // --- new passive auto-weapons & effects ---
+  { id: 'c_thunder',     icon: '🌩', name: 'Thunder Cult',      desc: 'Every 4s strike random foe for 60 dmg',         flag: 'thunderCult' },
+  { id: 'c_iceShard',    icon: '🧊', name: 'Ice Shards',        desc: 'Auto-launch homing ice shards every 1.6s',      flag: 'iceShards' },
+  { id: 'c_holyWater',   icon: '💧', name: 'Holy Water',        desc: 'Heal ring pulses every 6s (+15 HP)',            flag: 'holyWater' },
+  { id: 'c_swarm',       icon: '🐝', name: 'Swarm',             desc: 'Orbiting bees pierce + sting nearby foes',      flag: 'swarmAura' },
+  { id: 'c_spike',       icon: '🪤', name: 'Spike Plates',      desc: 'Drop spike traps on dash/spawn (60 dmg)',       flag: 'spikePlates' },
+  { id: 'c_overcharge',  icon: '⚡', name: 'Overcharge',        desc: 'Every 6th shot is double damage',               flag: 'overcharge' },
+  { id: 'c_railgun',     icon: '🎯', name: 'Railgun Stance',    desc: 'Standing still 1s+ = +60% damage',              flag: 'railStance' },
+  { id: 'c_juggernaut',  icon: '💪', name: 'Juggernaut',        desc: '+1 HP regen per 5 enemies in 200u',             flag: 'juggernaut' },
 ];
 
 // ---------- CAMP CARD SHOP POOL (slot-machine pulls) ----------

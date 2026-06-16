@@ -19,7 +19,7 @@ export default function LevelUpModal({ choices, onPick, playerLevel }) {
   }, []);
 
   return (
-    <div className="modal-overlay" data-testid="levelup-modal">
+    <div className="modal-overlay levelup-overlay" data-testid="levelup-modal">
       <div className="levelup">
         <div className="lvl-burst" aria-hidden>
           {Array.from({ length: 16 }).map((_, i) => (
@@ -43,7 +43,7 @@ export default function LevelUpModal({ choices, onPick, playerLevel }) {
                 <div className="card-tag">{r.name}</div>
                 <div className="card-shine" />
                 <div className="card-icon">{c.icon}</div>
-                <div className="card-rarity">{c.kind === 'weapon-new' ? 'NEW WEAPON' : c.kind === 'weapon-upgrade' ? 'WEAPON +' : 'STAT'}</div>
+                <div className="card-rarity">{c.kind === 'weapon-new' ? 'NEW WEAPON' : c.kind === 'weapon-upgrade' ? 'WEAPON +' : c.kind === 'flag' ? 'PASSIVE' : 'STAT'}</div>
                 <div className="card-name">{c.name}</div>
                 <div className="card-desc">{c.desc}</div>
               </div>

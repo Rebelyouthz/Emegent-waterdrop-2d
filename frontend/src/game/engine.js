@@ -163,6 +163,11 @@ export class Game {
       reloading: false, reloadT: 0, mag: 12,
       shootCD: 0,
       moving: false,
+      // velocity smoothing
+      vx: 0, vy: 0, dirX: 0, dirY: 0,
+      // visual feedback
+      squish: 0, tilt: 0, bob: 0,
+      recoil: 0,
       orbitAngle: 0,
       shockwaveCD: 0, scytheCD: 0, beamCD: 0, boltCD: 0,
       meteorCD: 0,
@@ -420,6 +425,75 @@ export class Game {
         }
       });
     }
+    // ===== NEW PASSIVE WEAPONS =====
+    if (f.thunderCult) {
+      this._thunderT = (this._thunderT || 0) + dt;
+      if (this._thunderT >= 4) {
+        this._thunderT = 0;
+        // Strike a random enemy within 480
+        const candidates = [];
+        this.enemies.forEach(e => { if (dist2(e.x, e.y, p.x, p.y) <= 480 * 480) candidates.push(e); });
+        if (candidates.length) {
+          const t = candidates[Math.floor(Math.random() * candidates.length)];
+          this.dealDamage(t, 60 * s.damageMult, false, 60, p.x, p.y);
+          this.spawnLightning(t.x, t.y - 200, t.x, t.y);
+          this.spawnRing(t.x, t.y, 36, '#bff0ff', 0.3);
+          this.cam.shake = Math.max(this.cam.shake, 3);
+        }
+      }
+    }
+    if (f.iceShards) {
+      this._iceT = (this._iceT || 0) + dt;
+      if (this._iceT >= 1.6) {
+        this._iceT = 0;
+        const tgt = this.nearestEnemy(p.x, p.y, 600);
+        if (tgt) {
+          const ang = Math.atan2(tgt.y - p.y, tgt.x - p.x);
+          this.fireProjectile(p.x, p.y, ang, { damage: 28, projSpeed: 520, projSize: 6, color: '#bff0ff', pierce: 2, crit: 0.1, _behaviour: 'projectile' }, true, 1.0);
+        }
+      }
+    }
+    if (f.holyWater) {
+      this._holyT = (this._holyT || 0) + dt;
+      if (this._holyT >= 6) {
+        this._holyT = 0;
+        p.hp = Math.min(p.maxHp, p.hp + 15);
+        this.spawnRing(p.x, p.y, 80, '#bff0ff', 0.5);
+        this.spawnDamageNumber(p.x, p.y - 12, '+15', '#4dffd4', 16);
+      }
+    }
+    if (f.swarmAura) {
+      // 3 bees orbiting + damaging
+      this._swarmT = (this._swarmT || 0) + dt;
+      const a0 = this.time * 4;
+      for (let i = 0; i < 3; i++) {
+        const a = a0 + (i / 3) * TAU;
+        const bx = p.x + Math.cos(a) * 60, by = p.y + Math.sin(a) * 60;
+        if (Math.random() < 0.15) this.spawnSpark(bx, by, '#ffd166');
+      }
+      if (this._swarmT >= 0.4) {
+        this._swarmT = 0;
+        this.enemies.forEach(e => {
+          if (dist2(e.x, e.y, p.x, p.y) <= 70 * 70) this.dealDamage(e, 12 * s.damageMult, false, 0, p.x, p.y, true);
+        });
+      }
+    }
+    if (f.juggernaut) {
+      let count = 0;
+      this.enemies.forEach(e => { if (dist2(e.x, e.y, p.x, p.y) <= 200 * 200) count++; });
+      if (count > 0) {
+        p.regenCarry += (count / 5) * dt;
+        while (p.regenCarry >= 1) { p.hp = Math.min(p.maxHp, p.hp + 1); p.regenCarry -= 1; }
+      }
+    }
+    if (f.railStance) {
+      // Track standing-still time
+      if (Math.hypot(p.vx || 0, p.vy || 0) < 10) {
+        p._stillT = (p._stillT || 0) + dt;
+      } else {
+        p._stillT = 0;
+      }
+    }
   }
 
   updatePlayer(dt) {
@@ -435,8 +509,28 @@ export class Game {
     }
     const l = Math.hypot(dx, dy) || 1;
     const baseSpd = 200 * s.moveMult;
-    p.x += (dx / l) * baseSpd * dt * (dx || dy ? 1 : 0);
-    p.y += (dy / l) * baseSpd * dt * (dx || dy ? 1 : 0);
+    // Target velocity (normalized) + accel/decel smoothing for that nice "weight" feel
+    const moving = !!(dx || dy);
+    const targetX = moving ? (dx / l) : 0;
+    const targetY = moving ? (dy / l) : 0;
+    // accelerate toward target dir
+    const accel = moving ? 9.0 : 12.0;
+    p.dirX += (targetX - p.dirX) * Math.min(1, accel * dt);
+    p.dirY += (targetY - p.dirY) * Math.min(1, accel * dt);
+    p.vx = p.dirX * baseSpd;
+    p.vy = p.dirY * baseSpd;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    // visual squish & tilt (decays toward 0 when idle)
+    const speedRel = Math.hypot(p.dirX, p.dirY);
+    p.squish += (speedRel * 0.18 - p.squish) * Math.min(1, dt * 8);
+    // tilt: lean into movement direction
+    const aimAng = Math.atan2(p.aimY, p.aimX);
+    const moveAng = Math.atan2(p.dirY, p.dirX);
+    const tiltTarget = moving ? Math.sin(moveAng - aimAng) * 0.35 * speedRel : 0;
+    p.tilt += (tiltTarget - p.tilt) * Math.min(1, dt * 10);
+    p.bob = (p.bob || 0) + dt * (moving ? 14 : 3);
+    p.recoil = Math.max(0, (p.recoil || 0) - dt * 4);
 
     // Dash motion
     if (p.dashing > 0) {
@@ -562,8 +656,9 @@ export class Game {
       const tx = p.x + p.aimX * 200, ty = p.y + p.aimY * 200;
       const warn = this.parts.acquire();
       warn.x = tx; warn.y = ty; warn.vx = 0; warn.vy = 0;
-      warn.life = 0.6; warn.max = 0.6; warn.color = '#ff7a1a'; warn.size = 180;
+      warn.life = 0.9; warn.max = 0.9; warn.color = '#ff7a1a'; warn.size = 180;
       warn.type = 'meteorMark'; warn._dmg = 200 * s.damageMult; warn._radius = 180;
+      warn._fallFrom = -480; warn._fallOffX = rand(-100, 100);
     } else if (id === 'vortex') {
       this._vortexT = 2; this._vortexX = p.x + p.aimX * 60; this._vortexY = p.y + p.aimY * 60;
     }
@@ -754,10 +849,12 @@ export class Game {
     const tx = tgt.x + rand(-30, 30), ty = tgt.y + rand(-30, 30);
     const warn = this.parts.acquire();
     warn.x = tx; warn.y = ty; warn.vx = 0; warn.vy = 0;
-    warn.life = 0.6; warn.max = 0.6; warn.color = s.color; warn.size = (s.area || 90) * rs.areaMult;
+    warn.life = 0.9; warn.max = 0.9; warn.color = s.color; warn.size = (s.area || 90) * rs.areaMult;
     warn.type = 'meteorMark';
     warn._dmg = s.damage * rs.damageMult;
     warn._radius = (s.area || 90) * rs.areaMult;
+    warn._fallFrom = -420 + rand(-60, 60); // sky height above target
+    warn._fallOffX = rand(-80, 80);         // angle from sky
   }
 
   weaponShotgun(s, dt) {
@@ -811,6 +908,13 @@ export class Game {
     const p = this.player; const s = this.run.stats;
     let dmg = base;
     if (s.berserk && p.hp < p.maxHp * 0.3) dmg *= 1.4;
+    const f = s.flags || {};
+    if (f.railStance && (p._stillT || 0) >= 1.0) dmg *= 1.6;
+    if (f.overcharge) {
+      p._overchargeN = (p._overchargeN || 0) + 1;
+      if (p._overchargeN % 6 === 0) dmg *= 2.0;
+    }
+    if (f.doubleHit && Math.random() < 0.20) dmg *= 2.0;
     const c = (baseCrit || 0) + s.crit;
     const isCrit = Math.random() < c;
     if (isCrit) dmg *= s.critDmgMult;
@@ -1028,16 +1132,28 @@ export class Game {
       if (p.type === 'meteorMark') {
         p.life -= dt;
         if (p.life <= 0) {
-          // impact!
+          // impact! Big explosion
           this.enemies.forEach(en => {
             if (dist2(en.x, en.y, p.x, p.y) <= p._radius * p._radius) {
               const dmg = this.rollDamage(p._dmg);
-              this.dealDamage(en, dmg.dmg, dmg.crit, 180, p.x, p.y);
+              this.dealDamage(en, dmg.dmg, dmg.crit, 220, p.x, p.y);
             }
           });
-          this.spawnRing(p.x, p.y, p._radius, p.color, 0.4);
-          this.spawnHitBurst(p.x, p.y, p.color, 18);
-          this.cam.shake = Math.max(this.cam.shake, 4);
+          this.spawnRing(p.x, p.y, p._radius, p.color, 0.5);
+          this.spawnRing(p.x, p.y, p._radius * 0.6, '#fff5d6', 0.35);
+          this.spawnHitBurst(p.x, p.y, p.color, 32);
+          // fire chunks flying out
+          for (let k = 0; k < 14; k++) {
+            const a = Math.random() * TAU;
+            const sp = rand(180, 420);
+            const cp = this.parts.acquire();
+            cp.x = p.x; cp.y = p.y;
+            cp.vx = Math.cos(a) * sp; cp.vy = Math.sin(a) * sp;
+            cp.life = rand(0.5, 0.9); cp.max = cp.life;
+            cp.color = k % 2 ? '#ffb84d' : '#ff7a1a';
+            cp.size = rand(3, 5); cp.type = 'spark';
+          }
+          this.cam.shake = Math.max(this.cam.shake, 9);
           this.parts.release(p);
         }
         return;
@@ -1228,11 +1344,36 @@ export class Game {
     while (r.xp >= r.xpToNext) {
       r.xp -= r.xpToNext;
       r.level += 1;
-      r.xpToNext = Math.floor(r.xpToNext * 1.32 + 2);
+      r.xpToNext = Math.floor(r.xpToNext * 1.42 + 3);
       this.levelUpQueue += 1;
       this.cam.slowmo = 0.3;
-      this.cam.shake = 6;
+      this.cam.shake = 10;
       Audio.levelUp();
+      // BIG level-up blast — visual + damage AoE that knocks enemies back
+      const p = this.player;
+      const blastR = 180 * (r.stats.areaMult || 1);
+      this.enemies.forEach(e => {
+        if (dist2(e.x, e.y, p.x, p.y) <= blastR * blastR) {
+          // gentle damage + huge knockback (helps survival on level)
+          this.dealDamage(e, 40 * r.stats.damageMult, false, 360, p.x, p.y, true);
+        }
+      });
+      this.spawnRing(p.x, p.y, blastR, '#ffd166', 0.55);
+      this.spawnRing(p.x, p.y, blastR * 0.55, '#4dffd4', 0.45);
+      this.spawnRing(p.x, p.y, blastR * 0.25, '#fff', 0.32);
+      // golden spark burst
+      for (let k = 0; k < 36; k++) {
+        const a = Math.random() * TAU;
+        const sp = rand(220, 520);
+        const pp = this.parts.acquire();
+        pp.x = p.x; pp.y = p.y;
+        pp.vx = Math.cos(a) * sp; pp.vy = Math.sin(a) * sp - 40;
+        pp.life = rand(0.45, 0.85); pp.max = pp.life;
+        pp.color = k % 3 === 0 ? '#fff' : (k % 3 === 1 ? '#ffd166' : '#4dffd4');
+        pp.size = rand(2, 4); pp.type = 'spark';
+      }
+      // brief iframes for safety
+      p.iframes = Math.max(p.iframes, 0.6);
     }
   }
 
@@ -1289,6 +1430,7 @@ export class Game {
   }
 
   spawnMuzzle(x, y, ang, color) {
+    this.player.recoil = Math.min(1, (this.player.recoil || 0) + 0.4);
     for (let i = 0; i < 5; i++) {
       const p = this.parts.acquire();
       p.x = x; p.y = y;
@@ -1529,15 +1671,49 @@ export class Game {
     this.parts.forEach(p => {
       const a = p.life / p.max;
       if (p.type === 'meteorMark') {
+        const t01 = 1 - (p.life / p.max); // 0 → 1
         const pulse = 0.5 + 0.5 * Math.sin(p.life * 24);
+        // ground warning ring
         ctx.strokeStyle = p.color;
         ctx.globalAlpha = 0.4 + 0.5 * pulse;
         ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(p.x, p.y, p._radius, 0, TAU); ctx.stroke();
-        ctx.globalAlpha = 0.15 * pulse;
+        ctx.globalAlpha = 0.12 * pulse;
         ctx.fillStyle = p.color;
         ctx.beginPath(); ctx.arc(p.x, p.y, p._radius, 0, TAU); ctx.fill();
         ctx.globalAlpha = 1;
+        // shadow on ground that grows
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        const shR = 10 + t01 * (p._radius * 0.35);
+        ctx.beginPath(); ctx.ellipse(p.x, p.y, shR, shR * 0.32, 0, 0, TAU); ctx.fill();
+        // falling meteor visual
+        const fy = (p._fallFrom || -300) * (1 - t01) + 0;
+        const fx = (p._fallOffX || 0) * (1 - t01);
+        const mx = p.x + fx, my = p.y + fy;
+        // fiery trail
+        for (let k = 0; k < 6; k++) {
+          const f = k / 6;
+          const tx = p.x + fx * (1 - f * 0.6);
+          const ty = p.y + (fy - f * 60);
+          ctx.globalAlpha = (1 - f) * 0.7;
+          ctx.fillStyle = k < 3 ? '#fff5d6' : (k < 5 ? '#ff9a3c' : '#b51d28');
+          ctx.beginPath(); ctx.arc(tx, ty, (16 - k * 2) * (0.6 + t01 * 0.4), 0, TAU); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        // meteor head
+        ctx.shadowColor = p.color; ctx.shadowBlur = 24;
+        const headR = 12 + t01 * 6;
+        const headGrad = ctx.createRadialGradient(mx - headR * 0.3, my - headR * 0.3, 1, mx, my, headR);
+        headGrad.addColorStop(0, '#fff5d6');
+        headGrad.addColorStop(0.55, '#ffb84d');
+        headGrad.addColorStop(1, '#5a1206');
+        ctx.fillStyle = headGrad;
+        ctx.beginPath(); ctx.arc(mx, my, headR, 0, TAU); ctx.fill();
+        ctx.shadowBlur = 0;
+        // dark rocky core dots
+        ctx.fillStyle = '#221008';
+        ctx.beginPath(); ctx.arc(mx + 2, my - 1, 2.4, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(mx - 3, my + 2, 1.8, 0, TAU); ctx.fill();
       } else if (p.type === 'poison') {
         ctx.globalAlpha = 0.30 * a;
         ctx.fillStyle = '#7ad96b';
@@ -1734,49 +1910,120 @@ export class Game {
   drawPlayer() {
     const ctx = this.ctx;
     const p = this.player;
-    // shadow
+    const aimAng = Math.atan2(p.aimY, p.aimX);
+
+    // shadow with squish
+    const sqx = 1 + p.squish * 0.25;
+    const sqy = 1 - p.squish * 0.18;
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.beginPath(); ctx.ellipse(p.x, p.y + 8, p.r * 0.8, p.r * 0.3, 0, 0, TAU); ctx.fill();
-    // body: water droplet
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 10, p.r * 0.9 * sqx, p.r * 0.32, 0, 0, TAU);
+    ctx.fill();
+
+    // body: water droplet with tilt + squish
     const flash = p.hit > 0 ? 1 : 0;
-    const grad = ctx.createRadialGradient(p.x - 4, p.y - 4, 1, p.x, p.y, p.r);
-    grad.addColorStop(0, flash ? '#fff' : '#bff0ff');
-    grad.addColorStop(0.6, flash ? '#fff' : '#4dc4ff');
-    grad.addColorStop(1, flash ? '#fff' : '#1e6da6');
-    ctx.shadowColor = '#4dc4ff'; ctx.shadowBlur = 16;
+    ctx.save();
+    ctx.translate(p.x, p.y - Math.abs(Math.sin(p.bob || 0)) * 0.8);
+    ctx.rotate(p.tilt);
+    ctx.scale(sqx, sqy);
+    const grad = ctx.createRadialGradient(-4, -5, 1, 0, 0, p.r);
+    grad.addColorStop(0, flash ? '#fff' : '#e8faff');
+    grad.addColorStop(0.5, flash ? '#fff' : '#5fd6ff');
+    grad.addColorStop(1, flash ? '#fff' : '#1a5d99');
+    ctx.shadowColor = '#4dc4ff'; ctx.shadowBlur = 14;
     ctx.fillStyle = grad;
     ctx.beginPath();
-    // drop shape
-    ctx.moveTo(p.x, p.y - p.r);
-    ctx.bezierCurveTo(p.x + p.r, p.y - p.r * 0.4, p.x + p.r, p.y + p.r * 0.6, p.x, p.y + p.r);
-    ctx.bezierCurveTo(p.x - p.r, p.y + p.r * 0.6, p.x - p.r, p.y - p.r * 0.4, p.x, p.y - p.r);
+    const r = p.r;
+    ctx.moveTo(0, -r * 1.15);
+    ctx.bezierCurveTo(r * 1.05, -r * 0.4, r * 1.05, r * 0.65, 0, r);
+    ctx.bezierCurveTo(-r * 1.05, r * 0.65, -r * 1.05, -r * 0.4, 0, -r * 1.15);
     ctx.closePath(); ctx.fill();
     ctx.shadowBlur = 0;
-    // outline
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.stroke();
-    // highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.beginPath(); ctx.arc(p.x - 4, p.y - 4, 2.5, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#06121e'; ctx.lineWidth = 2.4; ctx.stroke();
+    // highlight droplet
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.beginPath(); ctx.ellipse(-r * 0.35, -r * 0.5, 2.6, 4.2, -0.5, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath(); ctx.arc(r * 0.3, r * 0.25, 1.6, 0, TAU); ctx.fill();
+    // little eyes glow when iframes
+    if (p.iframes > 0) {
+      ctx.fillStyle = '#ffd166';
+      ctx.beginPath(); ctx.arc(-2, -2, 1.6, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(3, -2, 1.6, 0, TAU); ctx.fill();
+    }
+    ctx.restore();
 
-    // aim line / weapon barrel
-    const ax = p.aimX, ay = p.aimY;
-    ctx.strokeStyle = p.reloading ? '#ffd16688' : '#4dc4ffaa';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(p.x + ax * (p.r + 2), p.y + ay * (p.r + 2));
-    ctx.lineTo(p.x + ax * (p.r + 22), p.y + ay * (p.r + 22));
-    ctx.stroke();
+    // ===== RIFLE / GUN — drawn in aim direction with recoil =====
+    ctx.save();
+    ctx.translate(p.x, p.y + 1);
+    ctx.rotate(aimAng);
+    const recoil = -p.recoil * 4;
+    ctx.translate(recoil, 0);
+    // pick visuals based on equipped weapon (use first owned that's a "shooter")
+    const owned = this.run.ownedWeapons;
+    const isReloading = p.reloading;
+    let gunColor = '#3a4658';
+    let accentColor = '#6cb4ff';
+    if (owned.includes('voidBeam'))      { gunColor = '#2a1a3a'; accentColor = '#b362ff'; }
+    else if (owned.includes('emberOrbs')){ gunColor = '#3a201a'; accentColor = '#ff7a1a'; }
+    else if (owned.includes('shotgun'))  { gunColor = '#3a302a'; accentColor = '#ffd166'; }
+    else if (owned.includes('autoBolts')){ gunColor = '#2a3a44'; accentColor = '#4dffd4'; }
+    // stock
+    ctx.fillStyle = '#1f2632';
+    ctx.fillRect(-6, -3, 8, 6);
+    // grip
+    ctx.fillStyle = '#0f141c';
+    ctx.fillRect(-2, 3, 4, 6);
+    // body
+    ctx.fillStyle = gunColor;
+    ctx.fillRect(2, -3, 14, 6);
+    // magazine
+    ctx.fillStyle = '#11161e';
+    ctx.fillRect(8, 3, 4, 7);
+    // top rail with sight
+    ctx.fillStyle = '#11161e';
+    ctx.fillRect(4, -5, 9, 2);
+    // sight dot
+    ctx.fillStyle = accentColor;
+    ctx.beginPath(); ctx.arc(8, -5.5, 1.2, 0, TAU); ctx.fill();
+    // barrel
+    ctx.fillStyle = '#2a313d';
+    ctx.fillRect(16, -1.6, 12, 3.2);
+    // muzzle ring
+    ctx.fillStyle = '#0a0d12';
+    ctx.fillRect(27, -2.4, 2.5, 4.8);
+    // accent stripe
+    ctx.fillStyle = accentColor;
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(3, -0.6, 12, 1.2);
+    ctx.globalAlpha = 1;
+    // muzzle glow if recently fired
+    if (p.recoil > 0.05) {
+      ctx.fillStyle = accentColor;
+      ctx.shadowColor = accentColor; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(30, 0, 3 + p.recoil * 5, 0, TAU); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    // reload indicator
+    if (isReloading) {
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(8, 4, 9, -Math.PI * 0.5, -Math.PI * 0.5 + Math.PI * 2 * (1 - p.reloadT / 1.5)); ctx.stroke();
+    }
+    ctx.restore();
 
-    // crosshair at cursor position in world
-    const wmx = this.input.mx - this.W / 2 + this.cam.x;
-    const wmy = this.input.my - this.H / 2 + this.cam.y;
-    ctx.strokeStyle = '#ff7a1aaa'; ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(wmx - 8, wmy); ctx.lineTo(wmx - 3, wmy);
-    ctx.moveTo(wmx + 3, wmy); ctx.lineTo(wmx + 8, wmy);
-    ctx.moveTo(wmx, wmy - 8); ctx.lineTo(wmx, wmy - 3);
-    ctx.moveTo(wmx, wmy + 3); ctx.lineTo(wmx, wmy + 8);
-    ctx.stroke();
+    // crosshair at cursor position in world (desktop)
+    if (!this.input.joyAim || (!this.input.joyAim.x && !this.input.joyAim.y)) {
+      const wmx = this.input.mx - this.W / 2 + this.cam.x;
+      const wmy = this.input.my - this.H / 2 + this.cam.y;
+      ctx.strokeStyle = '#ff7a1aaa'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(wmx - 8, wmy); ctx.lineTo(wmx - 3, wmy);
+      ctx.moveTo(wmx + 3, wmy); ctx.lineTo(wmx + 8, wmy);
+      ctx.moveTo(wmx, wmy - 8); ctx.lineTo(wmx, wmy - 3);
+      ctx.moveTo(wmx, wmy + 3); ctx.lineTo(wmx, wmy + 8);
+      ctx.stroke();
+    }
 
     // Orbit weapon visuals
     if (this.run.ownedWeapons.includes('emberOrbs')) {

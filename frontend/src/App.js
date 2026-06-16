@@ -14,6 +14,7 @@ export default function App() {
   const [booted, setBooted] = useState(false);
   const [activeMission, setActiveMission] = useState(null);
   const [missionReward, setMissionReward] = useState(null);
+  const [runKey, setRunKey] = useState(0);
 
   useEffect(() => {
     getPlayerId();
@@ -88,6 +89,7 @@ export default function App() {
 
   const onMission = (mission) => {
     setActiveMission(mission);
+    setRunKey(k => k + 1);
     setView('game');
   };
 
@@ -104,27 +106,27 @@ export default function App() {
 
   if (view === 'welcome') {
     return (<Welcome save={save} setSave={setSave}
-      onContinue={() => { setActiveMission(null); if (!save.introSeen) setView('intro'); else setView('game'); }}
+      onContinue={() => { setActiveMission(null); setRunKey(k => k + 1); if (!save.introSeen) setView('intro'); else setView('game'); }}
       onCamp={() => setView('camp')} />);
   }
   if (view === 'intro') {
-    return (<IntroDialogue onDone={() => { setSave({ ...save, introSeen: true }); setView('game'); }} />);
+    return (<IntroDialogue onDone={() => { setSave({ ...save, introSeen: true }); setRunKey(k => k + 1); setView('game'); }} />);
   }
   if (view === 'menu') {
-    return (<MainMenu save={save} onStart={() => { setActiveMission(null); setView('game'); }} onCamp={() => setView('camp')} onReset={reset} />);
+    return (<MainMenu save={save} onStart={() => { setActiveMission(null); setRunKey(k => k + 1); setView('game'); }} onCamp={() => setView('camp')} onReset={reset} />);
   }
   if (view === 'camp') {
     return (<Camp save={save} setSave={setSave}
       onBack={() => setView('welcome')}
-      onStart={() => { setActiveMission(null); setView('game'); }}
+      onStart={() => { setActiveMission(null); setRunKey(k => k + 1); setView('game'); }}
       onMission={onMission} />);
   }
   if (view === 'game') {
     return (<>
-      <GameScreen key={Math.random()} save={save} setSave={setSave} mission={activeMission}
+      <GameScreen key={runKey} save={save} setSave={setSave} mission={activeMission}
         onRunEnd={onRunEnd}
         onExit={(where) => {
-          if (where === 'retry') { setView('camp'); setTimeout(() => setView('game'), 30); }
+          if (where === 'retry') { setRunKey(k => k + 1); }
           else if (where === 'menu') setView('welcome');
           else setView(where);
         }} />

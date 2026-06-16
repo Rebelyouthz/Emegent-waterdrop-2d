@@ -109,7 +109,9 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
   const [snap, setSnap] = useState(null);
   const [levelUpChoices, setLevelUpChoices] = useState(null);
   const [gameOverResult, setGameOverResult] = useState(null);
+  const [gameOverExtras, setGameOverExtras] = useState(null);
   const [paused, setPaused] = useState(false);
+  const initialSaveRef = useRef(save);
 
   useEffect(() => {
     Audio.startMusic();
@@ -126,7 +128,20 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
         onTick: (s) => setSnap(s),
         onGameOver: (r) => {
           setGameOverResult(r);
-          const newSave = { ...save, gold: save.gold + r.gold, lifetimeGold: (save.lifetimeGold || 0) + r.gold, runsCompleted: save.runsCompleted + 1, bestRunTime: Math.max(save.bestRunTime, r.time), bestKills: Math.max(save.bestKills, r.level), totalKills: save.totalKills + r.kills };
+          // Calculate run rewards summary for death screen
+          const isBest = r.time > (save.bestRunTime || 0);
+          const xpGained = r.kills * 2 + r.level * 5 + (r.victory ? 200 : 0) + Math.floor(r.time / 6);
+          const spGained = 1 + Math.floor(r.level / 5);
+          setGameOverExtras({
+            xpGained,
+            spGained,
+            isBestTime: isBest,
+            isBestKills: r.kills > (save.bestKills || 0),
+            noHit: !!r.noHit,
+            challengeBonus: mission && mission.isChallenge && r.victory ? (mission.mod ? { gold: 500, sp: 5 } : null) : null,
+          });
+          const baseSave = initialSaveRef.current;
+          const newSave = { ...baseSave, gold: baseSave.gold + r.gold, lifetimeGold: (baseSave.lifetimeGold || 0) + r.gold, runsCompleted: baseSave.runsCompleted + 1, bestRunTime: Math.max(baseSave.bestRunTime, r.time), bestKills: Math.max(baseSave.bestKills, r.level), totalKills: baseSave.totalKills + r.kills };
           if (r.noHit) newSave.noHitRuns = (newSave.noHitRuns || 0) + 1;
           setSave(newSave);
           onRunEnd && onRunEnd(r, newSave, mission);
@@ -173,7 +188,7 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
         </div>
       )}
       {gameOverResult && (
-        <GameOver result={gameOverResult} onMenu={() => onExit('menu')} onCamp={() => onExit('camp')} onRetry={() => onExit('retry')} />
+        <GameOver result={gameOverResult} extras={gameOverExtras} onMenu={() => onExit('menu')} onCamp={() => onExit('camp')} onRetry={() => onExit('retry')} />
       )}
     </div>
   );
