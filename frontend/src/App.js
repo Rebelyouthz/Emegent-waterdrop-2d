@@ -5,16 +5,20 @@ import IntroDialogue from './components/IntroDialogue';
 import Camp from './components/Camp';
 import GameScreen from './components/GameScreen';
 import MissionReveal from './components/MissionReveal';
+import PaywallModal from './components/PaywallModal';
 import { loadSave, saveLocal, syncSave, postRunResult, DEFAULT_SAVE, getPlayerId, addAccountXp } from './store';
 import { rollMissionRewards, MISSION_DEFS, CHALLENGES, ACHIEVEMENTS } from './game/data_ext2';
+import { AuthProvider, StripeReturnHandler, AuthCallback, useAuth } from './auth';
 
-export default function App() {
+function AppInner() {
   const [view, setView] = useState(null);
   const [save, setSaveState] = useState(loadSave());
   const [booted, setBooted] = useState(false);
   const [activeMission, setActiveMission] = useState(null);
   const [missionReward, setMissionReward] = useState(null);
   const [runKey, setRunKey] = useState(0);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const { paid, loading: authLoading, user } = useAuth();
 
   useEffect(() => {
     getPlayerId();
@@ -85,6 +89,16 @@ export default function App() {
     ns.sp = (ns.sp || 0) + 1 + Math.floor(result.level / 5);
     setSave(ns);
     postRunResult({ duration: result.time, level: result.level, kills: result.kills, gold: result.gold, wave: Math.ceil(result.time / 30) });
+    // Submit to leaderboard (fire-and-forget; backend ignores if not authenticated)
+    if (user) {
+      const API = (process.env.REACT_APP_BACKEND_URL || '') + '/api';
+      import('axios').then(({ default: axios }) => {
+        axios.post(`${API}/leaderboard/submit`, {
+          time: result.time, level: result.level, kills: result.kills,
+          victory: !!result.victory, no_hit: !!result.noHit,
+        }, { withCredentials: true }).catch(() => {});
+      });
+    }
   };
 
   const onMission = (mission) => {
@@ -100,26 +114,38 @@ export default function App() {
     setView('welcome');
   };
 
-  if (!booted || !view) {
+  // Gate function: try to start gameplay. Show paywall if not entitled.
+  const tryStartGame = (proceed) => {
+    if (paid) { proceed(); return; }
+    setShowPaywall(true);
+  };
+
+  if (!booted || !view || authLoading) {
     return (<div className="boot"><div className="boot-spin" /><div>WATERDROP SURVIVOR</div></div>);
   }
 
   if (view === 'welcome') {
-    return (<Welcome save={save} setSave={setSave}
-      onContinue={() => { setActiveMission(null); setRunKey(k => k + 1); if (!save.introSeen) setView('intro'); else setView('game'); }}
-      onCamp={() => setView('camp')} />);
+    return (<>
+      <Welcome save={save} setSave={setSave}
+        onContinue={() => tryStartGame(() => { setActiveMission(null); setRunKey(k => k + 1); if (!save.introSeen) setView('intro'); else setView('game'); })}
+        onCamp={() => setView('camp')} />
+      {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
+    </>);
   }
   if (view === 'intro') {
     return (<IntroDialogue onDone={() => { setSave({ ...save, introSeen: true }); setRunKey(k => k + 1); setView('game'); }} />);
   }
   if (view === 'menu') {
-    return (<MainMenu save={save} onStart={() => { setActiveMission(null); setRunKey(k => k + 1); setView('game'); }} onCamp={() => setView('camp')} onReset={reset} />);
+    return (<MainMenu save={save} onStart={() => tryStartGame(() => { setActiveMission(null); setRunKey(k => k + 1); setView('game'); })} onCamp={() => setView('camp')} onReset={reset} />);
   }
   if (view === 'camp') {
-    return (<Camp save={save} setSave={setSave}
-      onBack={() => setView('welcome')}
-      onStart={() => { setActiveMission(null); setRunKey(k => k + 1); setView('game'); }}
-      onMission={onMission} />);
+    return (<>
+      <Camp save={save} setSave={setSave}
+        onBack={() => setView('welcome')}
+        onStart={() => tryStartGame(() => { setActiveMission(null); setRunKey(k => k + 1); setView('game'); })}
+        onMission={(m) => tryStartGame(() => onMission(m))} />
+      {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
+    </>);
   }
   if (view === 'game') {
     return (<>
@@ -134,4 +160,25 @@ export default function App() {
     </>);
   }
   return null;
+}
+
+export default function App() {
+  // OAuth callback: detect session_id in URL fragment SYNCHRONOUSLY during render
+  // (NOT inside useEffect — that runs after first render, too late to prevent
+  // the rest of the app from trying to render with no auth).
+  const hash = (typeof window !== 'undefined') ? window.location.hash : '';
+  if (hash && hash.indexOf('session_id=') !== -1) {
+    return (
+      <AuthProvider>
+        <AuthCallback />
+      </AuthProvider>
+    );
+  }
+  return (
+    <AuthProvider>
+      <StripeReturnHandler>
+        <AppInner />
+      </StripeReturnHandler>
+    </AuthProvider>
+  );
 }

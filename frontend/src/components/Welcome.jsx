@@ -1,17 +1,53 @@
 import React, { useState } from 'react';
 import { AVATARS, DAILY_REWARDS, accountXpToNext, dailyQuests, CHESTS, rollChest } from '../game/data_ext';
 import { todayIdx, applyReward } from '../store';
+import { useAuth } from '../auth';
+import LeaderboardPanel from './LeaderboardPanel';
 
 const openChest = (chestId) => {
   const chest = CHESTS.find(c => c.id === chestId);
   return chest ? rollChest(chest, 0.5) : [];
 };
 
+function AccountWidget({ openLb }) {
+  const { user, paid, login, logout, loading } = useAuth();
+  if (loading) return null;
+  return (
+    <div className="account-widget" data-testid="account-widget">
+      {user ? (
+        <>
+          {user.picture
+            ? <img src={user.picture} alt="" className="acc-pic" />
+            : <div className="acc-pic acc-pic-fb">💧</div>}
+          <div className="acc-meta">
+            <div className="acc-name">{user.name || user.email}</div>
+            <div className="acc-sub">
+              {paid
+                ? <span className="acc-paid">✓ UNLOCKED</span>
+                : <span className="acc-trial">DEMO MODE</span>}
+            </div>
+          </div>
+          <button onClick={openLb} className="acc-btn" data-testid="open-leaderboard">🏆</button>
+          <button onClick={logout} className="acc-btn acc-btn-ghost" data-testid="account-logout">↩</button>
+        </>
+      ) : (
+        <>
+          <button onClick={openLb} className="acc-btn" data-testid="open-leaderboard">🏆 Leaderboard</button>
+          <button onClick={login} className="acc-btn acc-btn-google" data-testid="account-login">
+            <span style={{ fontSize: 14, fontWeight: 800 }}>G</span> Sign in
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function Welcome({ save, setSave, onContinue, onCamp }) {
   const [step, setStep] = useState(save.profile.name ? 'home' : 'create');
   const [name, setName] = useState(save.profile.name || '');
   const [avatar, setAvatar] = useState(save.profile.avatar || 'drop');
   const [claimedRewards, setClaimedRewards] = useState([]);
+  const [showLb, setShowLb] = useState(false);
 
   const today = todayIdx();
   const canClaim = save.daily.lastClaim !== today;
@@ -79,6 +115,7 @@ export default function Welcome({ save, setSave, onContinue, onCamp }) {
 
   return (
     <div className="app-shell" style={{ alignItems: 'flex-start' }}>
+      <AccountWidget openLb={() => setShowLb(true)} />
       <div className="welcome" data-testid="welcome-home">
         <div className="welcome-header">
           <div className="profile-card" data-testid="profile-card">
@@ -183,6 +220,14 @@ export default function Welcome({ save, setSave, onContinue, onCamp }) {
           </button>
         </div>
       </div>
+      {showLb && (
+        <div className="modal-overlay" onClick={() => setShowLb(false)} data-testid="lb-overlay">
+          <div className="lb-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="lb-close" onClick={() => setShowLb(false)} data-testid="lb-close">✕</button>
+            <LeaderboardPanel />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

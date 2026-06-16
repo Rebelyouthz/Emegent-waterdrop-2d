@@ -1,6 +1,57 @@
 # Waterdrop Survivor — PRD
 
+## Iter 7 (2026-06-16) — Google login + Stripe paywall + Leaderboard
+
+### What was built
+**Goal**: Make the game monetizable as a one-time $1.99 unlock with a global leaderboard, gated by Google sign-in.
+
+### Backend (server.py — extended)
+- **Emergent Google Auth** (managed): `POST /api/auth/session` exchanges fragment session_id, sets httpOnly cookie `session_token` (7-day), upserts user doc with custom `user_id = user_<uuid12>`. `GET /api/auth/me`, `POST /api/auth/logout`.
+- **Stripe one-time paywall** ($1.99) via `emergentintegrations.payments.stripe.checkout`:
+  - `POST /api/payment/checkout` (auth-required) — creates Checkout Session, server-side `amount` (never trusted from FE), records `payment_transactions` row as `initiated`.
+  - `GET /api/payment/status/{session_id}` — polls Stripe, updates `payment_transactions`, grants `entitlements.paid=true` ONCE per session.
+  - `POST /api/webhook/stripe` — defensive duplicate path that also grants entitlement.
+  - `GET /api/entitlement` — public; returns `{paid, user, price_usd, title}`.
+- **Leaderboard**:
+  - `POST /api/leaderboard/submit` (auth-required) — stores `{user_id, name, picture, time, level, kills, victory, no_hit}`.
+  - `GET /api/leaderboard?limit=50&sort_by=time|kills|level` — public. Falls back to legacy `runs` collection if empty.
+- New env vars: `STRIPE_API_KEY=sk_test_emergent`, `GAME_PRICE_USD=1.99`, `GAME_TITLE`.
+
+### Frontend
+- `/app/frontend/src/auth.js` — `<AuthProvider>` + `useAuth()` (user, paid, price, login(), logout(), refresh()); `<AuthCallback>` (detects `#session_id=` in URL fragment, exchanges, reloads); `<StripeReturnHandler>` (detects `?stripe_session_id=...` after Stripe returns, polls status, refreshes entitlement, shows verification overlay).
+- `/app/frontend/src/components/PaywallModal.jsx` — blocks game start, shows price + "Sign in with Google" → "Buy Now". Opens Stripe Checkout in same tab via redirect.
+- `/app/frontend/src/components/LeaderboardPanel.jsx` — sortable by time/kills/level, fetches `/api/leaderboard`, renders avatars + badges.
+- `Welcome.jsx` — top-right `AccountWidget` shows user / login button + 🏆 leaderboard button; opens leaderboard as modal.
+- `App.js` — `tryStartGame()` gate. If `paid=false`, shows `<PaywallModal>` before allowing `Enter the Lake` / mission start. Submits run results to `/api/leaderboard/submit` (fire-and-forget) when user is logged in.
+
+### Verified end-to-end (curl + browser)
+- `GET /api/health` → `{price_usd: 1.99}` ✓
+- `GET /api/auth/me` w/ seeded bearer token → returns Test Survivor user ✓
+- `GET /api/entitlement` w/ token → `{paid:false, user:{name:'Test Survivor',...}}` ✓
+- `POST /api/payment/checkout` w/ token → returns real Stripe URL `https://checkout.stripe.com/c/pay/cs_test_...` ✓
+- `POST /api/leaderboard/submit` w/ token → stores ✓
+- `GET /api/leaderboard` → returns the submitted row ✓
+- Browser: Welcome shows account widget, "Enter the Lake" opens paywall modal with $1.99 + Google sign-in button, leaderboard modal opens with rows ✓
+
+### Test card for Stripe test mode
+`4242 4242 4242 4242` · any expiry/CVC/ZIP
+
+### Pricing
+Set via `GAME_PRICE_USD` env var (currently 1.99). Change in `/app/backend/.env` to adjust.
+
 ## Iter 6 (2026-06-16) — Critical level-up loop fix
+[previous content preserved]
+
+## Iter 5 (2026-06-16) — Restart fix + visuals
+[previous content preserved]
+
+## Backlog
+- Apple Sign-In (needs Apple Developer account $99/yr + custom impl)
+- Per-account save sync (currently saves stay in localStorage)
+- Stage themes (P2), companion system (P2)
+- "Best Run Highlight" auto-shareable card (P3)
+- Code-review nitpicks (eslint hook-deps, empty catches) — deferred as cosmetic
+
 
 ### THE BUG
 User reported: after first level-up, modal kept showing the "same" level-up screen multiple times → game eventually froze. Root cause was actually two separate issues:
