@@ -1,0 +1,188 @@
+import React, { useState } from 'react';
+import { AVATARS, DAILY_REWARDS, accountXpToNext, dailyQuests, CHESTS, rollChest } from '../game/data_ext';
+import { todayIdx, applyReward } from '../store';
+
+const openChest = (chestId) => {
+  const chest = CHESTS.find(c => c.id === chestId);
+  return chest ? rollChest(chest, 0.5) : [];
+};
+
+export default function Welcome({ save, setSave, onContinue, onCamp }) {
+  const [step, setStep] = useState(save.profile.name ? 'home' : 'create');
+  const [name, setName] = useState(save.profile.name || '');
+  const [avatar, setAvatar] = useState(save.profile.avatar || 'drop');
+  const [claimedRewards, setClaimedRewards] = useState([]);
+
+  const today = todayIdx();
+  const canClaim = save.daily.lastClaim !== today;
+  const streakDay = (canClaim ? (save.daily.streak || 0) % 7 : ((save.daily.streak || 1) - 1) % 7) + 1;
+  const claimableReward = DAILY_REWARDS[(streakDay - 1) % 7];
+
+  const create = () => {
+    if (!name.trim()) return;
+    const ns = { ...save, profile: { ...save.profile, name: name.trim(), avatar } };
+    setSave(ns);
+    setStep('home');
+  };
+
+  const claimDaily = () => {
+    if (!canClaim) return;
+    const ns = {
+      ...save,
+      daily: { ...save.daily, lastClaim: today, streak: (save.daily.streak || 0) + 1 },
+    };
+    applyReward(ns, claimableReward, openChest);
+    setSave(ns);
+    setClaimedRewards(prev => [...prev, claimableReward.label]);
+  };
+
+  if (step === 'create') {
+    return (
+      <div className="app-shell">
+        <div className="menu" data-testid="welcome-create" style={{ width: 'min(720px, 92vw)' }}>
+          <div className="title">CHOOSE YOUR FORM</div>
+          <div className="subtitle">A.I.D.A. AWAKENS</div>
+          <div className="avatar-grid">
+            {AVATARS.map(a => (
+              <div
+                key={a.id}
+                className={`avatar-card ${avatar === a.id ? 'sel' : ''}`}
+                onClick={() => setAvatar(a.id)}
+                data-testid={`avatar-${a.id}`}
+              >
+                <div className="avatar-icon">{a.icon}</div>
+                <div className="avatar-name">{a.name}</div>
+                <div className="avatar-desc">{a.desc}</div>
+              </div>
+            ))}
+          </div>
+          <input
+            className="name-input"
+            placeholder="Enter your name…"
+            value={name}
+            maxLength={16}
+            onChange={(e) => setName(e.target.value)}
+            data-testid="name-input"
+          />
+          <button onClick={create} disabled={!name.trim()} data-testid="create-confirm" style={{ marginTop: 14 }}>
+            ▸ Begin Journey
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // home/welcome screen with profile, daily, quests
+  const xpNext = accountXpToNext(save.profile.level);
+  const xpPct = (save.profile.xp / xpNext) * 100;
+  const quests = dailyQuests(today);
+
+  return (
+    <div className="app-shell" style={{ alignItems: 'flex-start' }}>
+      <div className="welcome" data-testid="welcome-home">
+        <div className="welcome-header">
+          <div className="profile-card" data-testid="profile-card">
+            <div className="profile-avatar">{AVATARS.find(a => a.id === save.profile.avatar)?.icon || '💧'}</div>
+            <div style={{ flex: 1 }}>
+              <div className="profile-name">{save.profile.name || 'Wanderer'}</div>
+              <div className="profile-level">RANK {save.profile.level}</div>
+              <div className="profile-xp">
+                <div className="profile-xp-fill" style={{ width: xpPct + '%' }} />
+              </div>
+              <div className="profile-xp-text">{save.profile.xp} / {xpNext} XP</div>
+            </div>
+            <div className="profile-curr">
+              <div><span style={{ color: 'var(--accent-2)' }}>★</span> {save.gold}</div>
+              <div><span style={{ color: 'var(--rune)' }}>◆</span> {save.sp} SP</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="welcome-grid">
+          {/* Daily Reward */}
+          <div className="panel">
+            <div className="panel-title">DAILY REWARD</div>
+            <div className="daily-row">
+              {DAILY_REWARDS.map((r, i) => {
+                const claimed = i + 1 < streakDay;
+                const current = i + 1 === streakDay && canClaim;
+                return (
+                  <div key={r.day} className={`daily-cell ${claimed ? 'claimed' : ''} ${current ? 'current' : ''}`}>
+                    <div className="daily-day">D{r.day}</div>
+                    <div className="daily-icon">{r.icon}</div>
+                    <div className="daily-label">{r.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <button
+              onClick={claimDaily}
+              disabled={!canClaim}
+              data-testid="claim-daily"
+              style={{ marginTop: 12, width: '100%' }}
+            >
+              {canClaim ? `▸ CLAIM DAY ${streakDay}` : '✓ Already Claimed'}
+            </button>
+          </div>
+
+          {/* Daily Quests */}
+          <div className="panel">
+            <div className="panel-title">DAILY QUESTS</div>
+            <div className="quest-list">
+              {quests.map(q => {
+                const prog = save.quests.completed[q.id] || 0;
+                const claimed = save.quests.claimed[q.id];
+                const done = prog >= q.goal;
+                return (
+                  <div key={q.id} className={`quest-row ${done ? 'done' : ''}`} data-testid={`quest-${q.id}`}>
+                    <div className="quest-icon">{q.icon}</div>
+                    <div className="quest-body">
+                      <div className="quest-name">{q.name}</div>
+                      <div className="quest-desc">{q.desc}</div>
+                      <div className="quest-bar">
+                        <div className="quest-bar-fill" style={{ width: Math.min(100, (prog / q.goal) * 100) + '%' }} />
+                      </div>
+                      <div className="quest-prog">{Math.min(prog, q.goal)} / {q.goal}</div>
+                    </div>
+                    <div className="quest-reward">
+                      {q.reward.gold && <div>★ {q.reward.gold}</div>}
+                      {q.reward.sp && <div>◆ {q.reward.sp} SP</div>}
+                      {done && !claimed && (
+                        <button
+                          onClick={() => {
+                            const ns = {
+                              ...save,
+                              quests: {
+                                ...save.quests,
+                                claimed: { ...save.quests.claimed, [q.id]: true },
+                              },
+                            };
+                            applyReward(ns, q.reward, openChest);
+                            setSave(ns);
+                          }}
+                          data-testid={`claim-${q.id}`}
+                          style={{ padding: '4px 8px', fontSize: 11, marginTop: 4 }}
+                        >
+                          CLAIM
+                        </button>
+                      )}
+                      {claimed && <div style={{ color: 'var(--accent-2)' }}>✓</div>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="welcome-actions">
+          <button onClick={onCamp} data-testid="welcome-camp">⛺ The Camp</button>
+          <button onClick={onContinue} data-testid="welcome-fight"
+            style={{ borderColor: '#ff7a1a', boxShadow: 'var(--pixel-edge), 0 6px 0 #000, 0 0 28px #ff7a1a66' }}>
+            ▸ ENTER THE LAKE
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

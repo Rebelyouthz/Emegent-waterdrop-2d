@@ -1,0 +1,135 @@
+import React, { useEffect, useState } from 'react';
+import MainMenu from './components/MainMenu';
+import Welcome from './components/Welcome';
+import IntroDialogue from './components/IntroDialogue';
+import Camp from './components/Camp';
+import GameScreen from './components/GameScreen';
+import MissionReveal from './components/MissionReveal';
+import { loadSave, saveLocal, syncSave, postRunResult, DEFAULT_SAVE, getPlayerId, addAccountXp } from './store';
+import { rollMissionRewards, MISSION_DEFS, CHALLENGES, ACHIEVEMENTS } from './game/data_ext2';
+
+export default function App() {
+  const [view, setView] = useState(null);
+  const [save, setSaveState] = useState(loadSave());
+  const [booted, setBooted] = useState(false);
+  const [activeMission, setActiveMission] = useState(null);
+  const [missionReward, setMissionReward] = useState(null);
+
+  useEffect(() => {
+    getPlayerId();
+    setTimeout(() => {
+      setBooted(true);
+      if (!save.profile.name) setView('welcome');
+      else if (!save.introSeen) setView('intro');
+      else setView('welcome');
+    }, 220);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (view === 'game') document.body.classList.add('in-game');
+    else document.body.classList.remove('in-game');
+    return () => document.body.classList.remove('in-game');
+  }, [view]);
+
+  const setSave = (newSave) => {
+    setSaveState(newSave);
+    saveLocal(newSave);
+    syncSave(newSave);
+  };
+
+  const onRunEnd = (result, newSave, mission) => {
+    const ns = { ...newSave };
+    ns.quests = { ...ns.quests, completed: { ...ns.quests.completed } };
+    const bump = (id, v) => { const q = ns.quests.completed; q[id] = Math.max(q[id] || 0, v); };
+    bump('q_kill_100', result.kills); bump('q_kill_300', result.kills);
+    bump('q_surv_3', result.time); bump('q_surv_5', result.time);
+    bump('q_lvl_10', result.level); bump('q_lvl_20', result.level);
+    bump('q_gold_500', result.gold);
+    if (result.victory) { bump('q_boss', 1); }
+    if (result.victory && mission && mission.id && mission.id.startsWith('m_')) {
+      // Mission success — roll rewards
+      const md = MISSION_DEFS.find(m => m.id === mission.id);
+      if (md) {
+        const rwd = rollMissionRewards(md.reward);
+        const ns2 = { ...ns };
+        ns2.gold = (ns2.gold || 0) + (rwd.gold || 0);
+        ns2.lifetimeGold = (ns2.lifetimeGold || 0) + (rwd.gold || 0);
+        // shards
+        const bs = { ...(ns2.blueprintShards || {}) };
+        for (const [k, v] of Object.entries(rwd.blueprintShards || {})) bs[k] = (bs[k] || 0) + v;
+        ns2.blueprintShards = bs;
+        // parts
+        const inv = [...(ns2.parts || []), ...(rwd.parts || [])];
+        ns2.parts = inv;
+        // track legendary
+        const legCount = (rwd.parts || []).filter(p => p.rarity === 'legendary').length;
+        if (legCount > 0) ns2.legendaryPartsFound = (ns2.legendaryPartsFound || 0) + legCount;
+        setSaveState(ns2); saveLocal(ns2); syncSave(ns2);
+        setMissionReward(rwd);
+        postRunResult({ duration: result.time, level: result.level, kills: result.kills, gold: result.gold, wave: Math.ceil(result.time / 30) });
+        return;
+      }
+    }
+    if (mission && mission.isChallenge && result.victory) {
+      const c = CHALLENGES.find(x => x.id === mission.id);
+      if (c) {
+        ns.challengesDone = { ...(ns.challengesDone || {}), [c.id]: true };
+        ns.gold = (ns.gold || 0) + c.rwd.gold;
+        ns.sp = (ns.sp || 0) + c.rwd.sp;
+      }
+    }
+    if (result.victory) ns.aidaSlain = (ns.aidaSlain || 0) + 1;
+    addAccountXp(ns, result.kills * 2 + result.level * 5 + (result.victory ? 200 : 0) + Math.floor(result.time / 6));
+    ns.sp = (ns.sp || 0) + 1 + Math.floor(result.level / 5);
+    setSave(ns);
+    postRunResult({ duration: result.time, level: result.level, kills: result.kills, gold: result.gold, wave: Math.ceil(result.time / 30) });
+  };
+
+  const onMission = (mission) => {
+    setActiveMission(mission);
+    setView('game');
+  };
+
+  const reset = () => {
+    if (!window.confirm('Erase your save? All progress will be lost.')) return;
+    const fresh = { ...DEFAULT_SAVE };
+    setSaveState(fresh); saveLocal(fresh);
+    setView('welcome');
+  };
+
+  if (!booted || !view) {
+    return (<div className="boot"><div className="boot-spin" /><div>WATERDROP SURVIVOR</div></div>);
+  }
+
+  if (view === 'welcome') {
+    return (<Welcome save={save} setSave={setSave}
+      onContinue={() => { setActiveMission(null); if (!save.introSeen) setView('intro'); else setView('game'); }}
+      onCamp={() => setView('camp')} />);
+  }
+  if (view === 'intro') {
+    return (<IntroDialogue onDone={() => { setSave({ ...save, introSeen: true }); setView('game'); }} />);
+  }
+  if (view === 'menu') {
+    return (<MainMenu save={save} onStart={() => { setActiveMission(null); setView('game'); }} onCamp={() => setView('camp')} onReset={reset} />);
+  }
+  if (view === 'camp') {
+    return (<Camp save={save} setSave={setSave}
+      onBack={() => setView('welcome')}
+      onStart={() => { setActiveMission(null); setView('game'); }}
+      onMission={onMission} />);
+  }
+  if (view === 'game') {
+    return (<>
+      <GameScreen key={Math.random()} save={save} setSave={setSave} mission={activeMission}
+        onRunEnd={onRunEnd}
+        onExit={(where) => {
+          if (where === 'retry') { setView('camp'); setTimeout(() => setView('game'), 30); }
+          else if (where === 'menu') setView('welcome');
+          else setView(where);
+        }} />
+      {missionReward && <MissionReveal rewards={missionReward} onClose={() => { setMissionReward(null); setView('camp'); }} />}
+    </>);
+  }
+  return null;
+}
