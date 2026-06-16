@@ -249,17 +249,24 @@ export class Game {
 
   frame(now) {
     if (!this.running) return;
-    let dt = (now - this.last) / 1000;
-    this.last = now;
-    if (dt > 0.1) dt = 0.1;
-    this.fps = this.fps * 0.9 + (1 / Math.max(dt, 0.001)) * 0.1;
-    if (!this.paused && !this.over && this.levelUpQueue === 0) {
-      const speed = this.cam.slowmo > 0 ? 0.35 : 1.0;
-      this.update(dt * speed);
-      this.cam.slowmo = Math.max(0, this.cam.slowmo - dt);
+    try {
+      let dt = (now - this.last) / 1000;
+      this.last = now;
+      if (dt > 0.1) dt = 0.1;
+      this.fps = this.fps * 0.9 + (1 / Math.max(dt, 0.001)) * 0.1;
+      if (!this.paused && !this.over && this.levelUpQueue === 0) {
+        const speed = this.cam.slowmo > 0 ? 0.35 : 1.0;
+        try { this.update(dt * speed); } catch (e) { console.error('[engine.update]', e); }
+        this.cam.slowmo = Math.max(0, this.cam.slowmo - dt);
+      }
+      try { this.render(); } catch (e) { console.error('[engine.render]', e); }
+      if (this.callbacks.onTick) {
+        try { this.callbacks.onTick(this.snapshot()); } catch (e) { console.error('[engine.onTick]', e); }
+      }
+    } catch (e) {
+      console.error('[engine.frame fatal]', e);
     }
-    this.render();
-    if (this.callbacks.onTick) this.callbacks.onTick(this.snapshot());
+    // ALWAYS re-queue next frame — never let an error kill the game loop
     requestAnimationFrame(this.frame);
   }
 
@@ -1341,49 +1348,57 @@ export class Game {
   addXp(amount) {
     const r = this.run;
     r.xp += Math.floor(amount * r.stats.xpMult);
-    while (r.xp >= r.xpToNext) {
-      r.xp -= r.xpToNext;
-      r.level += 1;
-      r.xpToNext = Math.floor(r.xpToNext * 1.42 + 3);
-      this.levelUpQueue += 1;
-      this.cam.slowmo = 0.3;
-      this.cam.shake = 10;
-      Audio.levelUp();
-      // BIG level-up blast — visual + KNOCKBACK ONLY (no damage so we never trigger
-      // kill-cascades / chain-XP that previously could hang the loop during gem pickup).
-      const p = this.player;
-      const blastR = 180 * (r.stats.areaMult || 1);
-      const blastR2 = blastR * blastR;
-      // snapshot enemies array to a static list to avoid any pool-mutation surprises
-      const enemiesSnapshot = [];
-      this.enemies.forEach(e => { enemiesSnapshot.push(e); });
-      for (let i = 0; i < enemiesSnapshot.length; i++) {
-        const e = enemiesSnapshot[i];
-        if (!e || !e.alive) continue;
-        if (dist2(e.x, e.y, p.x, p.y) > blastR2) continue;
-        const dx = e.x - p.x, dy = e.y - p.y;
-        const d = Math.hypot(dx, dy) || 1;
-        e.kbX += (dx / d) * 380;
-        e.kbY += (dy / d) * 380;
-        e.iframes = Math.max(e.iframes || 0, 0.25);
-      }
-      this.spawnRing(p.x, p.y, blastR, '#ffd166', 0.55);
-      this.spawnRing(p.x, p.y, blastR * 0.55, '#4dffd4', 0.45);
-      this.spawnRing(p.x, p.y, blastR * 0.25, '#fff', 0.32);
-      // golden spark burst
-      for (let k = 0; k < 36; k++) {
-        const a = Math.random() * TAU;
-        const sp = rand(220, 520);
-        const pp = this.parts.acquire();
-        pp.x = p.x; pp.y = p.y;
-        pp.vx = Math.cos(a) * sp; pp.vy = Math.sin(a) * sp - 40;
-        pp.life = rand(0.45, 0.85); pp.max = pp.life;
-        pp.color = k % 3 === 0 ? '#fff' : (k % 3 === 1 ? '#ffd166' : '#4dffd4');
-        pp.size = rand(2, 4); pp.type = 'spark';
-      }
-      // brief iframes for safety
-      p.iframes = Math.max(p.iframes, 0.6);
+    this._maybeLevelUp();
+  }
+
+  _maybeLevelUp() {
+    const r = this.run;
+    // Only level up if there's no pending card to pick. This prevents the
+    // modal from looping the "same" level-up screen (it was actually multiple
+    // levels stacking in one frame from a single big gem).
+    if (this.levelUpQueue > 0) return;
+    if (r.xp < r.xpToNext) return;
+    r.xp -= r.xpToNext;
+    r.level += 1;
+    r.xpToNext = Math.floor(r.xpToNext * 1.42 + 3);
+    this.levelUpQueue += 1;
+    this.cam.slowmo = 0.3;
+    this.cam.shake = 10;
+    Audio.levelUp();
+    // BIG level-up blast — visual + KNOCKBACK ONLY (no damage so we never trigger
+    // kill-cascades / chain-XP that previously could hang the loop during gem pickup).
+    const p = this.player;
+    const blastR = 180 * (r.stats.areaMult || 1);
+    const blastR2 = blastR * blastR;
+    // snapshot enemies array to a static list to avoid any pool-mutation surprises
+    const enemiesSnapshot = [];
+    this.enemies.forEach(e => { enemiesSnapshot.push(e); });
+    for (let i = 0; i < enemiesSnapshot.length; i++) {
+      const e = enemiesSnapshot[i];
+      if (!e || !e.alive) continue;
+      if (dist2(e.x, e.y, p.x, p.y) > blastR2) continue;
+      const dx = e.x - p.x, dy = e.y - p.y;
+      const d = Math.hypot(dx, dy) || 1;
+      e.kbX += (dx / d) * 380;
+      e.kbY += (dy / d) * 380;
+      e.iframes = Math.max(e.iframes || 0, 0.25);
     }
+    this.spawnRing(p.x, p.y, blastR, '#ffd166', 0.55);
+    this.spawnRing(p.x, p.y, blastR * 0.55, '#4dffd4', 0.45);
+    this.spawnRing(p.x, p.y, blastR * 0.25, '#fff', 0.32);
+    // golden spark burst
+    for (let k = 0; k < 36; k++) {
+      const a = Math.random() * TAU;
+      const sp = rand(220, 520);
+      const pp = this.parts.acquire();
+      pp.x = p.x; pp.y = p.y;
+      pp.vx = Math.cos(a) * sp; pp.vy = Math.sin(a) * sp - 40;
+      pp.life = rand(0.45, 0.85); pp.max = pp.life;
+      pp.color = k % 3 === 0 ? '#fff' : (k % 3 === 1 ? '#ffd166' : '#4dffd4');
+      pp.size = rand(2, 4); pp.type = 'spark';
+    }
+    // brief iframes for safety
+    p.iframes = Math.max(p.iframes, 0.6);
   }
 
   nearestEnemy(x, y, maxR) {
@@ -1580,6 +1595,10 @@ export class Game {
     }
     this.levelUpQueue -= 1;
     this.cam.slowmo = 0;
+    // Process any remaining banked XP — gives ONE level-up per pick, so the
+    // user sees the level number tick up between picks instead of multiple
+    // identical-looking modals appearing in one frame.
+    this._maybeLevelUp();
   }
 
   // ====== RENDER ======

@@ -1,6 +1,38 @@
 # Waterdrop Survivor — PRD
 
-## Iter 5 (2026-06-16) — Restart fix + Visual upgrades + Death summary + Mobile-fit
+## Iter 6 (2026-06-16) — Critical level-up loop fix
+
+### THE BUG
+User reported: after first level-up, modal kept showing the "same" level-up screen multiple times → game eventually froze. Root cause was actually two separate issues:
+
+1. **addXp ran a `while` loop** that incremented `r.level` multiple times in a single XP gain (e.g., one gem could push you from level 1 → 5 instantly), queuing 4 separate level-up cards. From the user's perspective this looked like "the same level 2 screen repeating" because the modal kept opening rapidly with new card sets.
+2. **useEffect dep on `levelUpChoices`** caused re-fire on every `setLevelUpChoices(null)`, and the stale `snap` still said `pendingLevelUp=true` → modal could re-open before the next engine tick arrived.
+
+### FIX
+- Split `addXp` into:
+  - `addXp(amount)` — just banks XP into `r.xp`.
+  - `_maybeLevelUp()` — increments level by **exactly one** if queue is empty and XP threshold reached. Triggers the visual blast + iframes for that single level.
+- `applyCardChoice` now ends with `this._maybeLevelUp()`, so picking a card decrements queue → checks if banked XP can fuel another level → spawns next level-up screen with new level number.
+- `useEffect` in GameScreen now reads `gameRef.current.levelUpQueue` (LIVE engine state) instead of stale `snap.pendingLevelUp`.
+
+### RESULT (verified by test harness)
+- `addXp(10)` → q=1, lvl=2, 3 cards → pick → q=0, lvl=2, modal closed, **no loop**.
+- `addXp(2000)` → q=1, lvl=3 (not 11 instantly), 3 cards → each pick ticks lvl: 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 with fresh card choices and the modal title clearly showing the new level number each time.
+
+### Also: frame-loop hardening
+Wrapped `update/render/onTick` in try/catch with `requestAnimationFrame(this.frame)` ALWAYS re-queued, so no single exception can kill the game loop again (previously caused the "audio works but canvas frozen" symptom).
+
+### Zip download
+`https://drop-warrior.preview.emergentagent.com/waterdrop-survivor.zip` (264 KB) — refreshed with all iter-6 fixes.
+
+## Iter 5 (2026-06-16) — Restart fix + visual upgrades + death summary + mobile-fit
+[previous content preserved — see file history]
+
+## Backlog (unchanged)
+- Stage themes (P2), companion system (P2), tutorial overlay (P3), Capacitor wrap (P3).
+- React hook exhaustive-deps cosmetic warnings (P3).
+- Spike Plates visual trap entity (P3).
+
 
 ### Critical bug fix
 - **Mid-game random restart fixed**: `<GameScreen key={Math.random()}>` was forcing a remount on every App re-render. Replaced with stable `runKey` counter (only increments on retry / new run). Engine destroy + new Game instance no longer fires mid-run.

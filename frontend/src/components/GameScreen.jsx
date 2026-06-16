@@ -157,8 +157,12 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
   }, []);
 
   useEffect(() => {
-    if (!snap || !gameRef.current) return;
-    if (snap.pendingLevelUp && !gameOverResult && !levelUpChoices) {
+    if (!gameRef.current) return;
+    // Read LIVE engine state (not stale snap) — snap is from previous frame and
+    // would still say pendingLevelUp=true right after the user picks a card,
+    // causing the modal to re-open in a loop.
+    if (levelUpChoices || gameOverResult) return;
+    if (gameRef.current.levelUpQueue > 0) {
       const c = gameRef.current.buildLevelUpChoices();
       if (c && c.length > 0) setLevelUpChoices(c);
     }
