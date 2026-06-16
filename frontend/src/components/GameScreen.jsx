@@ -158,10 +158,12 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
 
   useEffect(() => {
     if (!snap || !gameRef.current) return;
-    if (snap.pendingLevelUp && !gameOverResult) {
-      setLevelUpChoices(cur => cur || gameRef.current.buildLevelUpChoices());
+    if (snap.pendingLevelUp && !gameOverResult && !levelUpChoices) {
+      const c = gameRef.current.buildLevelUpChoices();
+      if (c && c.length > 0) setLevelUpChoices(c);
     }
-  }, [snap, gameOverResult]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snap, gameOverResult, levelUpChoices]);
 
   const pickCard = (c) => { gameRef.current.applyCardChoice(c); setLevelUpChoices(null); };
   const onMobileUpdate = useCallback((joyMove, joyAim, firing) => {

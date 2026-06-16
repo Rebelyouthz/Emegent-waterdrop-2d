@@ -1349,15 +1349,24 @@ export class Game {
       this.cam.slowmo = 0.3;
       this.cam.shake = 10;
       Audio.levelUp();
-      // BIG level-up blast — visual + damage AoE that knocks enemies back
+      // BIG level-up blast — visual + KNOCKBACK ONLY (no damage so we never trigger
+      // kill-cascades / chain-XP that previously could hang the loop during gem pickup).
       const p = this.player;
       const blastR = 180 * (r.stats.areaMult || 1);
-      this.enemies.forEach(e => {
-        if (dist2(e.x, e.y, p.x, p.y) <= blastR * blastR) {
-          // gentle damage + huge knockback (helps survival on level)
-          this.dealDamage(e, 40 * r.stats.damageMult, false, 360, p.x, p.y, true);
-        }
-      });
+      const blastR2 = blastR * blastR;
+      // snapshot enemies array to a static list to avoid any pool-mutation surprises
+      const enemiesSnapshot = [];
+      this.enemies.forEach(e => { enemiesSnapshot.push(e); });
+      for (let i = 0; i < enemiesSnapshot.length; i++) {
+        const e = enemiesSnapshot[i];
+        if (!e || !e.alive) continue;
+        if (dist2(e.x, e.y, p.x, p.y) > blastR2) continue;
+        const dx = e.x - p.x, dy = e.y - p.y;
+        const d = Math.hypot(dx, dy) || 1;
+        e.kbX += (dx / d) * 380;
+        e.kbY += (dy / d) * 380;
+        e.iframes = Math.max(e.iframes || 0, 0.25);
+      }
       this.spawnRing(p.x, p.y, blastR, '#ffd166', 0.55);
       this.spawnRing(p.x, p.y, blastR * 0.55, '#4dffd4', 0.45);
       this.spawnRing(p.x, p.y, blastR * 0.25, '#fff', 0.32);
@@ -1536,6 +1545,11 @@ export class Game {
 
   applyCardChoice(choice) {
     const r = this.run;
+    if (!choice) { // safety: never leave queue stuck
+      this.levelUpQueue = Math.max(0, this.levelUpQueue - 1);
+      this.cam.slowmo = 0;
+      return;
+    }
     if (choice.kind === 'weapon-upgrade') {
       r.weaponLvls[choice.weaponId] = (r.weaponLvls[choice.weaponId] || 0) + 1;
     } else if (choice.kind === 'weapon-new') {
