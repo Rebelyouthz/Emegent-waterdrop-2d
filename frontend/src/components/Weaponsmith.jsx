@@ -36,7 +36,8 @@ export default function Weaponsmith({ save, setSave, onClose }) {
 
   return (
     <div className="modal-overlay" data-testid="weaponsmith" onClick={(e) => { if (e.target.classList.contains('modal-overlay')) onClose(); }}>
-      <div className="forge-panel">
+      <div className="forge-panel forge-panel-scrollable">
+        <div className="forge-scroll-hint" data-testid="forge-scroll-hint" aria-hidden="true">▾ scroll for more ▾</div>
         <div className="forge-header">
           <div className="forge-title">🔨 WEAPONSMITH</div>
           <div className="forge-gold">★ {save.gold}</div>

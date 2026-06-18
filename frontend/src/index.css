@@ -1250,131 +1250,151 @@ canvas#game {
   .card-icon { font-size: 32px !important; }
   .card-name { font-size: 12px !important; }
   .card-desc { font-size: 12px !important; }
+}
 
 /* ============================================================
-   MOBILE HUD REDESIGN — clean placement for iPhone 16 + tablets
+   HUD ITER 9 — centered timer, between-joystick skills, rounded HP
    ============================================================ */
 
-/* Dash gesture ring around left joystick (replaces dash button) */
+/* Dash gesture ring around left joystick */
 .joy-dash-ring {
   position: absolute; inset: -6px;
   border-radius: 50%;
   pointer-events: none;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'VT323', monospace;
-  font-size: 22px;
-  letter-spacing: 0;
-  z-index: 1;
+  font-family: 'VT323', monospace; font-size: 22px; z-index: 1;
 }
-.joy-dash-ring.ready {
-  border: 2px solid #4dffd4;
-  box-shadow: 0 0 18px #4dffd488, inset 0 0 8px #4dffd444;
-  color: #4dffd4;
-  animation: dashPulse 1.4s ease-in-out infinite;
-}
-.joy-dash-ring.cooldown {
-  border: 2px dashed #777;
-  color: #888;
-  opacity: 0.65;
-}
-.joy-dash-ring span {
-  position: absolute;
-  top: -22px;
-  background: #06040a;
-  padding: 1px 8px;
-  border: 1px solid #4dffd488;
-  border-radius: 8px;
-  font-size: 12px;
-}
+.joy-dash-ring.ready  { border: 2px solid #4dffd4; box-shadow: 0 0 18px #4dffd488, inset 0 0 8px #4dffd444; color: #4dffd4; animation: dashPulse 1.4s ease-in-out infinite; }
+.joy-dash-ring.cooldown { border: 2px dashed #777; color: #888; opacity: 0.65; }
+.joy-dash-ring span { position: absolute; top: -22px; background: #06040a; padding: 1px 8px; border: 1px solid #4dffd488; border-radius: 8px; font-size: 12px; }
 .joy-dash-ring.cooldown span { border-color: #555; }
 @keyframes dashPulse {
   0%, 100% { box-shadow: 0 0 14px #4dffd455, inset 0 0 6px #4dffd433; }
   50%      { box-shadow: 0 0 26px #4dffd488, inset 0 0 12px #4dffd466; }
 }
 
-/* HUD restyle for touch / small screens */
-@media (hover: none) and (pointer: coarse), (max-width: 540px) {
-  /* Top bar: tighter, smaller */
-  .hud-top { top: 8px; left: 8px; right: 8px; transform: none; align-items: flex-start; gap: 4px; }
-  .hud-timer { font-size: 30px; letter-spacing: 0.15em; padding: 0; }
-  .hud-wave { font-size: 12px; letter-spacing: 0.14em; padding: 0; }
-  .hud-xpbar {
-    width: 100%; max-width: 100%; height: 12px;
-    margin-top: 2px;
-  }
-  .hud-level { font-size: 12px; letter-spacing: 0.18em; }
+/* Top: timer + wave centered horizontally */
+.hud-top {
+  position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; z-index: 30; pointer-events: none;
+}
+.hud-timer, .hud-wave, .hud-level { text-align: center; }
+.hud-xpbar { width: min(680px, 70vw); max-width: 90vw; }
+.hud-boss-bar { width: min(680px, 70vw); margin-top: 6px; }
+.hud-boss-name { font-family: 'VT323', monospace; color: #ff7a1a; letter-spacing: 0.3em; text-align: center; font-size: 16px; }
+.hud-boss-bar-track { height: 10px; background: #00000099; border: 1px solid #000; box-shadow: inset 0 0 0 1px #ffffff10; }
+.hud-boss-bar-fill { height: 100%; background: linear-gradient(90deg,#ff7a1a,#b51d28); transition: width 200ms; }
 
-  /* Weapon strip moves UP and LEFT, next to joystick area (top-left, under timer) */
-  .weapon-strip {
-    position: fixed !important;
-    bottom: auto !important;
-    top: 100px !important;
-    left: 8px !important;
-    right: auto !important;
-    transform: none !important;
-    flex-direction: column;
-    gap: 4px;
-    background: rgba(0,0,0,0.45);
-    padding: 4px;
-    border: 1px solid #ffffff15;
-    z-index: 30;
-  }
-  .weapon-chip {
-    width: 40px; height: 40px;
-    font-size: 22px;
-  }
-  .weapon-chip .lv {
-    font-size: 9px; padding: 0 3px;
-  }
-
-  /* Active skills bar moves to top-RIGHT (vertical column) so they don't fight the dash gesture */
-  .active-bar {
-    position: fixed !important;
-    bottom: auto !important;
-    top: 100px !important;
-    right: 8px !important;
-    left: auto !important;
-    transform: none !important;
-    flex-direction: column;
-    gap: 6px;
-    z-index: 30;
-  }
-  .skill-btn { width: 50px !important; height: 50px !important; }
-  .skill-icon { font-size: 22px !important; }
-  .skill-key { font-size: 9px !important; padding: 1px 3px; }
-
-  /* HP bar: centered above joysticks (between them) */
-  .hud-bottom {
-    bottom: 8px; left: 50%; right: auto;
-    transform: translateX(-50%);
-    flex-direction: column;
-    align-items: center; gap: 4px;
-    background: transparent;
-    padding: 0;
-    max-width: 90vw;
-  }
-  .hud-hp { width: 220px; max-width: 80vw; }
-  .hud-hp-bar { height: 14px; }
-  .hud-hp-text { font-size: 13px; letter-spacing: 0.1em; }
-  .hud-stats { display: none; } /* hide FPS on phones */
-
-  .help { display: none; } /* hide keyboard hint on touch */
-
-  /* Reload button: top-right, away from skills column */
-  .touch-reload {
-    right: 70px !important;
-    bottom: auto !important;
-    top: 50px !important;
-    width: 46px !important; height: 46px !important;
-    font-size: 22px !important;
-  }
-  .touch-dash { display: none !important; } /* removed: gesture replaces it */
+/* Weapon chips → top-LEFT row (not vertical) so they're next to the droplet area */
+.weapon-strip {
+  position: fixed !important;
+  top: 90px !important; left: 14px !important;
+  right: auto !important; bottom: auto !important;
+  transform: none !important;
+  display: flex !important; flex-direction: row !important;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 260px;
+  z-index: 30;
+}
+.weapon-chip {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid #ffffff15;
+  font-size: 24px;
+  position: relative;
+  border-radius: 4px;
+}
+.weapon-chip .lv {
+  position: absolute; bottom: -2px; right: 0;
+  background: #06040a; color: var(--accent);
+  font-size: 9px; padding: 0 3px;
+  border: 1px solid #ffffff15;
 }
 
-/* iPhone-16 portrait (~402×874) refinements */
+/* Overflow skills (3+) → top-right vertical column */
+.active-bar-overflow {
+  position: fixed !important;
+  top: 90px !important; right: 14px !important;
+  left: auto !important; bottom: auto !important;
+  transform: none !important;
+  display: flex !important; flex-direction: column !important;
+  gap: 6px; z-index: 30;
+}
+
+/* Bottom stack: primary skills (max 2) → MAG text → HP bar */
+.hud-bottom-stack {
+  position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; z-index: 30;
+}
+.active-bar-center {
+  position: static !important;
+  display: flex; flex-direction: row; gap: 8px;
+  bottom: auto; left: auto; right: auto; transform: none;
+}
+.hud-mag-text {
+  font-family: 'VT323', monospace; font-size: 14px;
+  color: var(--ink-dim); letter-spacing: 0.2em;
+  text-shadow: 0 0 4px #000;
+}
+.hud-hp { width: min(420px, 78vw); }
+.hud-hp-bar {
+  position: relative; height: 16px;
+  border: 2px solid #000;
+  border-radius: 6px;
+  box-shadow:
+    inset 0 0 0 1px #ffffff15,
+    inset 0 2px 4px #0008,
+    0 0 0 1px #b51d2855,
+    0 2px 0 #000;
+  background: #1a0608;
+  overflow: hidden;
+}
+.hud-hp-fill {
+  height: 100%;
+  background: linear-gradient(180deg, #ff4060, #b51d28);
+  box-shadow: inset 0 1px 0 #ffffff30;
+  transition: width 200ms;
+}
+.hud-hp-text {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'VT323', monospace; font-size: 12px;
+  color: #fff; text-shadow: 0 1px 0 #000, 0 0 3px #000;
+  letter-spacing: 0.12em;
+}
+
+/* Hide reload button & dash button entirely — auto-reload + swipe-dash gesture handles them */
+.touch-reload, .touch-dash { display: none !important; }
+
+/* Mobile / touch tightening */
+@media (hover: none) and (pointer: coarse), (max-width: 540px) {
+  .hud-top { top: 8px; gap: 2px; }
+  .hud-timer { font-size: 28px; line-height: 1; }
+  .hud-wave { font-size: 11px; letter-spacing: 0.14em; }
+  .hud-xpbar { width: 70vw; height: 10px; }
+  .weapon-strip { top: 80px !important; left: 6px !important; max-width: 200px; }
+  .weapon-chip { width: 38px; height: 38px; font-size: 20px; }
+  .active-bar-overflow { top: 80px !important; right: 6px !important; }
+  .skill-btn { width: 46px !important; height: 46px !important; }
+  .hud-bottom-stack { bottom: 8px; gap: 4px; }
+  .hud-hp { width: 240px; max-width: 70vw; }
+  .hud-hp-bar { height: 14px; }
+  .hud-stats { display: none; }
+  .help { display: none; }
+}
+
 @media (max-width: 430px) and (orientation: portrait) {
-  .weapon-strip { top: 84px !important; }
-  .weapon-chip { width: 36px; height: 36px; font-size: 18px; }
+  .weapon-strip { top: 74px !important; }
+  .weapon-chip { width: 34px; height: 34px; font-size: 17px; }
+  .active-bar-overflow { top: 74px !important; }
+  .hud-timer { font-size: 24px; }
+  .joy { width: 100px !important; height: 100px !important; }
+  .joy-stick { width: 38px !important; height: 38px !important; }
+}
 
 /* ============================================================
    CARD SHOP — 3-reel slot machine animations
@@ -1501,15 +1521,6 @@ canvas#game {
   to   { transform: scale(1);   opacity: 1; }
 }
 
-  .active-bar { top: 84px !important; gap: 4px; }
-  .skill-btn { width: 44px !important; height: 44px !important; }
-  .hud-timer { font-size: 26px; }
-  .joy { width: 100px !important; height: 100px !important; }
-  .joy-stick { width: 40px !important; height: 40px !important; }
-}
-
-}
-
 /* ============================================================
    ACCOUNT WIDGET (top-right on Welcome)
    ============================================================ */
@@ -1617,6 +1628,32 @@ canvas#game {
   padding: 6px 10px;
   background: #00000044; border-left: 3px solid #ffffff15;
   font-family: 'VT323', monospace;
+
+/* Weaponsmith scroll hint — visible from start, fades when user scrolls */
+.forge-panel-scrollable { position: relative; }
+.forge-scroll-hint {
+  position: sticky;
+  bottom: 8px;
+  margin: 6px auto 0;
+  background: linear-gradient(180deg, #1a0f24, #0a0712);
+  border: 1px solid #ffd16699;
+  color: #ffd166;
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  letter-spacing: 0.25em;
+  padding: 4px 14px;
+  width: fit-content;
+  border-radius: 12px;
+  box-shadow: 0 0 18px #ffd16644;
+  pointer-events: none;
+  z-index: 5;
+  animation: scrollHintBlink 1.4s ease-in-out infinite;
+}
+@keyframes scrollHintBlink {
+  0%, 100% { transform: translateY(0); opacity: 0.85; }
+  50%      { transform: translateY(3px); opacity: 1; }
+}
+
 }
 .lb-top { border-left-color: #ffd166; box-shadow: inset 0 0 0 1px #ffd16633; }
 .lb-rank { font-size: 18px; text-align: center; }

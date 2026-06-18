@@ -1701,6 +1701,25 @@ export class Game {
       ctx.translate(pr.x, pr.y);
       ctx.rotate(ang);
 
+      // ENEMY projectiles: bright red pulsing with a glow trail so the player ALWAYS sees them
+      if (pr.friendly === false) {
+        const pulse = 0.7 + 0.3 * Math.sin(this.time * 18);
+        ctx.shadowColor = '#ff3146'; ctx.shadowBlur = 22 * pulse;
+        // trail
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = '#ff3146';
+        ctx.beginPath(); ctx.ellipse(-sz * 2.2, 0, sz * 2.0, sz * 0.6, 0, 0, TAU); ctx.fill();
+        ctx.globalAlpha = 1;
+        // core
+        ctx.fillStyle = '#ffec99';
+        ctx.beginPath(); ctx.arc(0, 0, sz * 1.4 * pulse, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#ff3146';
+        ctx.beginPath(); ctx.arc(0, 0, sz * 1.0 * pulse, 0, TAU); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.restore();
+        return;
+      }
+
       switch (pr._wid) {
         case 'hydropistol': {
           // Cyan water droplet — elongated tear shape
@@ -1823,16 +1842,7 @@ export class Game {
       const a = p.life / p.max;
       if (p.type === 'meteorMark') {
         const t01 = 1 - (p.life / p.max); // 0 → 1
-        const pulse = 0.5 + 0.5 * Math.sin(p.life * 24);
-        // ground warning ring
-        ctx.strokeStyle = p.color;
-        ctx.globalAlpha = 0.4 + 0.5 * pulse;
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p._radius, 0, TAU); ctx.stroke();
-        ctx.globalAlpha = 0.12 * pulse;
-        ctx.fillStyle = p.color;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p._radius, 0, TAU); ctx.fill();
-        ctx.globalAlpha = 1;
+        // (Removed the ground warning ring per player request — meteors fall visibly enough now)
         // shadow on ground that grows
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         const shR = 10 + t01 * (p._radius * 0.35);

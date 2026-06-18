@@ -162,7 +162,6 @@ export default function MobileControls({ onUpdate, onReload, onDashDir, dashCD, 
       <div ref={aimRef} className="joy joy-r" data-testid="joy-aim">
         <div className="joy-stick" style={{ transform: `translate(${aimVec.x * 40}px, ${aimVec.y * 40}px)` }} />
       </div>
-      <button className="touch-btn touch-reload" onClick={onReload} data-testid="touch-reload">↻</button>
     </>
   );
 }
