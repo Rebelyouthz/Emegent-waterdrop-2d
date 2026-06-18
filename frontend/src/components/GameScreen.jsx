@@ -152,7 +152,7 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
     const g = new Game(canvas, opts);
     gameRef.current = g;
     if (typeof window !== 'undefined') window.__game = g;
-    return () => { g.destroy(); Audio.stopMusic(); };
+    return () => { g.destroy(); /* keep music playing across views */ };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -174,14 +174,14 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
     if (gameRef.current) gameRef.current.setMobileInput(joyMove, joyAim, firing);
   }, []);
   const onMobileReload = () => gameRef.current && gameRef.current.tryReload();
-  const onMobileDash = () => gameRef.current && gameRef.current.tryDash();
+  const onMobileDashDir = (nx, ny) => gameRef.current && gameRef.current.tryDash(nx, ny);
   const onActiveSkill = (i) => gameRef.current && gameRef.current.tryActiveSkill(i);
 
   return (
     <div className="game-stage">
       <canvas ref={canvasRef} id="game" data-testid="game-canvas" />
       <HUD snap={snap} onActiveSkill={onActiveSkill} />
-      <MobileControls onUpdate={onMobileUpdate} onReload={onMobileReload} onDash={onMobileDash} dashCD={snap ? snap.dashCD : 0} dashReady={snap ? snap.dashReady : false} />
+      <MobileControls onUpdate={onMobileUpdate} onReload={onMobileReload} onDashDir={onMobileDashDir} dashCD={snap ? snap.dashCD : 0} dashReady={snap ? snap.dashReady : false} />
       {levelUpChoices && <LevelUpModal choices={levelUpChoices} onPick={pickCard} playerLevel={snap ? snap.level : 1} />}
       {paused && !gameOverResult && (
         <div className="pause-overlay">

@@ -1250,6 +1250,264 @@ canvas#game {
   .card-icon { font-size: 32px !important; }
   .card-name { font-size: 12px !important; }
   .card-desc { font-size: 12px !important; }
+
+/* ============================================================
+   MOBILE HUD REDESIGN — clean placement for iPhone 16 + tablets
+   ============================================================ */
+
+/* Dash gesture ring around left joystick (replaces dash button) */
+.joy-dash-ring {
+  position: absolute; inset: -6px;
+  border-radius: 50%;
+  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  letter-spacing: 0;
+  z-index: 1;
+}
+.joy-dash-ring.ready {
+  border: 2px solid #4dffd4;
+  box-shadow: 0 0 18px #4dffd488, inset 0 0 8px #4dffd444;
+  color: #4dffd4;
+  animation: dashPulse 1.4s ease-in-out infinite;
+}
+.joy-dash-ring.cooldown {
+  border: 2px dashed #777;
+  color: #888;
+  opacity: 0.65;
+}
+.joy-dash-ring span {
+  position: absolute;
+  top: -22px;
+  background: #06040a;
+  padding: 1px 8px;
+  border: 1px solid #4dffd488;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.joy-dash-ring.cooldown span { border-color: #555; }
+@keyframes dashPulse {
+  0%, 100% { box-shadow: 0 0 14px #4dffd455, inset 0 0 6px #4dffd433; }
+  50%      { box-shadow: 0 0 26px #4dffd488, inset 0 0 12px #4dffd466; }
+}
+
+/* HUD restyle for touch / small screens */
+@media (hover: none) and (pointer: coarse), (max-width: 540px) {
+  /* Top bar: tighter, smaller */
+  .hud-top { top: 8px; left: 8px; right: 8px; transform: none; align-items: flex-start; gap: 4px; }
+  .hud-timer { font-size: 30px; letter-spacing: 0.15em; padding: 0; }
+  .hud-wave { font-size: 12px; letter-spacing: 0.14em; padding: 0; }
+  .hud-xpbar {
+    width: 100%; max-width: 100%; height: 12px;
+    margin-top: 2px;
+  }
+  .hud-level { font-size: 12px; letter-spacing: 0.18em; }
+
+  /* Weapon strip moves UP and LEFT, next to joystick area (top-left, under timer) */
+  .weapon-strip {
+    position: fixed !important;
+    bottom: auto !important;
+    top: 100px !important;
+    left: 8px !important;
+    right: auto !important;
+    transform: none !important;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(0,0,0,0.45);
+    padding: 4px;
+    border: 1px solid #ffffff15;
+    z-index: 30;
+  }
+  .weapon-chip {
+    width: 40px; height: 40px;
+    font-size: 22px;
+  }
+  .weapon-chip .lv {
+    font-size: 9px; padding: 0 3px;
+  }
+
+  /* Active skills bar moves to top-RIGHT (vertical column) so they don't fight the dash gesture */
+  .active-bar {
+    position: fixed !important;
+    bottom: auto !important;
+    top: 100px !important;
+    right: 8px !important;
+    left: auto !important;
+    transform: none !important;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 30;
+  }
+  .skill-btn { width: 50px !important; height: 50px !important; }
+  .skill-icon { font-size: 22px !important; }
+  .skill-key { font-size: 9px !important; padding: 1px 3px; }
+
+  /* HP bar: centered above joysticks (between them) */
+  .hud-bottom {
+    bottom: 8px; left: 50%; right: auto;
+    transform: translateX(-50%);
+    flex-direction: column;
+    align-items: center; gap: 4px;
+    background: transparent;
+    padding: 0;
+    max-width: 90vw;
+  }
+  .hud-hp { width: 220px; max-width: 80vw; }
+  .hud-hp-bar { height: 14px; }
+  .hud-hp-text { font-size: 13px; letter-spacing: 0.1em; }
+  .hud-stats { display: none; } /* hide FPS on phones */
+
+  .help { display: none; } /* hide keyboard hint on touch */
+
+  /* Reload button: top-right, away from skills column */
+  .touch-reload {
+    right: 70px !important;
+    bottom: auto !important;
+    top: 50px !important;
+    width: 46px !important; height: 46px !important;
+    font-size: 22px !important;
+  }
+  .touch-dash { display: none !important; } /* removed: gesture replaces it */
+}
+
+/* iPhone-16 portrait (~402×874) refinements */
+@media (max-width: 430px) and (orientation: portrait) {
+  .weapon-strip { top: 84px !important; }
+  .weapon-chip { width: 36px; height: 36px; font-size: 18px; }
+
+/* ============================================================
+   CARD SHOP — 3-reel slot machine animations
+   ============================================================ */
+.cs-modal { padding-bottom: 18px; }
+.slot-frame {
+  position: relative;
+  background: linear-gradient(180deg, #1a0f24 0%, #08050d 100%);
+  border: 3px solid #000;
+  box-shadow:
+    inset 0 0 0 2px #ffd16699,
+    inset 0 12px 24px #0008,
+    0 8px 0 #000,
+    0 0 24px #ffd16633;
+  padding: 16px 14px 14px;
+  margin: 0 auto;
+  max-width: 460px;
+  transition: box-shadow 220ms, border-color 220ms;
+}
+.slot-frame.cs-shake { animation: csShake 90ms infinite; }
+@keyframes csShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1px) translateY(1px); }
+  50% { transform: translateX(1px); }
+  75% { transform: translateX(0) translateY(-1px); }
+}
+.slot-frame.cs-jackpot {
+  border-color: #ffd166;
+  box-shadow:
+    inset 0 0 0 2px #ffd166,
+    inset 0 12px 24px #0008,
+    0 8px 0 #000,
+    0 0 60px #ffd16699,
+    0 0 120px #ff7a1a44;
+  animation: csJackpot 600ms ease-out;
+}
+@keyframes csJackpot {
+  0%   { transform: scale(0.95); }
+  40%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.slot-window {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(80px, 1fr));
+  gap: 8px;
+  background: #06040a;
+  border: 2px solid #000;
+  padding: 8px;
+  box-shadow: inset 0 0 0 1px #ffffff10;
+  margin: 0 auto 12px;
+  width: 100%;
+  max-width: 420px;
+}
+.slot-cell {
+  background: linear-gradient(180deg, #141826 0%, #06080f 100%);
+  border: 1px solid #ffffff15;
+  min-height: 100px;
+  height: 100px;
+  width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.slot-cell.spinning .slot-icon {
+  animation: csReel 70ms infinite linear;
+  filter: blur(1.5px);
+}
+.slot-cell.stopped .slot-icon {
+  animation: csStop 280ms cubic-bezier(.34, 1.56, .64, 1);
+}
+.slot-cell.cs-glow {
+  box-shadow: 0 0 18px currentColor, inset 0 0 14px #00000080;
+}
+.slot-cell.cs-glow.rar-common    { color: #c7c7c7; box-shadow: inset 0 0 0 2px #c7c7c7, inset 0 0 14px #00000080, 0 0 14px #c7c7c777; }
+.slot-cell.cs-glow.rar-magic     { color: #5dd9ff; box-shadow: inset 0 0 0 2px #5dd9ff, inset 0 0 14px #00000080, 0 0 18px #5dd9ffaa; }
+.slot-cell.cs-glow.rar-rare      { color: #b362ff; box-shadow: inset 0 0 0 2px #b362ff, inset 0 0 14px #00000080, 0 0 22px #b362ffaa; }
+.slot-cell.cs-glow.rar-epic      { color: #ff7a1a; box-shadow: inset 0 0 0 2px #ff7a1a, inset 0 0 14px #00000080, 0 0 26px #ff7a1acc; }
+.slot-cell.cs-glow.rar-legendary { color: #ffd166; box-shadow: inset 0 0 0 2px #ffd166, inset 0 0 18px #00000080, 0 0 32px #ffd166dd; animation: legPulse 700ms ease-in-out infinite alternate; }
+@keyframes legPulse {
+  from { box-shadow: inset 0 0 0 2px #ffd166, inset 0 0 18px #00000080, 0 0 26px #ffd166aa; }
+  to   { box-shadow: inset 0 0 0 2px #fff,    inset 0 0 22px #00000080, 0 0 44px #ffd166ff; }
+}
+.slot-icon {
+  font-size: 54px;
+  text-shadow: 0 2px 8px #000a;
+}
+@keyframes csReel {
+  0%   { transform: translateY(-30px); opacity: 0.4; }
+  50%  { transform: translateY(0);     opacity: 1; }
+  100% { transform: translateY(30px);  opacity: 0.4; }
+}
+@keyframes csStop {
+  0%   { transform: translateY(-26px) scale(0.8); opacity: 0; }
+  60%  { transform: translateY(4px)   scale(1.18); opacity: 1; }
+  100% { transform: translateY(0)     scale(1); }
+}
+.cs-status, .cs-result {
+  margin-top: 4px;
+  padding: 8px;
+  background: #00000055;
+  border-left: 3px solid var(--accent-2);
+  text-align: center;
+}
+.cs-status {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  letter-spacing: 0.25em;
+  color: var(--ink-dim);
+}
+.cs-suspense {
+  color: #ffd166;
+  animation: csSuspense 0.4s ease-in-out infinite alternate;
+}
+@keyframes csSuspense {
+  from { opacity: 0.5; transform: scale(1); }
+  to   { opacity: 1;   transform: scale(1.05); }
+}
+.cs-result {
+  border-left-color: #ffd166;
+  animation: csResultIn 500ms cubic-bezier(.34, 1.56, .64, 1);
+}
+@keyframes csResultIn {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+  .active-bar { top: 84px !important; gap: 4px; }
+  .skill-btn { width: 44px !important; height: 44px !important; }
+  .hud-timer { font-size: 26px; }
+  .joy { width: 100px !important; height: 100px !important; }
+  .joy-stick { width: 40px !important; height: 40px !important; }
+}
+
 }
 
 /* ============================================================

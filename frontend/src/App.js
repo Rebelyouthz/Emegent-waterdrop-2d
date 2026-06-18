@@ -9,6 +9,7 @@ import PaywallModal from './components/PaywallModal';
 import { loadSave, saveLocal, syncSave, postRunResult, DEFAULT_SAVE, getPlayerId, addAccountXp } from './store';
 import { rollMissionRewards, MISSION_DEFS, CHALLENGES, ACHIEVEMENTS } from './game/data_ext2';
 import { AuthProvider, StripeReturnHandler, AuthCallback, useAuth } from './auth';
+import { Audio } from './game/audio';
 
 function AppInner() {
   const [view, setView] = useState(null);
@@ -19,6 +20,20 @@ function AppInner() {
   const [runKey, setRunKey] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
   const { paid, loading: authLoading, user } = useAuth();
+
+  // Start menu music on first user interaction (browsers block autoplay).
+  // Keeps playing across views; only the GameScreen will swap music on game start.
+  useEffect(() => {
+    const start = () => { try { Audio.startMusic(); } catch (e) {} };
+    document.addEventListener('pointerdown', start, { once: true });
+    document.addEventListener('keydown', start, { once: true });
+    document.addEventListener('touchstart', start, { once: true });
+    return () => {
+      document.removeEventListener('pointerdown', start);
+      document.removeEventListener('keydown', start);
+      document.removeEventListener('touchstart', start);
+    };
+  }, []);
 
   useEffect(() => {
     getPlayerId();

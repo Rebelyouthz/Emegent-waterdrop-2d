@@ -111,6 +111,78 @@ export const WEAPON_PARTS = {
   ], stat: 'rarity' },
 };
 
+// ---------- PER-WEAPON PART LABEL OVERRIDES ----------
+// Each weapon may override what each "slot" is called + the tier names so the
+// upgrades feel native to that weapon. Mechanics stay the same; only labels change.
+export const WEAPON_PART_OVERRIDES = {
+  meteor: {
+    magazine: { name: 'Meteor Volume',  icon: '☄️', tierNames: ['Solo', 'Pair', 'Cluster', 'Swarm'] },
+    sight:    { name: 'Targeting',      icon: '🎯', tierNames: ['Manual', 'Tracking', 'Predictive', 'Eye of Horus'] },
+    barrel:   { name: 'Impact',         icon: '💥', tierNames: ['Light', 'Heavy', 'Devastating', 'Annunaki'] },
+    bullets:  { name: 'Meteor Type',    icon: '🔥', tierNames: ['Stone', 'Burning', 'Splitting', 'Voidshard'] },
+  },
+  voidBeam: {
+    magazine: { name: 'Power Cell',     icon: '🔋', tierNames: ['Standard', 'Extended', 'Reactor', 'Cosmic'] },
+    sight:    { name: 'Lens',           icon: '🔭', tierNames: ['Plain', 'Coated', 'Prismatic', 'Eye of Horus'] },
+    barrel:   { name: 'Aperture',       icon: '🌀', tierNames: ['Narrow', 'Standard', 'Wide', 'Annunaki'] },
+    bullets:  { name: 'Beam Type',      icon: '✨', tierNames: ['Pure', 'Pierce', 'Burning', 'Voidlash'] },
+  },
+  emberOrbs: {
+    magazine: { name: 'Orb Count',      icon: '🟠', tierNames: ['Two', 'Three', 'Four', 'Six'] },
+    sight:    { name: 'Orbit Pattern',  icon: '🎯', tierNames: ['Tight', 'Wide', 'Elliptical', 'Eye of Horus'] },
+    barrel:   { name: 'Ember Power',    icon: '🔥', tierNames: ['Spark', 'Flame', 'Inferno', 'Annunaki'] },
+    bullets:  { name: 'Burn',           icon: '🔥', tierNames: ['None', 'Brief', 'Lasting', 'Voidburn'] },
+  },
+  shotgun: {
+    magazine: { name: 'Shell Box',      icon: '📦', tierNames: ['Standard', 'Extended', 'Drum', 'Cosmic'] },
+    sight:    { name: 'Choke',          icon: '🎯', tierNames: ['Open', 'Modified', 'Full', 'Eye of Horus'] },
+    barrel:   { name: 'Barrel Length',  icon: '🔫', tierNames: ['Sawed', 'Standard', 'Long', 'Annunaki'] },
+    bullets:  { name: 'Shell Type',     icon: '🟡', tierNames: ['Buckshot', 'Slugs', 'Incendiary', 'Voidshell'] },
+  },
+  tidal: {
+    magazine: { name: 'Shell Box',      icon: '📦', tierNames: ['Standard', 'Extended', 'Drum', 'Cosmic'] },
+    sight:    { name: 'Choke',          icon: '🎯', tierNames: ['Open', 'Modified', 'Tight', 'Eye of Horus'] },
+    barrel:   { name: 'Wave Length',    icon: '🌊', tierNames: ['Ripple', 'Wave', 'Tidal', 'Tsunami'] },
+    bullets:  { name: 'Shell Type',     icon: '💧', tierNames: ['Buckshot', 'Slugs', 'Bursting', 'Voidshell'] },
+  },
+  iceLance: {
+    magazine: { name: 'Shard Stack',    icon: '🧊', tierNames: ['Single', 'Pair', 'Triple', 'Hailstorm'] },
+    sight:    { name: 'Lock',           icon: '🎯', tierNames: ['Manual', 'Tracking', 'Auto-Lock', 'Eye of Horus'] },
+    barrel:   { name: 'Spear Length',   icon: '🔱', tierNames: ['Short', 'Standard', 'Long', 'Annunaki'] },
+    bullets:  { name: 'Frost Type',     icon: '❄️', tierNames: ['Chill', 'Pierce', 'Freezing', 'Voidfrost'] },
+  },
+  plasmaLance: {
+    magazine: { name: 'Plasma Cell',    icon: '🔋', tierNames: ['Standard', 'Extended', 'Reactor', 'Cosmic'] },
+    sight:    { name: 'Optics',         icon: '🎯', tierNames: ['Plain', 'Holographic', 'Smart', 'Eye of Horus'] },
+    barrel:   { name: 'Coil',           icon: '⚡', tierNames: ['Single', 'Twin', 'Triple', 'Annunaki'] },
+    bullets:  { name: 'Charge',         icon: '✨', tierNames: ['Standard', 'Pierce', 'Overcharged', 'Voidcharge'] },
+  },
+  runicRifle: {
+    magazine: { name: 'Rune Quiver',    icon: '📜', tierNames: ['Standard', 'Extended', 'Bound', 'Cosmic Tome'] },
+    sight:    { name: 'Rune Sight',     icon: '👁', tierNames: ['Plain', 'Etched', 'Inscribed', 'Eye of Horus'] },
+    barrel:   { name: 'Shaft',          icon: '🪵', tierNames: ['Oak', 'Bone', 'Ash', 'Annunaki'] },
+    bullets:  { name: 'Rune Type',      icon: '🔮', tierNames: ['Common', 'Pierce', 'Burning', 'Voidrune'] },
+  },
+  twinSMG: {
+    magazine: { name: 'Twin Mag',       icon: '📦', tierNames: ['Standard', 'Extended', 'Drum', 'Cosmic'] },
+    sight:    { name: 'Sight',          icon: '🎯', tierNames: ['Iron', 'Red Dot', 'Tactical', 'Eye of Horus'] },
+    barrel:   { name: 'Twin Barrel',    icon: '🔫', tierNames: ['Short', 'Standard', 'Long', 'Annunaki'] },
+    bullets:  { name: 'Bullets',        icon: '🔥', tierNames: ['FMJ', 'AP', 'Incendiary', 'Voidlash'] },
+  },
+  runeBolts: {
+    magazine: { name: 'Bolt Quiver',    icon: '🏹', tierNames: ['Standard', 'Extended', 'Bound', 'Cosmic'] },
+    sight:    { name: 'Rune Sight',     icon: '👁', tierNames: ['Plain', 'Etched', 'Bound', 'Eye of Horus'] },
+    barrel:   { name: 'Bow Tension',    icon: '🪶', tierNames: ['Standard', 'Heavy', 'Master', 'Annunaki'] },
+    bullets:  { name: 'Bolt Type',      icon: '🔮', tierNames: ['Wood', 'Pierce', 'Burning', 'Voidrune'] },
+  },
+  scythe: {
+    magazine: { name: 'Swing Range',    icon: '📏', tierNames: ['Short', 'Extended', 'Wide', 'Cosmic'] },
+    sight:    { name: 'Focus',          icon: '🎯', tierNames: ['Iron', 'Sharp', 'Razor', 'Eye of Horus'] },
+    barrel:   { name: 'Blade',          icon: '🌑', tierNames: ['Standard', 'Heavy', 'Long', 'Annunaki'] },
+    bullets:  { name: 'Edge Type',      icon: '🩸', tierNames: ['Plain', 'Bleeding', 'Burning', 'Voidedge'] },
+  },
+};
+
 // ---------- EQUIPMENT (chest drops) ----------
 export const EQUIP_SLOTS = ['head', 'chest', 'boots', 'trinket'];
 export const EQUIP_BASE = {

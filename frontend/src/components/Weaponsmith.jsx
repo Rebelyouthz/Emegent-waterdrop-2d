@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { WEAPONS } from '../game/data';
-import { WEAPON_PARTS } from '../game/data_ext';
+import { WEAPON_PARTS, WEAPON_PART_OVERRIDES } from '../game/data_ext';
 
 export default function Weaponsmith({ save, setSave, onClose }) {
   const [wid, setWid] = useState('hydropistol');
   const w = WEAPONS[wid];
   const parts = save.weaponParts[wid] || {};
+  const overrides = WEAPON_PART_OVERRIDES[wid] || {};
 
   const buyTier = (partKey, tierIdx) => {
     const tier = WEAPON_PARTS[partKey].tiers[tierIdx];
@@ -18,6 +19,19 @@ export default function Weaponsmith({ save, setSave, onClose }) {
       weaponParts: { ...save.weaponParts, [wid]: { ...parts, [partKey]: tierIdx } },
     };
     setSave(ns);
+  };
+
+  // Get the display label for a slot using per-weapon override if available
+  const labelFor = (pk, defaultName, defaultIcon) => {
+    const o = overrides[pk];
+    if (o) return { name: o.name || defaultName, icon: o.icon || defaultIcon };
+    return { name: defaultName, icon: defaultIcon };
+  };
+  // Get the display tier name for a slot+tier
+  const tierNameFor = (pk, tierIdx, defaultName) => {
+    const o = overrides[pk];
+    if (o && o.tierNames && o.tierNames[tierIdx]) return o.tierNames[tierIdx];
+    return defaultName;
   };
 
   return (
@@ -41,13 +55,16 @@ export default function Weaponsmith({ save, setSave, onClose }) {
         <div className="forge-parts">
           {Object.entries(WEAPON_PARTS).map(([pk, part]) => {
             const cur = parts[pk] || 0;
+            const lbl = labelFor(pk, part.name, part.icon);
+            const curTierName = tierNameFor(pk, cur, part.tiers[cur].name);
             return (
               <div className="forge-part" key={pk} data-testid={`part-${pk}`}>
-                <div className="forge-part-h">{part.icon} {part.name} — <span style={{ color: 'var(--accent-2)' }}>{part.tiers[cur].name}</span></div>
+                <div className="forge-part-h">{lbl.icon} {lbl.name} — <span style={{ color: 'var(--accent-2)' }}>{curTierName}</span></div>
                 <div className="forge-tiers">
                   {part.tiers.map((t, i) => {
                     const owned = i <= cur;
                     const canBuy = i === cur + 1 && save.gold >= t.cost;
+                    const tName = tierNameFor(pk, i, t.name);
                     return (
                       <button
                         key={i}
@@ -57,7 +74,7 @@ export default function Weaponsmith({ save, setSave, onClose }) {
                         data-testid={`tier-${pk}-${i}`}
                         style={{ fontSize: 11, padding: '6px 8px' }}
                       >
-                        <div>{t.name}</div>
+                        <div>{tName}</div>
                         {!owned && <div style={{ fontSize: 10, color: 'var(--accent-2)' }}>★ {t.cost}</div>}
                         {owned && <div style={{ fontSize: 10, color: 'var(--rune)' }}>✓</div>}
                       </button>

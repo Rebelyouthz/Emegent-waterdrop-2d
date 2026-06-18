@@ -182,8 +182,8 @@ export const ENEMIES = {
   },
   // Bosses
   bossOcular: {
-    id: 'bossOcular', name: 'Eye of Horus', size: 60, hp: 1600, dmg: 28, speed: 50, color: '#ffd166',
-    xp: 200, gold: 200, ai: 'boss', boss: true, shootCD: 1.0,
+    id: 'bossOcular', name: 'Eye of Horus', size: 90, hp: 1200, dmg: 18, speed: 55, color: '#ffd166',
+    xp: 200, gold: 220, ai: 'boss', boss: true, shootCD: 1.8,
   },
   bossAida: {
     id: 'bossAida', name: 'A.I.D.A.', size: 80, hp: 6000, dmg: 40, speed: 60, color: '#b362ff',

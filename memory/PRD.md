@@ -1,6 +1,87 @@
 # Waterdrop Survivor — PRD
 
+## Iter 8 (2026-06-18) — Mobile UX overhaul + Slot machine + Eye of Horus + Per-weapon parts + Custom music
+
+### What was built (high-impact items from user feature list, ~95 credits target)
+
+**1. Swipe-to-dash gesture (removes dash button overlay bug)**
+- The dash button no longer covers weapons/skills on touch devices — REMOVED.
+- New gesture: fast flick on the LEFT joystick (>40px in <180ms) triggers a dash in the swipe direction.
+- A glowing dash-ready ring appears around the left joystick; shows cooldown in seconds when on CD.
+- `engine.tryDash(dirX, dirY)` accepts explicit direction; keyboard SPACE still uses movement/aim fallback.
+
+**2. Mobile HUD redesign for iPhone 16 / phones (≤540px or coarse pointer)**
+- Top bar: timer + wave + XP bar tightened, no overlap.
+- **Weapon strip → top-left vertical column** (5 chips, 40×40).
+- **Active skills → top-right vertical column** (5 buttons, 50×50, no fight with dash gesture area).
+- **HP bar → bottom center** (between joysticks) with mag/no-hit readout.
+- FPS counter + keyboard hint hidden on touch.
+- Reload button → top-right (away from skills column).
+
+**3. Eye of Horus — actually visible + winnable**
+- Stylized **animated EYE rendering**: golden pulsing ring + white sclera + iris that LOOKS AT THE PLAYER + pupil + specular highlight.
+- Bigger (size 60 → 90), more HP (1600 → 1200 with no time-scaling penalty), less damage (28 → 18), slower shoot rate (1.0s → 1.8s).
+- **Off-screen boss arrow** — when the boss is outside the camera, a glowing pulsing golden "BOSS" arrow points toward it along the screen edge so the player always knows where it is.
+
+**4. Custom uploaded music in menus + game**
+- The user-uploaded `Waterdrop survivor .mp3` (6.7MB) is now served from `/public/menu-music.mp3` and loaded on first user interaction.
+- Music starts on first pointer/key/touch (browsers block autoplay otherwise).
+- Music continues across welcome → camp → game without restarting.
+
+**5. Per-weapon themed parts (Weaponsmith)**
+- `WEAPON_PART_OVERRIDES` lets each weapon rename its part slots & tier names thematically.
+- Examples:
+  - **Meteor Rain**: Meteor Volume (Solo/Pair/Cluster/Swarm), Targeting, Impact, Meteor Type (Stone/Burning/Splitting/Voidshard)
+  - **Void Beam**: Power Cell, Lens, Aperture, Beam Type
+  - **Ember Orbs**: Orb Count (Two/Three/Four/Six), Orbit Pattern, Ember Power, Burn
+  - **Shotgun/Tidal**: Shell Box, Choke, Barrel/Wave Length, Shell Type (Buckshot/Slugs/Incendiary/Voidshell)
+  - **Ice Lance**: Shard Stack, Lock, Spear Length, Frost Type
+  - **Plasma Lance, Runic Rifle, Twin SMG, Rune Bolts, Scythe** — all themed.
+
+**6. Card Shop — slot machine dopamine**
+- THREE physical reels instead of one card flipping.
+- Each reel spins independently with staggered stop times (900ms, 1450ms, 2100ms) — classic slot-machine suspense.
+- Reel blur during spin, bounce-in pop animation when each stops, sound feedback per stop.
+- Rarity color glow flashes around result cells (legendary = golden pulsing).
+- Jackpot scale-bounce on legendary pull.
+- Suspense text "SPINNING…" with pulse.
+
+**7. Better per-weapon projectile visuals (with level scaling)**
+- Each weapon's projectile now renders with its own custom shape and glow:
+  - **Hydropistol**: cyan water droplet (elongated tear)
+  - **Auto Bolts / Runic Rifle**: bright glowing tracer rod
+  - **Twin SMG**: yellow bullet rectangle
+  - **Tidal/Shotgun**: golden pellet
+  - **Ice Lance**: sharp ice diamond with cyan stroke
+  - **Plasma Lance**: plasma orb with crackling lightning
+  - **Rune Bolts**: purple kite-shaped magic dart
+  - **Default**: glow ball + trail
+- Each visual scales by 8% per weapon level → upgrades feel visually meaningful.
+
+**8. Frame-loop hardening (carried forward from iter 6)**
+- `update`/`render`/`onTick` wrapped in try/catch. requestAnimationFrame ALWAYS requeues. No more silent freezes.
+
+### Skipped (user explicitly requested skip): Maps with missions, More achievements/milestones
+### Deferred to future session
+- More new weapons & active skills
+- Per-level projectile evolution (currently scales but no new shape on milestones)
+- New level-up cards
+- More missions content
+
+### Backlog (P3, cheap when budget allows)
+- Apple Sign-In (still requires $99/yr Apple Dev account)
+- React hook deps lint warnings (cosmetic)
+- Spike Plates visual trap entity
+
+### Zip download (latest)
+`https://drop-warrior.preview.emergentagent.com/waterdrop-survivor.zip` — now ~7 MB (includes custom mp3).
+
 ## Iter 7 (2026-06-16) — Google login + Stripe paywall + Leaderboard
+[preserved]
+
+## Iter 6 (2026-06-16) — Level-up loop fix
+[preserved]
+
 
 ### What was built
 **Goal**: Make the game monetizable as a one-time $1.99 unlock with a global leaderboard, gated by Google sign-in.

@@ -591,23 +591,29 @@ export class Game {
     p.orbitAngle += dt * 2.0;
   }
 
-  tryDash() {
+  tryDash(dirX, dirY) {
     const p = this.player; const s = this.run.stats;
     if (!s.dash) return;
     if (p.dashCD > 0 || p.dashing > 0) return;
-    const dx = p.aimX, dy = p.aimY;
-    // dash in movement direction if WASD pressed; else aim
-    const k = this.input.keys;
-    let mvx = 0, mvy = 0;
-    if (k['w'] || k['arrowup']) mvy -= 1;
-    if (k['s'] || k['arrowdown']) mvy += 1;
-    if (k['a'] || k['arrowleft']) mvx -= 1;
-    if (k['d'] || k['arrowright']) mvx += 1;
-    if (this.input.joyMove && (this.input.joyMove.x || this.input.joyMove.y)) {
-      mvx = this.input.joyMove.x; mvy = this.input.joyMove.y;
+    let vx, vy;
+    if (dirX !== undefined && dirY !== undefined && (dirX || dirY)) {
+      // Explicit direction (e.g., from swipe gesture)
+      vx = dirX; vy = dirY;
+    } else {
+      // Fall back to movement keys / aim
+      const dx = p.aimX, dy = p.aimY;
+      const k = this.input.keys;
+      let mvx = 0, mvy = 0;
+      if (k['w'] || k['arrowup']) mvy -= 1;
+      if (k['s'] || k['arrowdown']) mvy += 1;
+      if (k['a'] || k['arrowleft']) mvx -= 1;
+      if (k['d'] || k['arrowright']) mvx += 1;
+      if (this.input.joyMove && (this.input.joyMove.x || this.input.joyMove.y)) {
+        mvx = this.input.joyMove.x; mvy = this.input.joyMove.y;
+      }
+      vx = mvx; vy = mvy;
+      if (!vx && !vy) { vx = dx; vy = dy; }
     }
-    let vx = mvx, vy = mvy;
-    if (!vx && !vy) { vx = dx; vy = dy; }
     const l = Math.hypot(vx, vy) || 1;
     const speed = 1100;
     p.dashVX = (vx / l) * speed;
@@ -617,6 +623,7 @@ export class Game {
     p.iframes = 0.22;
     this.cam.shake = Math.max(this.cam.shake, 2);
     for (let i = 0; i < 12; i++) this.spawnSpark(p.x, p.y, '#4dffd4');
+    Audio.dash();
   }
 
   tryActiveSkill(idx) {
@@ -685,6 +692,8 @@ export class Game {
       const w = WEAPONS[wid];
       const lvl = this.run.weaponLvls[wid] || 0;
       const stats = this.computeWeaponStats(w, lvl);
+      stats._wid = wid;
+      stats._wlvl = lvl;
       switch (w.behaviour) {
         case 'projectile':
           stats._behaviour = w.behaviour;
@@ -907,6 +916,9 @@ export class Game {
     pr.knockback = s.knockback || 0;
     pr.explode = s.explode || 0;
     pr._weaponBehaviour = s._behaviour || 'projectile';
+    pr._wid = s._wid || null;          // weapon id for custom render
+    pr._wlvl = s._wlvl || 0;           // weapon level for visual scaling
+    pr._ang = ang;                     // facing for sprite orientation
     pr.hit.clear();
     pr.friendly = friendly;
   }
@@ -1680,15 +1692,121 @@ export class Game {
     // Player
     this.drawPlayer();
 
-    // Projectiles
+    // Projectiles — per-weapon custom rendering with level-based scaling
     this.projs.forEach(pr => {
-      ctx.fillStyle = pr.color;
-      ctx.shadowColor = pr.color; ctx.shadowBlur = 12;
-      ctx.beginPath(); ctx.arc(pr.x, pr.y, pr.size, 0, TAU); ctx.fill();
-      // trail
-      ctx.globalAlpha = 0.4;
-      ctx.beginPath(); ctx.arc(pr.x - pr.vx * 0.02, pr.y - pr.vy * 0.02, pr.size * 0.7, 0, TAU); ctx.fill();
-      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+      const sz = pr.size || 6;
+      const lvlBoost = 1 + (pr._wlvl || 0) * 0.08;
+      const ang = pr._ang != null ? pr._ang : Math.atan2(pr.vy, pr.vx);
+      ctx.save();
+      ctx.translate(pr.x, pr.y);
+      ctx.rotate(ang);
+
+      switch (pr._wid) {
+        case 'hydropistol': {
+          // Cyan water droplet — elongated tear shape
+          const grad = ctx.createRadialGradient(-sz, 0, 1, 0, 0, sz * 1.6);
+          grad.addColorStop(0, '#fff'); grad.addColorStop(0.5, '#5fd6ff'); grad.addColorStop(1, '#1a5d99');
+          ctx.fillStyle = grad;
+          ctx.shadowColor = '#5fd6ff'; ctx.shadowBlur = 14;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, sz * 1.6 * lvlBoost, sz * 0.7 * lvlBoost, 0, 0, TAU);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          // Trail
+          ctx.globalAlpha = 0.5; ctx.fillStyle = '#5fd6ff';
+          ctx.beginPath(); ctx.ellipse(-sz * 2.2, 0, sz * 1.4, sz * 0.4, 0, 0, TAU); ctx.fill();
+          ctx.globalAlpha = 1;
+          break;
+        }
+        case 'shotgun': case 'tidal': {
+          // Slug pellet — golden bullet
+          ctx.fillStyle = '#ffd166';
+          ctx.shadowColor = '#ff7a1a'; ctx.shadowBlur = 12;
+          ctx.beginPath(); ctx.arc(0, 0, sz * lvlBoost, 0, TAU); ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#fff8d0';
+          ctx.beginPath(); ctx.arc(-sz * 0.3, -sz * 0.3, sz * 0.3, 0, TAU); ctx.fill();
+          break;
+        }
+        case 'autoBolts': case 'runicRifle': {
+          // Tracer round — bright cyan rod
+          const len = sz * 3.6 * lvlBoost;
+          const w = sz * 0.5;
+          ctx.shadowColor = pr.color; ctx.shadowBlur = 14;
+          ctx.fillStyle = pr.color;
+          ctx.fillRect(-len * 0.5, -w * 0.5, len, w);
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(-len * 0.5, -w * 0.2, len, w * 0.4);
+          ctx.shadowBlur = 0;
+          break;
+        }
+        case 'twinSMG': {
+          // Yellow small bullet with motion lines
+          ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 10;
+          ctx.fillStyle = '#ffd166';
+          ctx.fillRect(-sz * 0.8, -sz * 0.4, sz * 1.6, sz * 0.8);
+          ctx.shadowBlur = 0;
+          break;
+        }
+        case 'iceLance': {
+          // Ice shard — sharp diamond
+          ctx.shadowColor = '#bff0ff'; ctx.shadowBlur = 14;
+          ctx.fillStyle = '#e7f9ff';
+          ctx.beginPath();
+          ctx.moveTo(sz * 2.0 * lvlBoost, 0);
+          ctx.lineTo(0, sz * 0.7 * lvlBoost);
+          ctx.lineTo(-sz * 1.4 * lvlBoost, 0);
+          ctx.lineTo(0, -sz * 0.7 * lvlBoost);
+          ctx.closePath(); ctx.fill();
+          ctx.strokeStyle = '#5fd6ff'; ctx.lineWidth = 1.4; ctx.stroke();
+          ctx.shadowBlur = 0;
+          break;
+        }
+        case 'plasmaLance': {
+          // Plasma orb with electric crackle
+          const r = sz * 1.4 * lvlBoost;
+          const grad = ctx.createRadialGradient(0, 0, 1, 0, 0, r);
+          grad.addColorStop(0, '#fff'); grad.addColorStop(0.5, '#4dffd4'); grad.addColorStop(1, '#1a5d99');
+          ctx.fillStyle = grad;
+          ctx.shadowColor = '#4dffd4'; ctx.shadowBlur = 22;
+          ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill();
+          ctx.shadowBlur = 0;
+          // Crackle
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+          for (let i = 0; i < 3; i++) {
+            const a = Math.random() * TAU;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(a) * r * 0.4, Math.sin(a) * r * 0.4);
+            ctx.lineTo(Math.cos(a) * r * 1.2, Math.sin(a) * r * 1.2);
+            ctx.stroke();
+          }
+          break;
+        }
+        case 'runeBolts': {
+          // Magic rune bolt — purple
+          ctx.shadowColor = '#b362ff'; ctx.shadowBlur = 14;
+          ctx.fillStyle = '#b362ff';
+          ctx.beginPath();
+          ctx.moveTo(sz * 1.4 * lvlBoost, 0);
+          ctx.lineTo(-sz * 0.8 * lvlBoost, sz * 0.6 * lvlBoost);
+          ctx.lineTo(-sz * 0.4 * lvlBoost, 0);
+          ctx.lineTo(-sz * 0.8 * lvlBoost, -sz * 0.6 * lvlBoost);
+          ctx.closePath(); ctx.fill();
+          ctx.shadowBlur = 0;
+          break;
+        }
+        default: {
+          // Generic glow ball + trail
+          ctx.shadowColor = pr.color; ctx.shadowBlur = 12;
+          ctx.fillStyle = pr.color;
+          ctx.beginPath(); ctx.arc(0, 0, sz * lvlBoost, 0, TAU); ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.globalAlpha = 0.4; ctx.fillStyle = pr.color;
+          ctx.beginPath(); ctx.arc(-sz * 1.6, 0, sz * 0.7, 0, TAU); ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+      ctx.restore();
     });
     this.eprojs.forEach(ep => {
       ctx.fillStyle = ep.color;
@@ -1825,7 +1943,49 @@ export class Game {
 
     ctx.restore();
 
-    // Vignette
+    // Off-screen boss indicator — guide arrow pointing toward boss when out of view
+    if (this.bossActive) {
+      const b = this.bossActive;
+      const sx = b.x - this.cam.x + W / 2;
+      const sy = b.y - this.cam.y + H / 2;
+      const margin = 50;
+      if (sx < margin || sx > W - margin || sy < margin || sy > H - margin) {
+        // Clamp arrow to screen edge
+        const cx = W / 2, cy = H / 2;
+        const dx = sx - cx, dy = sy - cy;
+        const ang = Math.atan2(dy, dx);
+        // distance to edge
+        const maxX = (W / 2) - margin;
+        const maxY = (H / 2) - margin;
+        const tx = Math.max(-maxX, Math.min(maxX, Math.cos(ang) * 9999));
+        const ty = Math.max(-maxY, Math.min(maxY, Math.sin(ang) * 9999));
+        // Find intersection with the rect edge along this angle
+        const k = Math.min(maxX / Math.abs(Math.cos(ang) || 0.0001), maxY / Math.abs(Math.sin(ang) || 0.0001));
+        const ax = cx + Math.cos(ang) * k;
+        const ay = cy + Math.sin(ang) * k;
+        ctx.save();
+        ctx.translate(ax, ay);
+        ctx.rotate(ang);
+        const pulse = 0.6 + 0.4 * Math.sin(this.time * 8);
+        ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 18 * pulse;
+        ctx.fillStyle = '#ffd166';
+        ctx.beginPath();
+        ctx.moveTo(20, 0);
+        ctx.lineTo(-10, 14);
+        ctx.lineTo(-4, 0);
+        ctx.lineTo(-10, -14);
+        ctx.closePath(); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('BOSS', -2, 4);
+        ctx.restore();
+        // tx,ty unused suppressor
+        void tx; void ty;
+      }
+    }
+
     const grad = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.7);
     grad.addColorStop(0, 'rgba(0,0,0,0)');
     grad.addColorStop(1, 'rgba(0,0,0,0.7)');
@@ -1915,8 +2075,14 @@ export class Game {
           if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
         ctx.closePath(); break;
-      case 'bossOcular':
-        ctx.arc(e.x, e.y, s * 0.5, 0, TAU); break;
+      case 'bossOcular': {
+        // Big iris with golden ring + animated pupil — drawn as a stylized eye, not a plain disc
+        const s2 = s * 0.6;
+        // Outer eye-shape (almond)
+        ctx.beginPath();
+        ctx.ellipse(e.x, e.y, s2 * 1.25, s2 * 0.78, 0, 0, TAU);
+        ctx.closePath(); break;
+      }
       case 'bossAida':
         for (let i = 0; i < 6; i++) {
           const a = (i / 6) * TAU + this.time;
@@ -1931,11 +2097,45 @@ export class Game {
     }
     if (outline) ctx.stroke(); else ctx.fill();
 
-    // Bosses get a pupil/inner ring
+    // Bosses get extra rendering passes (after the outline)
     if (t.id === 'bossOcular' && !outline) {
+      // Golden outer ring with pulse
+      const pulse = 0.5 + 0.5 * Math.sin(this.time * 4);
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 4;
+      ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 24;
+      ctx.beginPath();
+      ctx.ellipse(e.x, e.y, s * 0.72 + pulse * 4, s * 0.45 + pulse * 2.5, 0, 0, TAU);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      // White inner sclera
+      ctx.fillStyle = '#fffbe0';
+      ctx.beginPath();
+      ctx.ellipse(e.x, e.y, s * 0.65, s * 0.4, 0, 0, TAU);
+      ctx.fill();
+      // Iris (looks at player)
+      const dxp = this.player.x - e.x, dyp = this.player.y - e.y;
+      const dpl = Math.hypot(dxp, dyp) || 1;
+      const irisOffset = Math.min(s * 0.18, dpl * 0.4);
+      const irisX = e.x + (dxp / dpl) * irisOffset;
+      const irisY = e.y + (dyp / dpl) * irisOffset;
+      const irisGrad = ctx.createRadialGradient(irisX, irisY, 1, irisX, irisY, s * 0.25);
+      irisGrad.addColorStop(0, '#ff7a1a');
+      irisGrad.addColorStop(0.6, '#b51d28');
+      irisGrad.addColorStop(1, '#3a0808');
+      ctx.fillStyle = irisGrad;
+      ctx.beginPath(); ctx.arc(irisX, irisY, s * 0.22, 0, TAU); ctx.fill();
+      // Pupil
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.arc(irisX, irisY, s * 0.09, 0, TAU); ctx.fill();
+      // Specular highlight
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(irisX - s * 0.05, irisY - s * 0.05, s * 0.04, 0, TAU); ctx.fill();
+    }
+    if (t.id === 'bossAida' && !outline) {
       ctx.fillStyle = '#000';
       ctx.beginPath(); ctx.arc(e.x, e.y, s * 0.18, 0, TAU); ctx.fill();
-      ctx.fillStyle = '#b51d28';
+      ctx.fillStyle = '#ff7a1a';
       ctx.beginPath(); ctx.arc(e.x, e.y, s * 0.08, 0, TAU); ctx.fill();
     }
   }

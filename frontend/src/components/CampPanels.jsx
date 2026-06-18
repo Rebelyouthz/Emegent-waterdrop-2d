@@ -182,10 +182,16 @@ export function MilestoneBar({ save, setSave }) {
 }
 
 // ---------- Card Shop (Slot Machine) ----------
+const REEL_ICONS = ['💧', '⚔️', '⭐', '💎', '🎰', '🌟', '🔮', '⚡', '🛡', '❤️'];
+const REEL_RARITIES = ['common', 'magic', 'rare', 'epic', 'legendary'];
+
 export function CardShopModal({ save, setSave, onClose }) {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
-  const [reel, setReel] = useState('common');
+  // Three reels (slot machine row), each cycles independently then stops
+  const [reels, setReels] = useState(['💧', '⚔️', '⭐']);
+  const [stopped, setStopped] = useState([true, true, true]);
+  const [reelRarity, setReelRarity] = useState('common');
   const pullCount = save.shopPulls || 0;
   const cost = shopCardCost(pullCount);
   const luck = (save.meta.m_luck || 0) * 0.5 + (save.skills.sk_luck || 0) * 0.5;
@@ -193,18 +199,55 @@ export function CardShopModal({ save, setSave, onClose }) {
   const pull = () => {
     if (save.gold < cost || spinning) return;
     setSpinning(true); setResult(null);
+    setStopped([false, false, false]);
+    setReelRarity('common');
     Audio.click();
-    const rar = ['common', 'magic', 'rare', 'epic', 'legendary'];
+    // Pre-roll the actual card outcome so we can animate to it
+    const card = rollShopPull(luck);
+    // Animate three reels with staggered stop times for dopamine anticipation
+    const reelIntervals = [];
     let i = 0;
-    const id = setInterval(() => { setReel(rar[i % rar.length]); i++; Audio.click(); }, 80);
+    reelIntervals.push(setInterval(() => {
+      setReels(prev => [REEL_ICONS[(i + 0) % REEL_ICONS.length], prev[1], prev[2]]);
+      i++;
+    }, 65));
+    reelIntervals.push(setInterval(() => {
+      setReels(prev => [prev[0], REEL_ICONS[(i + 3) % REEL_ICONS.length], prev[2]]);
+    }, 80));
+    reelIntervals.push(setInterval(() => {
+      setReels(prev => [prev[0], prev[1], REEL_ICONS[(i + 7) % REEL_ICONS.length]]);
+    }, 95));
+    // Rarity ticker (for the highlight color)
+    const rarityTicker = setInterval(() => {
+      const idx = Math.floor(Math.random() * REEL_RARITIES.length);
+      setReelRarity(REEL_RARITIES[idx]);
+      Audio.click();
+    }, 130);
+
+    // Stop first reel
     setTimeout(() => {
-      clearInterval(id);
-      const card = rollShopPull(luck);
-      setReel(card.rarity);
+      clearInterval(reelIntervals[0]);
+      setReels(prev => [card.icon, prev[1], prev[2]]);
+      setStopped(s => [true, s[1], s[2]]);
+      try { Audio.hit && Audio.hit(); } catch (e) {}
+    }, 900);
+    // Stop second reel
+    setTimeout(() => {
+      clearInterval(reelIntervals[1]);
+      setReels(prev => [prev[0], card.icon, prev[2]]);
+      setStopped(s => [s[0], true, s[2]]);
+      try { Audio.hit && Audio.hit(); } catch (e) {}
+    }, 1450);
+    // Stop third reel — moment of truth!
+    setTimeout(() => {
+      clearInterval(reelIntervals[2]);
+      clearInterval(rarityTicker);
+      setReels(prev => [prev[0], prev[1], card.icon]);
+      setStopped([true, true, true]);
+      setReelRarity(card.rarity);
       setResult(card);
       Audio.levelUp();
       const ns = { ...save, gold: save.gold - cost, shopPulls: pullCount + 1 };
-      // apply
       if (card.effect.unlockSkill) {
         ns.unlockedActives = { ...(ns.unlockedActives || {}), [card.effect.unlockSkill]: true };
       } else if (card.effect.stat) {
@@ -214,36 +257,74 @@ export function CardShopModal({ save, setSave, onClose }) {
       }
       setSave(ns);
       setSpinning(false);
-    }, 1200);
+    }, 2100);
   };
+
+  const rarityCls = PART_RAR_CLS[reelRarity] || '';
+
   return (
     <div className="modal-overlay" data-testid="card-shop" onClick={(e) => { if (e.target.classList.contains('modal-overlay')) onClose(); }}>
-      <div className="forge-panel" style={{ maxWidth: 680, textAlign: 'center' }}>
+      <div className="forge-panel cs-modal" style={{ maxWidth: 680, textAlign: 'center' }}>
         <div className="forge-header">
           <div className="forge-title">🎰 CARD SHOP</div>
           <div className="forge-gold">★ {save.gold}</div>
           <button onClick={onClose} style={{ padding: '6px 12px', fontSize: 12 }}>✕</button>
         </div>
         <div style={{ color: 'var(--ink-dim)', fontFamily: 'VT323', marginBottom: 14 }}>Pull {pullCount + 1} · luck {luck.toFixed(1)}</div>
-        <div className={`slot-reel ${spinning ? 'spinning' : ''} card ${PART_RAR_CLS[reel]}`}>
-          {result ? (
-            <>
-              <div className="card-tag">{(result.rarity || '').toUpperCase()}</div>
-              <div className="card-icon">{result.icon}</div>
-              <div className="card-name">{result.name}</div>
+
+        {/* 3-reel slot frame */}
+        <div className={`slot-frame ${rarityCls} ${spinning ? 'cs-shake' : ''} ${result && result.rarity === 'legendary' ? 'cs-jackpot' : ''}`}>
+          <div className="slot-window" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, minmax(80px, 1fr))',
+            gap: 8,
+            background: '#06040a',
+            border: '2px solid #000',
+            padding: 8,
+            margin: '0 auto 12px',
+            width: '100%',
+            maxWidth: 420,
+            boxShadow: 'inset 0 0 0 1px #ffffff10',
+          }}>
+            {[0, 1, 2].map(idx => (
+              <div key={idx} className={`slot-cell ${stopped[idx] ? 'stopped' : 'spinning'} ${result && stopped[idx] ? 'cs-glow ' + (PART_RAR_CLS[reelRarity] || '') : ''}`} style={{
+                background: 'linear-gradient(180deg, #141826 0%, #06080f 100%)',
+                border: '1px solid #ffffff15',
+                minHeight: 100,
+                height: 100,
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                <div className="slot-icon" style={{ fontSize: 54, textShadow: '0 2px 8px #000a' }}>{reels[idx]}</div>
+              </div>
+            ))}
+          </div>
+          {result && (
+            <div className="cs-result" data-testid="cs-result">
+              <div className="card-tag" style={{ marginBottom: 4 }}>{(result.rarity || '').toUpperCase()}</div>
+              <div className="card-name" style={{ fontSize: 22, marginBottom: 4 }}>{result.name}</div>
               <div className="card-desc">
                 {result.effect.unlockSkill ? `New active skill: ${ACTIVE_SKILLS[result.effect.unlockSkill].name}` :
                   `Permanent +${result.finalEffect.amount}${result.effect.stat === 'maxHp' || result.effect.stat === 'armor' ? '' : '%'} ${result.effect.stat}`}
               </div>
-            </>
-          ) : (
-            <>
-              <div className="card-tag">{reel.toUpperCase()}</div>
-              <div className="card-icon" style={{ fontSize: 80 }}>{spinning ? '🎰' : '❓'}</div>
-              <div className="card-name">{spinning ? 'PULLING…' : 'Spin the reel'}</div>
-            </>
+            </div>
+          )}
+          {!result && spinning && (
+            <div className="cs-status" data-testid="cs-status">
+              <span className="cs-suspense">SPINNING…</span>
+            </div>
+          )}
+          {!result && !spinning && (
+            <div className="cs-status" data-testid="cs-idle">
+              <span>READY · PRESS PULL</span>
+            </div>
           )}
         </div>
+
         <button onClick={pull} disabled={save.gold < cost || spinning} style={{ marginTop: 18, width: '100%' }} data-testid="shop-pull">
           ★ {cost} — {spinning ? 'PULLING…' : `PULL #${pullCount + 1}`}
         </button>

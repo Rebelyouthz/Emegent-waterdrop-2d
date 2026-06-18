@@ -67,14 +67,16 @@ export const Audio = {
   },
   startMusic() {
     const c = ctx(); if (!c || _musicNode) return;
-    // Try MP3 BGM first
+    // Try uploaded MP3 BGM first (user's custom Waterdrop Survivor track)
     try {
-      const a = new window.Audio('https://customer-assets.emergentagent.com/job_progression-warrior/artifacts/hyp8e5j4_guitarbagpipe-synapse.mp3');
-      a.loop = true; a.volume = (_musicVol || 0.15) * 0.7;
-      a.play().catch(() => {});
-      _musicNode = { disconnect: () => { a.pause(); }, _mp3: a, gain: { value: a.volume } };
+      // Use relative path so it works in both preview and production
+      const a = new window.Audio('/menu-music.mp3');
+      a.loop = true;
+      a.volume = Math.max(0, Math.min(1, (_musicVol || 0.15) * 1.6));
+      a.play().catch((err) => console.warn('[Audio] menu mp3 autoplay blocked:', err));
+      _musicNode = { disconnect: () => { try { a.pause(); a.currentTime = 0; } catch (e) {} }, _mp3: a, gain: { value: a.volume } };
       return;
-    } catch (e) { /* fall through to procedural */ }
+    } catch (e) { console.warn('[Audio] mp3 load failed, falling back to procedural', e); }
     // Fallback procedural drone
     const o1 = c.createOscillator(); o1.type = 'sine'; o1.frequency.value = 110;
     const o2 = c.createOscillator(); o2.type = 'sine'; o2.frequency.value = 110.5;
