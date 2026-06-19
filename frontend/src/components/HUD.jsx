@@ -8,10 +8,8 @@ export default function HUD({ snap, onActiveSkill }) {
   const hpPct = (snap.hp / snap.maxHp) * 100;
   const missionTimeLeft = snap.targetDuration && snap.targetDuration < 999 ? Math.max(0, snap.targetDuration - snap.time) : null;
 
-  // Split active skills: first 2 go between joysticks (mobile sweet spot), rest go to right column
+  // All active skills go to right column — no center button between joysticks
   const skills = snap.activeSkills || [];
-  const primarySkills = skills.slice(0, 2);
-  const overflowSkills = skills.slice(2);
 
   return (
     <>
@@ -41,11 +39,10 @@ export default function HUD({ snap, onActiveSkill }) {
         ))}
       </div>
 
-      {/* Overflow skills (3rd+) — right column */}
-      {overflowSkills.length > 0 && (
+      {/* Active skills — right column */}
+      {skills.length > 0 && (
         <div className="active-bar active-bar-overflow" data-testid="active-bar-overflow">
-          {overflowSkills.map((s, i) => {
-            const idx = i + 2;
+          {skills.map((s, idx) => {
             const ready = s.cd <= 0;
             const pct = s.maxCd > 0 ? Math.max(0, Math.min(100, 100 - (s.cd / s.maxCd) * 100)) : 100;
             return (
@@ -60,24 +57,8 @@ export default function HUD({ snap, onActiveSkill }) {
         </div>
       )}
 
-      {/* Bottom area: primary skills (between joysticks, above HP) + MAG text + HP bar */}
+      {/* Bottom area: MAG text + HP bar (NO center active skill button) */}
       <div className="hud-bottom-stack">
-        {primarySkills.length > 0 && (
-          <div className="active-bar active-bar-center" data-testid="active-bar">
-            {primarySkills.map((s, i) => {
-              const ready = s.cd <= 0;
-              const pct = s.maxCd > 0 ? Math.max(0, Math.min(100, 100 - (s.cd / s.maxCd) * 100)) : 100;
-              return (
-                <button key={i} className={`skill-btn ${ready ? 'ready' : ''}`} onClick={() => onActiveSkill && onActiveSkill(i)} data-testid={`skill-${i}`} aria-label={s.name}>
-                  <div className="skill-icon">{s.icon}</div>
-                  <div className="skill-key">{i + 1}</div>
-                  <div className="skill-cd" style={{ height: `${100 - pct}%` }} />
-                  {!ready && <div className="skill-cd-num">{Math.ceil(s.cd)}</div>}
-                </button>
-              );
-            })}
-          </div>
-        )}
         <div className="hud-mag-text">
           {snap.reloading ? <span style={{ color: 'var(--accent-2)' }}>↻ RELOADING…</span> : `MAG ${snap.mag}`}
           {snap.noHit && <span style={{ marginLeft: 12, color: 'var(--rune)' }}>👻 NO-HIT</span>}
