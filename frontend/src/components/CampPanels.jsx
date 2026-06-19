@@ -4,7 +4,7 @@ import { MISSION_DEFS, MISSION_DAILY_LIMIT, MISSION_REGEN_MS, rollMissionRewards
 import { Audio } from '../game/audio';
 import { accountXpToNext } from '../game/data_ext';
 
-const PART_RAR_CLS = { common: 'r-common', magic: 'r-magic', rare: 'r-rare', epic: 'r-epic', legendary: 'r-legendary' };
+const PART_RAR_CLS = { common: 'r-common', uncommon: 'r-uncommon', rare: 'r-rare', epic: 'r-epic', legendary: 'r-legendary', mythical: 'r-mythical' };
 
 // ---------- Missions ----------
 export function MissionsPanel({ save, setSave, onStart }) {
@@ -183,7 +183,7 @@ export function MilestoneBar({ save, setSave }) {
 
 // ---------- Card Shop (Slot Machine) ----------
 const REEL_ICONS = ['💧', '⚔️', '⭐', '💎', '🎰', '🌟', '🔮', '⚡', '🛡', '❤️'];
-const REEL_RARITIES = ['common', 'magic', 'rare', 'epic', 'legendary'];
+const REEL_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'];
 
 export function CardShopModal({ save, setSave, onClose }) {
   const [spinning, setSpinning] = useState(false);
@@ -449,7 +449,8 @@ export function WeaponCrafting({ save, setSave, onClose }) {
 }
 
 // ---------- Settings ----------
-export function SettingsPanel({ save, setSave, onClose }) {
+export function SettingsPanel({ save, setSave, onClose, onReset }) {
+  const [confirmReset, setConfirmReset] = useState(false);
   const set = (k, v) => setSave({ ...save, settings: { ...(save.settings || {}), [k]: v } });
   const s = save.settings || {};
   useEffect(() => { Audio.setSfxVol(s.sfx ?? 0.4); Audio.setMusicVol(s.music ?? 0.15); Audio.setMuted(s.muted ?? false); }, [s.sfx, s.music, s.muted]);
@@ -466,27 +467,45 @@ export function SettingsPanel({ save, setSave, onClose }) {
         <div className="setting-row"><span>Screen Shake</span><input type="checkbox" checked={s.shake ?? true} onChange={(e) => set('shake', e.target.checked)} /></div>
         <div className="setting-row"><span>Particle Density</span>
           <select value={s.particles ?? 'high'} onChange={(e) => set('particles', e.target.value)}>
-            <option value="low">Low (mobile)</option>
+            <option value="low">Low (mobil)</option>
             <option value="med">Medium</option>
             <option value="high">High</option>
           </select>
         </div>
         <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid #b51d2855' }}>
-          <div style={{ fontFamily: 'VT323, monospace', color: '#ff6675', fontSize: 12, letterSpacing: '0.2em', marginBottom: 6 }}>DANGER ZONE</div>
-          <button
-            data-testid="reset-progress-btn"
-            onClick={() => {
-              if (window.confirm('Reset ALL progress? Gold, weapons, parts, achievements — everything will be wiped. Cannot be undone.')) {
-                try { localStorage.removeItem('wds.save.v1'); } catch (e) {}
-                window.location.reload();
-              }
-            }}
-            style={{ width: '100%', padding: '10px', borderColor: '#b51d28', color: '#ff6675', background: 'linear-gradient(180deg,#2a0a10,#10050a)' }}
-          >
-            🗑 RESET ALL PROGRESS
-          </button>
-          <div style={{ fontSize: 10, color: '#666', fontFamily: 'VT323, monospace', marginTop: 6, textAlign: 'center', letterSpacing: '0.1em' }}>
-            Start from scratch. Your purchase entitlement is kept (linked to your Google account).
+          <div style={{ fontFamily: 'VT323, monospace', color: '#ff6675', fontSize: 12, letterSpacing: '0.2em', marginBottom: 8 }}>DANGER ZONE</div>
+          {!confirmReset ? (
+            <button
+              data-testid="reset-progress-btn"
+              onClick={() => setConfirmReset(true)}
+              style={{ width: '100%', padding: '10px', borderColor: '#b51d28', color: '#ff6675', background: 'linear-gradient(180deg,#2a0a10,#10050a)' }}
+            >
+              🗑 RESET ALL PROGRESS
+            </button>
+          ) : (
+            <div style={{ background: '#1a0508', border: '2px solid #b51d28', borderRadius: 4, padding: 14 }}>
+              <div style={{ color: '#ff6675', fontFamily: 'VT323, monospace', fontSize: 14, letterSpacing: '0.15em', marginBottom: 10, textAlign: 'center' }}>
+                ÄR DU SÄKER? Allt raderas — guld, vapen, delar, prestationer.
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  data-testid="confirm-reset-btn"
+                  onClick={() => { setConfirmReset(false); onReset?.(); onClose(); }}
+                  style={{ flex: 1, padding: '10px', background: '#b51d28', borderColor: '#ff3146', color: '#fff', fontFamily: 'VT323, monospace', fontSize: 16 }}
+                >
+                  JA, RESET
+                </button>
+                <button
+                  onClick={() => setConfirmReset(false)}
+                  style={{ flex: 1, padding: '10px', background: '#0a0612' }}
+                >
+                  AVBRYT
+                </button>
+              </div>
+            </div>
+          )}
+          <div style={{ fontSize: 10, color: '#555', fontFamily: 'VT323, monospace', marginTop: 6, textAlign: 'center', letterSpacing: '0.1em' }}>
+            Ditt köpbevis sparas (kopplat till Google-kontot).
           </div>
         </div>
       </div>
@@ -513,7 +532,7 @@ export function PartsInventory({ save, setSave, onClose }) {
     setSave({ ...save, equippedParts: { ...equipped, [wid]: cur } });
   };
   const sellPart = (part) => {
-    const val = ({ common: 20, magic: 60, rare: 200, epic: 800, legendary: 3000 })[part.rarity] || 10;
+    const val = ({ common: 20, uncommon: 60, rare: 200, epic: 800, legendary: 3000, mythical: 8000 })[part.rarity] || 10;
     const inv = parts.filter(p => p.id !== part.id);
     const cleared = { ...equipped };
     for (const w of Object.keys(cleared)) if (cleared[w] && cleared[w][part.slot] === part.id) delete cleared[w][part.slot];

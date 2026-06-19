@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { META_UPGRADES, metaCost } from '../game/data';
 import { MILESTONES, AVATARS, CHESTS, rollChest } from '../game/data_ext';
-import { applyReward } from '../store';
+import { applyReward, DEFAULT_SAVE, saveLocal } from '../store';
 import SkillTree from './SkillTree';
 import Weaponsmith from './Weaponsmith';
 import Shop from './Shop';
@@ -42,7 +42,14 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
     if (val < m.goal) return;
     const ns = { ...save, milestones: { ...save.milestones, claimed: { ...save.milestones.claimed, [m.id]: true } } };
     applyReward(ns, m.reward, openChest);
-    setSave(ns); Audio.levelUp();
+    setSave(ns); Audio.levelUp(); Audio.waterDrop();
+  };
+
+  const handleReset = () => {
+    const fresh = { ...DEFAULT_SAVE };
+    setSave(fresh);
+    saveLocal(fresh);
+    onBack();
   };
 
   const avatar = AVATARS.find(a => a.id === save.profile.avatar) || AVATARS[0];
@@ -51,31 +58,32 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
     <div className="app-shell">
       <div className="camp" data-testid="camp-screen">
         <div className="camp-sidebar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <div style={{ fontSize: 28 }}>{avatar.icon}</div>
+          <div className="camp-tabs-scroll">
+            <button className={`camp-tab ${tab === 'cards' ? 'active' : ''}`} onClick={() => setTab('cards')} data-testid="tab-cards">💠 META</button>
+            <button className={`camp-tab ${tab === 'missions' ? 'active' : ''}`} onClick={() => setTab('missions')} data-testid="tab-missions">📋 MISSIONS</button>
+            <button className={`camp-tab ${tab === 'challenges' ? 'active' : ''}`} onClick={() => setTab('challenges')} data-testid="tab-challenges">🏆 CHALLENGES</button>
+            <button className={`camp-tab ${tab === 'achievements' ? 'active' : ''}`} onClick={() => setTab('achievements')} data-testid="tab-ach">🎖 ACHIEVEMENTS</button>
+            <button className={`camp-tab ${tab === 'milestones' ? 'active' : ''}`} onClick={() => setTab('milestones')} data-testid="tab-milestones">⭐ MILESTONES</button>
+            <button className={`camp-tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')} data-testid="tab-stats">📊 STATS</button>
+            <div className="camp-tab-divider" />
+            <button className="camp-tab" onClick={() => setShopOpen(true)} data-testid="open-card-shop">🎰 CARD SHOP</button>
+            <button className="camp-tab" onClick={() => setLoadoutOpen(true)} data-testid="open-loadout">🎯 LOADOUT</button>
+            <button className="camp-tab" onClick={() => setCraftOpen(true)} data-testid="open-craft">📜 BLUEPRINTS</button>
+            <button className="camp-tab" onClick={() => setPartsOpen(true)} data-testid="open-parts">🔧 PARTS</button>
+            <button className="camp-tab" onClick={() => setSkillOpen(true)} data-testid="open-skills">🧠 SKILLS</button>
+            <button className="camp-tab" onClick={() => setForgeOpen(true)} data-testid="open-forge">🔨 SMITH</button>
+            <button className="camp-tab" onClick={() => setChestOpen(true)} data-testid="open-chest">📦 CHESTS</button>
+            <button className="camp-tab" onClick={() => setSettingsOpen(true)} data-testid="open-settings">⚙ SETTINGS</button>
+          </div>
+          <div className="camp-profile-bar">
+            <span style={{ fontSize: 24 }}>{avatar.icon}</span>
             <div>
               <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--ink)' }}>{save.profile.name || 'Wanderer'}</div>
               <div style={{ fontSize: 10, color: 'var(--rune)', letterSpacing: '0.2em' }}>RANK {save.profile.level}</div>
             </div>
-          </div>
-          <button className={`camp-tab ${tab === 'cards' ? 'active' : ''}`} onClick={() => setTab('cards')} data-testid="tab-cards">💠 META</button>
-          <button className={`camp-tab ${tab === 'missions' ? 'active' : ''}`} onClick={() => setTab('missions')} data-testid="tab-missions">📋 MISSIONS</button>
-          <button className={`camp-tab ${tab === 'challenges' ? 'active' : ''}`} onClick={() => setTab('challenges')} data-testid="tab-challenges">🏆 CHALLENGES</button>
-          <button className={`camp-tab ${tab === 'achievements' ? 'active' : ''}`} onClick={() => setTab('achievements')} data-testid="tab-ach">🎖 ACHIEVEMENTS</button>
-          <button className={`camp-tab ${tab === 'milestones' ? 'active' : ''}`} onClick={() => setTab('milestones')} data-testid="tab-milestones">⭐ MILESTONES</button>
-          <button className={`camp-tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')} data-testid="tab-stats">📊 STATS</button>
-          <div style={{ height: 8 }} />
-          <button className="camp-tab" onClick={() => setShopOpen(true)} data-testid="open-card-shop">🎰 CARD SHOP</button>
-          <button className="camp-tab" onClick={() => setLoadoutOpen(true)} data-testid="open-loadout">🎯 LOADOUT</button>
-          <button className="camp-tab" onClick={() => setCraftOpen(true)} data-testid="open-craft">📜 BLUEPRINTS</button>
-          <button className="camp-tab" onClick={() => setPartsOpen(true)} data-testid="open-parts">🔧 PARTS</button>
-          <button className="camp-tab" onClick={() => setSkillOpen(true)} data-testid="open-skills">🧠 SKILLS</button>
-          <button className="camp-tab" onClick={() => setForgeOpen(true)} data-testid="open-forge">🔨 SMITH</button>
-          <button className="camp-tab" onClick={() => setChestOpen(true)} data-testid="open-chest">📦 CHESTS</button>
-          <button className="camp-tab" onClick={() => setSettingsOpen(true)} data-testid="open-settings">⚙ SETTINGS</button>
-          <div style={{ flex: 1 }} />
-          <div style={{ fontFamily: 'VT323', color: 'var(--ink-dim)', fontSize: 13, lineHeight: 1.5 }}>
-            ★ {save.gold} Gold<br />◆ {save.sp} SP<br />🎒 {(save.inventory || []).length} items
+            <div style={{ marginLeft: 'auto', fontFamily: 'VT323', color: 'var(--ink-dim)', fontSize: 13, lineHeight: 1.6, textAlign: 'right' }}>
+              ★ {save.gold}<br />◆ {save.sp} SP
+            </div>
           </div>
         </div>
 
@@ -183,7 +191,7 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
       {chestOpen && <Shop save={save} setSave={setSave} onClose={() => setChestOpen(false)} />}
       {loadoutOpen && <ActiveLoadoutPanel save={save} setSave={setSave} onClose={() => setLoadoutOpen(false)} />}
       {craftOpen && <WeaponCrafting save={save} setSave={setSave} onClose={() => setCraftOpen(false)} />}
-      {settingsOpen && <SettingsPanel save={save} setSave={setSave} onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && <SettingsPanel save={save} setSave={setSave} onClose={() => setSettingsOpen(false)} onReset={handleReset} />}
       {partsOpen && <PartsInventory save={save} setSave={setSave} onClose={() => setPartsOpen(false)} />}
     </div>
   );

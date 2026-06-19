@@ -1,17 +1,17 @@
 // Waterdrop Survivor — All game data: weapons, enemies, level-up cards, meta upgrades.
 
 export const RARITY = {
-  common:    { name: 'COMMON',    weight: 60, color: '#9a8fa6', cls: 'r-common',    mult: 1.0 },
-  magic:     { name: 'MAGIC',     weight: 28, color: '#4dc4ff', cls: 'r-magic',     mult: 1.6 },
-  rare:      { name: 'RARE',      weight: 9,  color: '#ffd166', cls: 'r-rare',      mult: 2.4 },
-  epic:      { name: 'EPIC',      weight: 2.5,color: '#b362ff', cls: 'r-epic',      mult: 3.6 },
-  legendary: { name: 'LEGENDARY', weight: 0.5,color: '#ff7a1a', cls: 'r-legendary', mult: 5.0 },
-  mythical:  { name: 'MYTHICAL',  weight: 0.05,color: '#ff4dff', cls: 'r-mythical',  mult: 7.5 },
+  common:    { name: 'COMMON',    weight: 60,   color: '#9a8fa6', cls: 'r-common',    mult: 1.0 },
+  uncommon:  { name: 'UNCOMMON',  weight: 28,   color: '#4dff91', cls: 'r-uncommon',  mult: 1.6 },
+  rare:      { name: 'RARE',      weight: 9,    color: '#4dc4ff', cls: 'r-rare',      mult: 2.4 },
+  epic:      { name: 'EPIC',      weight: 2.5,  color: '#b362ff', cls: 'r-epic',      mult: 3.6 },
+  legendary: { name: 'LEGENDARY', weight: 0.5,  color: '#ff7a1a', cls: 'r-legendary', mult: 5.0 },
+  mythical:  { name: 'MYTHICAL',  weight: 0.05, color: '#ff3146', cls: 'r-mythical',  mult: 7.5 },
 };
 
 export function rollRarity(luck = 0) {
   // luck shifts roll up
-  const keys = ['common', 'magic', 'rare', 'epic', 'legendary', 'mythical'];
+  const keys = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'];
   const weights = keys.map((k, i) => RARITY[k].weight * (1 + luck * i * 0.5));
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
@@ -201,19 +201,19 @@ export const ENEMIES = {
   },
   // Bosses
   bossOcular: {
-    id: 'bossOcular', name: 'Eye of Horus', size: 90, hp: 1200, dmg: 18, speed: 55, color: '#ffd166',
+    id: 'bossOcular', name: 'Eye of Horus', size: 90, hp: 1200, dmg: 18, speed: 165, color: '#ffd166',
     xp: 200, gold: 220, ai: 'boss', boss: true, shootCD: 1.8,
   },
   bossNecromancer: {
-    id: 'bossNecromancer', name: 'Nekromansen', size: 75, hp: 2800, dmg: 22, speed: 50, color: '#7ad96b',
+    id: 'bossNecromancer', name: 'Nekromansen', size: 75, hp: 2800, dmg: 22, speed: 95, color: '#7ad96b',
     xp: 400, gold: 450, ai: 'boss', boss: true, shootCD: 1.4,
   },
   bossVoidTitan: {
-    id: 'bossVoidTitan', name: 'Void Titan', size: 100, hp: 5000, dmg: 35, speed: 32, color: '#b362ff',
+    id: 'bossVoidTitan', name: 'Void Titan', size: 100, hp: 5000, dmg: 35, speed: 62, color: '#b362ff',
     xp: 600, gold: 600, ai: 'boss', boss: true, shootCD: 0.8,
   },
   bossAida: {
-    id: 'bossAida', name: 'A.I.D.A.', size: 80, hp: 6000, dmg: 40, speed: 60, color: '#b362ff',
+    id: 'bossAida', name: 'A.I.D.A.', size: 80, hp: 6000, dmg: 40, speed: 145, color: '#b362ff',
     xp: 800, gold: 800, ai: 'boss', boss: true, shootCD: 0.6,
   },
 };

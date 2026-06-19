@@ -53,6 +53,45 @@ export const Audio = {
   kill()  { noise(0.12, 0.12, 800); tone(160, 0.10, 'sawtooth', 0.08, 60); },
   reload(){ tone(380, 0.08, 'square', 0.06, 540); },
   levelUp(){ tone(523, 0.10, 'triangle', 0.12); setTimeout(() => tone(659, 0.10, 'triangle', 0.12), 90); setTimeout(() => tone(784, 0.18, 'triangle', 0.14), 180); },
+  // XP pickup — pitch rises as XP bar fills (Halls of Torment style)
+  xpPing(progress = 0) {
+    const c = ctx(); if (!c || _muted) return;
+    const freq = 480 + progress * 1400; // 480 Hz (empty) → 1880 Hz (full)
+    const g = c.createGain();
+    g.gain.setValueAtTime(_sfxVol * 0.18, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.09);
+    g.connect(c.destination);
+    const o = c.createOscillator();
+    o.frequency.setValueAtTime(freq, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(freq * 1.06, c.currentTime + 0.06);
+    o.type = 'sine';
+    o.connect(g);
+    o.start(c.currentTime); o.stop(c.currentTime + 0.09);
+  },
+  // Water drop — for skill point / mission reward collection
+  waterDrop() {
+    const c = ctx(); if (!c || _muted) return;
+    const g = c.createGain();
+    g.gain.setValueAtTime(_sfxVol * 0.35, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.22);
+    g.connect(c.destination);
+    const o = c.createOscillator();
+    o.frequency.setValueAtTime(1800, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(600, c.currentTime + 0.18);
+    o.type = 'sine';
+    o.connect(g);
+    const g2 = c.createGain();
+    g2.gain.setValueAtTime(0, c.currentTime + 0.04);
+    g2.gain.setValueAtTime(_sfxVol * 0.15, c.currentTime + 0.06);
+    g2.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.18);
+    g2.connect(c.destination);
+    const o2 = c.createOscillator();
+    o2.frequency.setValueAtTime(900, c.currentTime + 0.04);
+    o2.frequency.exponentialRampToValueAtTime(400, c.currentTime + 0.18);
+    o2.type = 'sine'; o2.connect(g2);
+    o.start(c.currentTime); o.stop(c.currentTime + 0.22);
+    o2.start(c.currentTime + 0.04); o2.stop(c.currentTime + 0.22);
+  },
   click() { tone(880, 0.05, 'square', 0.08); },
   dash()  { tone(1200, 0.10, 'square', 0.08, 200); },
   boss()  { tone(80, 0.6, 'sawtooth', 0.15, 40); noise(0.4, 0.10, 400); },

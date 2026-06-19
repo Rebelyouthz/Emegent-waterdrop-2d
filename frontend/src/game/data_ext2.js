@@ -59,7 +59,7 @@ for (const k of Object.keys(STARTER_WEAPONS)) {
 
 // ---------- WEAPON PARTS (AK47 style attachment system) ----------
 export const PART_SLOTS = ['barrel', 'magazine', 'sight', 'muzzle', 'stock', 'bullets', 'grip'];
-export const PART_RARITIES = ['common', 'magic', 'rare', 'epic', 'legendary'];
+export const PART_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'];
 export const PART_RARITY_COLORS = { common: '#9a8fa6', magic: '#4dc4ff', rare: '#ffd166', epic: '#b362ff', legendary: '#ff7a1a' };
 export const PART_RARITY_MULT  = { common: 1.0, magic: 1.5, rare: 2.1, epic: 2.9, legendary: 4.0 };
 export const PART_SLOT_INFO = {
@@ -296,8 +296,8 @@ export function rollShopPull(luck = 0) {
   if (rarityRoll < 0.005) rarity = 'legendary';
   else if (rarityRoll < 0.04) rarity = 'epic';
   else if (rarityRoll < 0.16) rarity = 'rare';
-  else if (rarityRoll < 0.45) rarity = 'magic';
-  const mult = { common: 1.0, magic: 1.5, rare: 2.0, epic: 2.8, legendary: 4.0 }[rarity];
+  else if (rarityRoll < 0.45) rarity = 'uncommon';
+  const mult = { common: 1.0, uncommon: 1.5, rare: 2.0, epic: 2.8, legendary: 4.0, mythical: 6.5 }[rarity];
   return { ...card, rarity, mult, finalEffect: card.effect.amount ? { ...card.effect, amount: card.effect.amount * mult } : card.effect };
 }
 

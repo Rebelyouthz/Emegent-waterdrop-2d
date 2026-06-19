@@ -287,8 +287,10 @@ canvas#game {
 .card {
   width: 240px; min-height: 320px;
   flex: 0 1 240px;
-  background: linear-gradient(180deg, #1a1226, #0a0612);
+  background: linear-gradient(180deg, #1a1226 0%, #0a0612 100%);
+  background-color: var(--rar-bg, transparent);
   border: 2px solid #000;
+  border-left: 3px solid var(--rar, #333);
   box-shadow: var(--pixel-edge), 0 12px 0 #000, 0 0 0 2px var(--rar);
   padding: 18px 16px;
   cursor: pointer;
@@ -302,12 +304,13 @@ canvas#game {
   transform: translateY(-6px);
   box-shadow: var(--pixel-edge), 0 18px 0 #000, 0 0 40px var(--rar);
 }
-.card.r-common    { --rar: #9a8fa6; }
-.card.r-magic     { --rar: #4dc4ff; }
-.card.r-rare      { --rar: #ffd166; }
-.card.r-epic      { --rar: #b362ff; }
-.card.r-legendary { --rar: #ff7a1a; }
-.card.r-mythical  { --rar: #ff4dff; }
+.card.r-common    { --rar: #9a8fa6; background: linear-gradient(180deg, #16121f 0%, #0a0612 100%); }
+.card.r-uncommon  { --rar: #4dff91; background: linear-gradient(180deg, #0d1f14 0%, #0a0612 100%); }
+.card.r-rare      { --rar: #4dc4ff; background: linear-gradient(180deg, #0d1820 0%, #0a0612 100%); }
+.card.r-epic      { --rar: #b362ff; background: linear-gradient(180deg, #180d20 0%, #0a0612 100%); }
+.card.r-legendary { --rar: #ff7a1a; background: linear-gradient(180deg, #200f07 0%, #0a0612 100%); box-shadow: var(--pixel-edge), 0 12px 0 #000, 0 0 0 2px var(--rar), 0 0 22px var(--rar); }
+.card.r-mythical  { --rar: #ff3146; background: linear-gradient(180deg, #200810 0%, #0a0612 100%); box-shadow: var(--pixel-edge), 0 12px 0 #000, 0 0 0 2px var(--rar), 0 0 28px var(--rar); animation: cardIn 280ms cubic-bezier(.2,.9,.3,1.4) both, mythCardPulse 700ms ease-in-out 280ms infinite alternate; }
+@keyframes mythCardPulse { from { box-shadow: var(--pixel-edge), 0 12px 0 #000, 0 0 0 2px #ff3146, 0 0 18px #ff3146; } to { box-shadow: var(--pixel-edge), 0 12px 0 #000, 0 0 0 2px #ff3146, 0 0 38px #ff3146, 0 0 60px rgba(255,49,70,0.35); } }
 .card-rarity {
   font-family: 'VT323', monospace;
   letter-spacing: 0.3em;
@@ -373,10 +376,27 @@ canvas#game {
 .camp-sidebar {
   width: 240px;
   background: #00000066;
-  padding: 24px 18px;
   border-right: 2px solid #000;
-  display: flex; flex-direction: column; gap: 10px;
+  display: flex; flex-direction: column;
   z-index: 1;
+  overflow: hidden;
+}
+.camp-tabs-scroll {
+  flex: 1;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 18px 14px 8px 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.camp-profile-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid #ffffff18;
+  background: #00000044;
+  flex-shrink: 0;
+}
+.camp-tab-divider {
+  height: 1px; background: #ffffff14; margin: 2px 0;
 }
 .camp-sidebar h2 {
   font-size: 18px; color: var(--accent-2); letter-spacing: 0.2em;
@@ -514,13 +534,22 @@ canvas#game {
   .hud-stats { font-size: 14px; gap: 10px; }
   .camp { flex-direction: column; min-height: auto; }
   .camp-sidebar {
-    width: 100%; flex-direction: row; overflow-x: auto; gap: 6px;
-    padding: 12px;
+    width: 100%; flex-direction: column;
     border-right: none; border-bottom: 2px solid #000;
-    flex-wrap: nowrap;
+    max-height: 220px;
   }
-  .camp-sidebar > div:first-child { flex-shrink: 0; }
-  .camp-sidebar .camp-tab { flex-shrink: 0; padding: 8px 10px; font-size: 11px; }
+  .camp-tabs-scroll {
+    flex-direction: row; flex-wrap: nowrap;
+    overflow-x: auto; overflow-y: hidden;
+    padding: 10px 12px 6px 12px;
+    gap: 6px;
+    /* Right-fade hint: more content scrollable */
+    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  }
+  .camp-tabs-scroll .camp-tab { flex-shrink: 0; padding: 8px 10px; font-size: 11px; }
+  .camp-tabs-scroll .camp-tab-divider { width: 1px; height: auto; min-height: 32px; margin: 0 2px; }
+  .camp-profile-bar { padding: 6px 12px; font-size: 11px; }
   .camp-main { padding: 16px 14px 110px 14px; }
   .upgrade-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .upgrade-card { padding: 10px; }
@@ -1007,12 +1036,16 @@ canvas#game {
   font-family: 'VT323', monospace;
 }
 .part-chip.r-common { --rar: #9a8fa6; }
-.part-chip.r-magic { --rar: #4dc4ff; }
+.part-chip.r-uncommon { --rar: #4dff91; box-shadow: var(--pixel-edge), 0 0 0 1px var(--rar); }
 .part-chip.r-rare { --rar: #ffd166; }
 .part-chip.r-epic { --rar: #b362ff; }
+.part-chip.r-common   { --rar: #9a8fa6; }
+.part-chip.r-uncommon { --rar: #4dff91; box-shadow: var(--pixel-edge), 0 0 0 1px var(--rar); }
+.part-chip.r-rare     { --rar: #4dc4ff; box-shadow: var(--pixel-edge), 0 0 0 2px var(--rar), 0 0 10px var(--rar); }
+.part-chip.r-epic     { --rar: #b362ff; box-shadow: var(--pixel-edge), 0 0 0 2px var(--rar), 0 0 14px var(--rar); }
 .part-chip.r-legendary { --rar: #ff7a1a; box-shadow: var(--pixel-edge), 0 0 0 2px var(--rar), 0 0 16px var(--rar); }
-.part-chip.r-mythical  { --rar: #ff4dff; box-shadow: var(--pixel-edge), 0 0 0 2px #ff4dff, 0 0 20px #ff4dff, 0 0 38px rgba(255,77,255,0.5); animation: mythPulse 600ms ease-in-out infinite alternate; }
-@keyframes mythPulse { from { box-shadow: var(--pixel-edge), 0 0 0 2px #ff4dff, 0 0 14px #ff4dff; } to { box-shadow: var(--pixel-edge), 0 0 0 2px #ff4dff, 0 0 28px #ff4dff, 0 0 50px rgba(255,77,255,0.45); } }
+.part-chip.r-mythical  { --rar: #ff3146; box-shadow: var(--pixel-edge), 0 0 0 2px #ff3146, 0 0 20px #ff3146, 0 0 38px rgba(255,49,70,0.5); animation: mythPulse 600ms ease-in-out infinite alternate; }
+@keyframes mythPulse { from { box-shadow: var(--pixel-edge), 0 0 0 2px #ff3146, 0 0 14px #ff3146; } to { box-shadow: var(--pixel-edge), 0 0 0 2px #ff3146, 0 0 28px #ff3146, 0 0 50px rgba(255,49,70,0.45); } }
 
 /* Settings rows */
 .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px dashed #ffffff11; font-family: 'VT323', monospace; font-size: 16px; }
@@ -1469,12 +1502,12 @@ canvas#game {
 .slot-cell.cs-glow {
   box-shadow: 0 0 18px currentColor, inset 0 0 14px #00000080;
 }
-.slot-cell.cs-glow.rar-common    { color: #c7c7c7; box-shadow: inset 0 0 0 2px #c7c7c7, inset 0 0 14px #00000080, 0 0 14px #c7c7c777; }
-.slot-cell.cs-glow.rar-magic     { color: #5dd9ff; box-shadow: inset 0 0 0 2px #5dd9ff, inset 0 0 14px #00000080, 0 0 18px #5dd9ffaa; }
-.slot-cell.cs-glow.rar-rare      { color: #b362ff; box-shadow: inset 0 0 0 2px #b362ff, inset 0 0 14px #00000080, 0 0 22px #b362ffaa; }
-.slot-cell.cs-glow.rar-epic      { color: #ff7a1a; box-shadow: inset 0 0 0 2px #ff7a1a, inset 0 0 14px #00000080, 0 0 26px #ff7a1acc; }
-.slot-cell.cs-glow.rar-legendary { color: #ffd166; box-shadow: inset 0 0 0 2px #ffd166, inset 0 0 18px #00000080, 0 0 32px #ffd166dd; animation: legPulse 700ms ease-in-out infinite alternate; }
-.slot-cell.cs-glow.rar-mythical  { color: #ff4dff; box-shadow: inset 0 0 0 2px #ff4dff, inset 0 0 20px #00000080, 0 0 40px #ff4dffee; animation: legPulse 500ms ease-in-out infinite alternate; }
+.slot-cell.cs-glow.rar-common    { color: #9a8fa6; box-shadow: inset 0 0 0 2px #9a8fa6, inset 0 0 14px #00000080, 0 0 14px #9a8fa677; }
+.slot-cell.cs-glow.rar-uncommon  { color: #4dff91; box-shadow: inset 0 0 0 2px #4dff91, inset 0 0 14px #00000080, 0 0 18px #4dff91aa; }
+.slot-cell.cs-glow.rar-rare      { color: #4dc4ff; box-shadow: inset 0 0 0 2px #4dc4ff, inset 0 0 14px #00000080, 0 0 22px #4dc4ffaa; }
+.slot-cell.cs-glow.rar-epic      { color: #b362ff; box-shadow: inset 0 0 0 2px #b362ff, inset 0 0 14px #00000080, 0 0 26px #b362ffaa; }
+.slot-cell.cs-glow.rar-legendary { color: #ff7a1a; box-shadow: inset 0 0 0 2px #ff7a1a, inset 0 0 18px #00000080, 0 0 32px #ff7a1add; animation: legPulse 700ms ease-in-out infinite alternate; }
+.slot-cell.cs-glow.rar-mythical  { color: #ff3146; box-shadow: inset 0 0 0 2px #ff3146, inset 0 0 20px #00000080, 0 0 40px #ff3146ee; animation: legPulse 500ms ease-in-out infinite alternate; }
 @keyframes legPulse {
   from { box-shadow: inset 0 0 0 2px #ffd166, inset 0 0 18px #00000080, 0 0 26px #ffd166aa; }
   to   { box-shadow: inset 0 0 0 2px #fff,    inset 0 0 22px #00000080, 0 0 44px #ffd166ff; }
@@ -1797,26 +1830,26 @@ canvas#game {
   border-radius: 50%;
   pointer-events: none;
   z-index: 9000;
-  background: rgba(0, 10, 20, 0.30);
+  background: rgba(0, 10, 20, 0.10);
   transition: border-color 0.12s, box-shadow 0.12s;
 }
 .static-ring-left {
   left: 27px; bottom: 70px;
-  border: 2px solid rgba(77, 255, 212, 0.40);
-  box-shadow: inset 0 0 14px rgba(0,0,0,0.4), 0 0 8px rgba(77, 255, 212, 0.22);
+  border: 2px solid rgba(77, 255, 212, 0.18);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.25), 0 0 5px rgba(77, 255, 212, 0.08);
 }
 .static-ring-right {
   right: 27px; bottom: 70px;
-  border: 2px solid rgba(255, 150, 50, 0.40);
-  box-shadow: inset 0 0 14px rgba(0,0,0,0.4), 0 0 8px rgba(255, 150, 50, 0.22);
+  border: 2px solid rgba(255, 150, 50, 0.18);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.25), 0 0 5px rgba(255, 150, 50, 0.08);
 }
 .static-ring-left.active {
-  border-color: rgba(77, 255, 212, 0.80);
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.4), 0 0 16px rgba(77, 255, 212, 0.45);
+  border-color: rgba(77, 255, 212, 0.55);
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.3), 0 0 12px rgba(77, 255, 212, 0.25);
 }
 .static-ring-right.active {
-  border-color: rgba(255, 150, 50, 0.80);
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.4), 0 0 16px rgba(255, 150, 50, 0.45);
+  border-color: rgba(255, 150, 50, 0.55);
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.3), 0 0 12px rgba(255, 150, 50, 0.25);
 }
 
 /* Knobs — CSS centers at ring center; offset by JS transform */
@@ -1833,11 +1866,13 @@ canvas#game {
 /* Center: x=90, y=vh-133 → left: 90-26=64, bottom: 133-26=107 */
 .static-knob-left {
   left: 64px; bottom: 107px;
+  opacity: 0.45;
   background: radial-gradient(circle at 35% 30%, #aef9ff, #1a5d99 70%);
 }
 /* Center: x=vw-90, y=vh-133 → right: 90-26=64, bottom: 133-26=107 */
 .static-knob-right {
   right: 64px; bottom: 107px;
+  opacity: 0.45;
   background: radial-gradient(circle at 35% 30%, #ffe8c2, #b54a08 70%);
 }
 
@@ -1859,19 +1894,19 @@ canvas#game {
 /* ── Dash-cooldown ring states on left stick ──────────────────── */
 /* Default (idle / dash-ready): gentle teal pulse */
 .static-ring-left.dash-ready {
-  border-color: rgba(77, 255, 212, 0.75) !important;
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.35), 0 0 14px rgba(77, 255, 212, 0.40) !important;
+  border-color: rgba(77, 255, 212, 0.45) !important;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.28), 0 0 10px rgba(77, 255, 212, 0.20) !important;
   animation: dash-pulse 2s ease-in-out infinite;
 }
 /* On cooldown: amber/dim */
 .static-ring-left.dash-cd {
-  border-color: rgba(255, 180, 50, 0.40) !important;
-  box-shadow: inset 0 0 14px rgba(0,0,0,0.4), 0 0 6px rgba(255, 180, 50, 0.18) !important;
+  border-color: rgba(255, 180, 50, 0.22) !important;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 0 4px rgba(255, 180, 50, 0.10) !important;
   animation: none;
 }
 @keyframes dash-pulse {
-  0%, 100% { box-shadow: inset 0 0 10px rgba(0,0,0,0.35), 0 0 8px rgba(77,255,212,0.25); }
-  50%       { box-shadow: inset 0 0 10px rgba(0,0,0,0.35), 0 0 18px rgba(77,255,212,0.55); }
+  0%, 100% { box-shadow: inset 0 0 8px rgba(0,0,0,0.25), 0 0 5px rgba(77,255,212,0.15); }
+  50%       { box-shadow: inset 0 0 8px rgba(0,0,0,0.25), 0 0 12px rgba(77,255,212,0.30); }
 }
 
 /* ── Active skill buttons at top of rings ─────────────────────── */
@@ -1884,13 +1919,14 @@ canvas#game {
   display: flex; align-items: center; justify-content: center;
   font-size: 18px; line-height: 1;
   overflow: hidden;
-  border: 2px solid rgba(255,255,255,0.45);
-  background: rgba(10, 20, 35, 0.80);
-  box-shadow: 0 0 10px rgba(0,0,0,0.6), 0 0 16px rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.18);
+  background: rgba(10, 20, 35, 0.45);
+  box-shadow: 0 0 8px rgba(0,0,0,0.4), 0 0 8px rgba(255,255,255,0.05);
   cursor: pointer;
+  opacity: 0.65;
   -webkit-tap-highlight-color: transparent;
   touch-action: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, opacity 0.15s;
 }
 /* Center of left ring: x=90, ring-top-y: bottom=196 → btn center at bottom=196 */
 .joy-skill-left  { left: 71px;  bottom: 177px; }
@@ -1898,8 +1934,9 @@ canvas#game {
 .joy-skill-right { right: 71px; bottom: 177px; }
 
 .joy-skill-btn.ready {
-  border-color: rgba(77, 255, 212, 0.80);
-  box-shadow: 0 0 10px rgba(0,0,0,0.5), 0 0 20px rgba(77, 255, 212, 0.50);
+  border-color: rgba(77, 255, 212, 0.55);
+  box-shadow: 0 0 8px rgba(0,0,0,0.4), 0 0 12px rgba(77, 255, 212, 0.28);
+  opacity: 0.80;
 }
 .joy-skill-btn:active {
   transform: scale(0.88);

@@ -212,11 +212,11 @@ export const EQUIP_BASE = {
 // rarity adds a stat slot and multiplies values
 export const EQUIP_RARITY = {
   common:    { mult: 1.0, slots: 1, color: '#9a8fa6', cls: 'r-common' },
-  magic:     { mult: 1.5, slots: 2, color: '#4dc4ff', cls: 'r-magic' },
-  rare:      { mult: 2.0, slots: 3, color: '#ffd166', cls: 'r-rare' },
+  uncommon:  { mult: 1.5, slots: 2, color: '#4dff91', cls: 'r-uncommon' },
+  rare:      { mult: 2.0, slots: 3, color: '#4dc4ff', cls: 'r-rare' },
   epic:      { mult: 2.7, slots: 4, color: '#b362ff', cls: 'r-epic' },
   legendary: { mult: 3.6, slots: 5, color: '#ff7a1a', cls: 'r-legendary' },
-  mythical:  { mult: 5.5, slots: 6, color: '#ff4dff', cls: 'r-mythical' },
+  mythical:  { mult: 5.5, slots: 6, color: '#ff3146', cls: 'r-mythical' },
 };
 const EQUIP_NAMES = {
   head: ['Helm of Tides', 'Drowned Crown', 'Visor of Horus', 'Skull of A.I.D.A.', 'Cap of Echoes'],
@@ -259,8 +259,8 @@ export function rollEquip(rarity, level = 1) {
 
 // ---------- CHESTS ----------
 export const CHESTS = [
-  { id: 'wood',     name: 'Wooden Chest',    icon: '📦',  cost: 100,  rolls: 1, rarityWeights: { common: 80, magic: 18, rare: 2 } },
-  { id: 'iron',     name: 'Iron Chest',      icon: '🗄',  cost: 350,  rolls: 1, rarityWeights: { magic: 65, rare: 28, epic: 7 } },
+  { id: 'wood',     name: 'Wooden Chest',    icon: '📦',  cost: 100,  rolls: 1, rarityWeights: { common: 80, uncommon: 18, rare: 2 } },
+  { id: 'iron',     name: 'Iron Chest',      icon: '🗄',  cost: 350,  rolls: 1, rarityWeights: { uncommon: 65, rare: 28, epic: 7 } },
   { id: 'gold',     name: 'Gold Chest',      icon: '🏆',  cost: 1200, rolls: 2, rarityWeights: { rare: 60, epic: 32, legendary: 8 } },
   { id: 'annunaki', name: 'Annunaki Cache',  icon: '🛸',  cost: 4500, rolls: 3, rarityWeights: { epic: 70, legendary: 30 } },
 ];
@@ -330,11 +330,24 @@ export function accountLevelReward(level) {
 
 // ---------- MILESTONES ----------
 export const MILESTONES = [
-  { id: 'ms_kills_1k',  name: '1K Kills',     desc: 'Reach 1000 total kills',     metric: 'totalKills', goal: 1000, reward: { gold: 500, sp: 2 } },
-  { id: 'ms_runs_10',   name: '10 Runs',      desc: 'Complete 10 runs',           metric: 'runsCompleted', goal: 10,    reward: { gold: 400, sp: 1 } },
-  { id: 'ms_runs_50',   name: '50 Runs',      desc: 'Complete 50 runs',           metric: 'runsCompleted', goal: 50,    reward: { gold: 2000, sp: 5 } },
-  { id: 'ms_boss',      name: 'Boss Slayer',  desc: 'Defeat A.I.D.A.',            metric: 'aidaSlain', goal: 1,    reward: { gold: 5000, sp: 10 } },
-  { id: 'ms_time_5m',   name: 'Endurance',    desc: 'Survive 5 minutes',          metric: 'bestRunTime', goal: 300, reward: { gold: 600, sp: 2 } },
+  { id: 'ms_kills_1k',  name: '1K Kills',        desc: 'Nå 1000 totala kills',        metric: 'totalKills',    goal: 1000,  reward: { gold: 500,  sp: 2  } },
+  { id: 'ms_kills_5k',  name: '5K Kills',        desc: 'Nå 5000 totala kills',        metric: 'totalKills',    goal: 5000,  reward: { gold: 1500, sp: 5  } },
+  { id: 'ms_kills_20k', name: '20K Kills',       desc: 'Nå 20000 totala kills',       metric: 'totalKills',    goal: 20000, reward: { gold: 5000, sp: 15 } },
+  { id: 'ms_runs_10',   name: '10 Runs',          desc: 'Fullfölj 10 rundor',          metric: 'runsCompleted', goal: 10,    reward: { gold: 400,  sp: 1  } },
+  { id: 'ms_runs_50',   name: '50 Runs',          desc: 'Fullfölj 50 rundor',          metric: 'runsCompleted', goal: 50,    reward: { gold: 2000, sp: 5  } },
+  { id: 'ms_runs_100',  name: '100 Runs',         desc: 'Fullfölj 100 rundor',         metric: 'runsCompleted', goal: 100,   reward: { gold: 6000, sp: 12 } },
+  { id: 'ms_boss',      name: 'A.I.D.A. Slayer',  desc: 'Besegra A.I.D.A.',            metric: 'aidaSlain',     goal: 1,     reward: { gold: 5000, sp: 10 } },
+  { id: 'ms_necro',     name: 'Bone Breaker',     desc: 'Besegra Nekromansen',         metric: 'necroSlain',    goal: 1,     reward: { gold: 1200, sp: 3  } },
+  { id: 'ms_void',      name: 'Titan Toppler',    desc: 'Besegra Void Titan',          metric: 'voidSlain',     goal: 1,     reward: { gold: 2500, sp: 6  } },
+  { id: 'ms_ocular',    name: 'Eye Opener',       desc: 'Besegra Eye of Horus',        metric: 'ocularSlain',   goal: 1,     reward: { gold: 800,  sp: 2  } },
+  { id: 'ms_time_3m',   name: 'Survivor',         desc: 'Överlev 3 minuter',           metric: 'bestRunTime',   goal: 180,   reward: { gold: 400,  sp: 1  } },
+  { id: 'ms_time_5m',   name: 'Endurance',        desc: 'Överlev 5 minuter',           metric: 'bestRunTime',   goal: 300,   reward: { gold: 600,  sp: 2  } },
+  { id: 'ms_time_10m',  name: 'Marathonist',      desc: 'Överlev 10 minuter',          metric: 'bestRunTime',   goal: 600,   reward: { gold: 2000, sp: 6  } },
+  { id: 'ms_level_10',  name: 'Rising',           desc: 'Nå level 10 i en runda',      metric: 'bestLevel',     goal: 10,    reward: { gold: 300,  sp: 1  } },
+  { id: 'ms_level_25',  name: 'Power Surge',      desc: 'Nå level 25 i en runda',      metric: 'bestLevel',     goal: 25,    reward: { gold: 800,  sp: 3  } },
+  { id: 'ms_level_40',  name: 'Ascendant',        desc: 'Nå level 40 i en runda',      metric: 'bestLevel',     goal: 40,    reward: { gold: 2500, sp: 8  } },
+  { id: 'ms_nohit',     name: 'Untouchable',      desc: 'Fullfölj en runda utan att träffas', metric: 'noHitRuns', goal: 1, reward: { gold: 3000, sp: 8  } },
+  { id: 'ms_endless',   name: 'Void Walker',      desc: 'Nå Endless Mode',             metric: 'endlessReached',goal: 1,     reward: { gold: 8000, sp: 20 } },
 ];
 
 // ---------- EXTRA WEAPON (extra variety) ----------

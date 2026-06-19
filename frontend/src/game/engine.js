@@ -997,7 +997,7 @@ export class Game {
     const t = ENEMIES[typeId]; if (!t) return;
     const p = this.player;
     const ang = Math.random() * TAU;
-    const dist = Math.max(this.W, this.H) * 0.7;
+    const dist = Math.max(this.W, this.H) * 0.42;
     const e = this.enemies.acquire();
     e.x = p.x + Math.cos(ang) * dist;
     e.y = p.y + Math.sin(ang) * dist;
@@ -1005,9 +1005,13 @@ export class Game {
     e.maxHp = Math.floor(t.hp * (1 + this.run.time / 600));
     e.hp = e.maxHp;
     e.hit = 0; e.cd = 0; e.dz = 0; e.kbX = 0; e.kbY = 0;
+    // Reset boss-specific state flags so recycled pool objects start clean
+    e._hasFleed = false; e._fleeing = false; e._fleeTimer = 0;
+    e._summonCD = undefined; e._voidCD = undefined;
     this.bossActive = e;
     this.cam.shake = 18;
     this.cam.slowmo = 0.6;
+    this.spawnDamageNumber(p.x, p.y - 60, t.name.toUpperCase() + '!', t.color || '#fff');
   }
 
   updateEnemies(dt) {
@@ -1285,7 +1289,7 @@ export class Game {
         g.y += (dy / Math.max(d, 0.001)) * pull * dt;
       }
       if (d < p.r + 6) {
-        if (g.xp > 0) this.addXp(g.xp);
+        if (g.xp > 0) { this.addXp(g.xp); Audio.xpPing(Math.min(1, this.run.xp / this.run.xpToNext)); }
         if (g.gold > 0) this.run.gold += g.gold;
         this.gems.release(g);
       }
@@ -1637,7 +1641,7 @@ export class Game {
         kind: 'weapon-upgrade', weaponId: id, icon: def.icon,
         name: def.name + (upg && upg.evolve ? ' — EVOLVE!' : (lvl >= def.levelUps.length ? ' +' + (lvl - def.levelUps.length + 2) : ' +')),
         desc: this.describeWeaponUpgrade(def, upg),
-        rarity: upg && upg.evolve ? 'epic' : (lvl >= 4 ? 'rare' : 'magic'),
+        rarity: upg && upg.evolve ? 'epic' : (lvl >= 4 ? 'rare' : 'uncommon'),
       });
     }
     // 2: new weapons

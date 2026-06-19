@@ -1,5 +1,44 @@
 # Waterdrop Survivor — PRD
 
+## Iter 10 (2026-02-XX) — Bugfixes, Rarity Overhaul, UX & Audio
+
+### Rarity-system (slutgiltigt)
+- **6 nivåer**: Common (grå #9a8fa6) → Uncommon (grön #4dff91) → Rare (blå #4dc4ff) → Epic (lila #b362ff) → Legendary (orange #ff7a1a) → Mythical (röd #ff3146)
+- Inget "magic" kvar — renamed till Uncommon överallt (data.js, data_ext.js, data_ext2.js, CampPanels.jsx, index.css)
+- Level-up-kort: tydlig vänster-border per sällsynthet + tonad bakgrund + animated glow för Legendary/Mythical
+- Part-chips, slot-cells, EQUIP_RARITY, CHESTS: alla uppdaterade
+
+### Boss-buggar fixade
+- Eye of Horus speed: 55 → 165 (bossen når nu spelaren!)
+- Nekromansen speed: 50 → 95, Void Titan: 32 → 62, A.I.D.A.: 60 → 145
+- Spawn-avstånd: 0.7 → 0.42 (bossen spawnar nära, on-screen snabbt)
+- Boss flags (_hasFleed, _fleeing, _fleeTimer, _summonCD, _voidCD) resetas vid spawn
+- Boss annonserar sig med namntext vid spawn (t.name + '!')
+
+### Reset-knapp fixad
+- Ersatt window.confirm + window.location.reload med in-app bekräftelsedialog
+- Kallar direkt setSave(DEFAULT_SAVE) + saveLocal + onBack() — ingen sidladdning
+- Svenska bekräftelsetext: "ÄR DU SÄKER? Allt raderas"
+
+### Camp-struktur förbättrad
+- Sidebar omstrukturerad: .camp-tabs-scroll (scrollbar) + .camp-profile-bar (nedan)
+- Profilbild/nivå visas UNDER flik-raden (inte inne i scroll-ytan)
+- Mobil: horisontell scroll med gradient-fade hint på höger sida (visar att det finns mer)
+
+### XP-ljud (Halls of Torment-stil)
+- Audio.xpPing(progress): tonhöjden stiger från 480 Hz (tom XP-bar) till 1880 Hz (full XP-bar)
+- Anropas vid varje XP-gem-pickup
+- Audio.waterDrop(): vattendroppe-ljud vid milstolps-/missions-belöning
+
+### Joystick-transparens
+- Ring-border: 0.40 → 0.18 opacity, glow: 0.22 → 0.08
+- Ring-bakgrund: 0.30 → 0.10 opacity
+- Knob-opacity: 1.0 → 0.45
+- Skill-button: 0.80 → 0.45 bakgrund, ny opacity: 0.65 idle, 0.80 ready
+
+### 18 milstolpar (utökat från 5)
+- Kills: 1K/5K/20K, Runs: 10/50/100, Bossar: alla 4, Tid: 3min/5min/10min, Level: 10/25/40, NoHit, Endless
+
 ## Iter 9 (2026-02-XX) — 6-Step Gameplay Overhaul
 
 ### What was built
