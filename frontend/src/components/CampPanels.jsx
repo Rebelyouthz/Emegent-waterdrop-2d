@@ -471,6 +471,24 @@ export function SettingsPanel({ save, setSave, onClose }) {
             <option value="high">High</option>
           </select>
         </div>
+        <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid #b51d2855' }}>
+          <div style={{ fontFamily: 'VT323, monospace', color: '#ff6675', fontSize: 12, letterSpacing: '0.2em', marginBottom: 6 }}>DANGER ZONE</div>
+          <button
+            data-testid="reset-progress-btn"
+            onClick={() => {
+              if (window.confirm('Reset ALL progress? Gold, weapons, parts, achievements — everything will be wiped. Cannot be undone.')) {
+                try { localStorage.removeItem('wds.save.v1'); } catch (e) {}
+                window.location.reload();
+              }
+            }}
+            style={{ width: '100%', padding: '10px', borderColor: '#b51d28', color: '#ff6675', background: 'linear-gradient(180deg,#2a0a10,#10050a)' }}
+          >
+            🗑 RESET ALL PROGRESS
+          </button>
+          <div style={{ fontSize: 10, color: '#666', fontFamily: 'VT323, monospace', marginTop: 6, textAlign: 'center', letterSpacing: '0.1em' }}>
+            Start from scratch. Your purchase entitlement is kept (linked to your Google account).
+          </div>
+        </div>
       </div>
     </div>
   );

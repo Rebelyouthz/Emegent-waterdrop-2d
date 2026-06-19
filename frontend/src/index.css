@@ -1629,12 +1629,12 @@ canvas#game {
   background: #00000044; border-left: 3px solid #ffffff15;
   font-family: 'VT323', monospace;
 
-/* Weaponsmith scroll hint — visible from start, fades when user scrolls */
+/* Weaponsmith scroll hint — visible from start at TOP, fades when user scrolls */
 .forge-panel-scrollable { position: relative; }
 .forge-scroll-hint {
   position: sticky;
-  bottom: 8px;
-  margin: 6px auto 0;
+  top: 0;
+  margin: 0 auto 6px;
   background: linear-gradient(180deg, #1a0f24, #0a0712);
   border: 1px solid #ffd16699;
   color: #ffd166;
@@ -1646,13 +1646,106 @@ canvas#game {
   border-radius: 12px;
   box-shadow: 0 0 18px #ffd16644;
   pointer-events: none;
-  z-index: 5;
+  z-index: 50;
   animation: scrollHintBlink 1.4s ease-in-out infinite;
 }
 @keyframes scrollHintBlink {
   0%, 100% { transform: translateY(0); opacity: 0.85; }
   50%      { transform: translateY(3px); opacity: 1; }
 }
+
+/* ============================================================
+   DYNAMIC TWIN JOYSTICKS — appear where finger touches
+   ============================================================ */
+.dyn-joy-area {
+  position: fixed;
+  bottom: 0; height: 55vh;
+  width: 50vw;
+  z-index: 100;            /* must be above all HUD chrome */
+  touch-action: none;
+  /* Subtle persistent hint so the player knows where to touch */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 80px;
+  background: radial-gradient(circle at 50% 80%, rgba(77, 255, 212, 0.07) 0, transparent 35%);
+}
+.dyn-area-left  { left: 0; background: radial-gradient(circle at 50% 75%, rgba(77, 196, 255, 0.10) 0, transparent 38%); }
+.dyn-area-right { right: 0; background: radial-gradient(circle at 50% 75%, rgba(255, 122, 26, 0.10) 0, transparent 38%); }
+.dyn-area-left::before, .dyn-area-right::before {
+  content: '';
+  position: absolute;
+  bottom: 90px;
+  left: 50%; transform: translateX(-50%);
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255,255,255,0.18);
+  pointer-events: none;
+  animation: dynJoyHint 2.4s ease-in-out infinite;
+}
+@keyframes dynJoyHint {
+  0%, 100% { opacity: 0.35; transform: translateX(-50%) scale(0.95); }
+  50%      { opacity: 0.7;  transform: translateX(-50%) scale(1.05); }
+}
+.dyn-area-left::after, .dyn-area-right::after {
+  content: 'MOVE / SWIPE TO DASH';
+  position: absolute;
+  bottom: 64px;
+  left: 0; right: 0;
+  text-align: center;
+  font-family: 'VT323', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.4);
+  pointer-events: none;
+}
+.dyn-area-right::after { content: 'AIM / FIRE'; }
+
+.dyn-joy-ring {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 101;
+  border: 3px solid #ffffff20;
+  background: rgba(0,0,0,0.35);
+  box-shadow: inset 0 0 20px #00000080, 0 0 24px #00000080;
+}
+.dyn-joy-ring.dyn-left  { border-color: #4dffd455; box-shadow: inset 0 0 20px #00000080, 0 0 24px #4dffd455; }
+.dyn-joy-ring.dyn-right { border-color: #ff7a1a55; box-shadow: inset 0 0 20px #00000080, 0 0 24px #ff7a1a55; }
+.dyn-joy-knob {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 102;
+  border: 2px solid #00000080;
+  box-shadow: 0 4px 10px #000a;
+}
+.dyn-joy-knob.dyn-left  { background: radial-gradient(circle at 35% 30%, #aef9ff, #1a5d99 70%); }
+.dyn-joy-knob.dyn-right { background: radial-gradient(circle at 35% 30%, #ffe8c2, #b54a08 70%); }
+
+.dash-pip {
+  position: fixed;
+  bottom: 8px; left: 50%; transform: translateX(-50%);
+  z-index: 105;
+  font-family: 'VT323', monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  padding: 3px 12px;
+  border: 1px solid #4dffd455;
+  background: rgba(8, 12, 22, 0.7);
+  pointer-events: none;
+}
+.dash-pip.ready    { color: #4dffd4; border-color: #4dffd488; box-shadow: 0 0 12px #4dffd455; }
+.dash-pip.cooldown { color: #888;   border-color: #555; }
+
+/* HUD bottom stack — must not block joystick touches */
+.hud-bottom-stack { pointer-events: none !important; z-index: 28 !important; }
+.hud-bottom-stack .skill-btn,
+.hud-bottom-stack button { pointer-events: auto; }
+
+/* Hide old static joystick visuals */
+.joy, .joy-stick, .joy-dash-ring { display: none !important; }
+
 
 }
 .lb-top { border-left-color: #ffd166; box-shadow: inset 0 0 0 1px #ffd16633; }

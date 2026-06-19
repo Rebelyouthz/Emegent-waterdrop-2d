@@ -115,6 +115,7 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
 
   useEffect(() => {
     Audio.startMusic();
+    Audio.swapToGameMusic();
     const canvas = canvasRef.current;
     const opts = {
       meta: buildMetaEffects(save),
@@ -152,7 +153,7 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
     const g = new Game(canvas, opts);
     gameRef.current = g;
     if (typeof window !== 'undefined') window.__game = g;
-    return () => { g.destroy(); /* keep music playing across views */ };
+    return () => { g.destroy(); Audio.swapToMenuMusic(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

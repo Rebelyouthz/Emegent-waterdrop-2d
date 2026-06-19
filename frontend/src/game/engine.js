@@ -1667,26 +1667,29 @@ export class Game {
       }
     });
 
-    // Enemies
+    // Enemies — each enemy in its own try/catch so a single broken render
+    // can't kill the whole frame and make everything disappear
     this.enemies.forEach(e => {
-      const t = e.t;
-      // shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.45)';
-      ctx.beginPath(); ctx.ellipse(e.x, e.y + t.size * 0.45, t.size * 0.45, t.size * 0.18, 0, 0, TAU); ctx.fill();
-      // body
-      ctx.fillStyle = e.hit > 0 ? '#fff' : t.color;
-      ctx.shadowColor = t.color; ctx.shadowBlur = t.boss ? 24 : 6;
-      this.drawEnemyShape(e);
-      ctx.shadowBlur = 0;
-      // outline
-      ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
-      this.drawEnemyShape(e, true);
-      // HP bar (only damaged)
-      if (e.hp < e.maxHp) {
-        const bw = t.boss ? 80 : Math.max(20, t.size * 1.2);
-        ctx.fillStyle = '#000'; ctx.fillRect(e.x - bw / 2, e.y - t.size * 0.7 - 6, bw, 4);
-        ctx.fillStyle = '#ff3146'; ctx.fillRect(e.x - bw / 2, e.y - t.size * 0.7 - 6, bw * Math.max(0, e.hp / e.maxHp), 4);
-      }
+      try {
+        const t = e.t;
+        // shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.beginPath(); ctx.ellipse(e.x, e.y + t.size * 0.45, t.size * 0.45, t.size * 0.18, 0, 0, TAU); ctx.fill();
+        // body
+        ctx.fillStyle = e.hit > 0 ? '#fff' : t.color;
+        ctx.shadowColor = t.color; ctx.shadowBlur = t.boss ? 24 : 6;
+        this.drawEnemyShape(e);
+        ctx.shadowBlur = 0;
+        // outline
+        ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+        this.drawEnemyShape(e, true);
+        // HP bar (only damaged)
+        if (e.hp < e.maxHp) {
+          const bw = t.boss ? 80 : Math.max(20, t.size * 1.2);
+          ctx.fillStyle = '#000'; ctx.fillRect(e.x - bw / 2, e.y - t.size * 0.7 - 6, bw, 4);
+          ctx.fillStyle = '#ff3146'; ctx.fillRect(e.x - bw / 2, e.y - t.size * 0.7 - 6, bw * Math.max(0, e.hp / e.maxHp), 4);
+        }
+      } catch (err) { console.error('[draw enemy]', err); ctx.shadowBlur = 0; }
     });
 
     // Player
@@ -2086,12 +2089,9 @@ export class Game {
         }
         ctx.closePath(); break;
       case 'bossOcular': {
-        // Big iris with golden ring + animated pupil — drawn as a stylized eye, not a plain disc
-        const s2 = s * 0.6;
-        // Outer eye-shape (almond)
-        ctx.beginPath();
-        ctx.ellipse(e.x, e.y, s2 * 1.25, s2 * 0.78, 0, 0, TAU);
-        ctx.closePath(); break;
+        // Big visible eye — drawn as a circle (stable rendering, no crash potential)
+        ctx.arc(e.x, e.y, s * 0.6, 0, TAU);
+        break;
       }
       case 'bossAida':
         for (let i = 0; i < 6; i++) {
@@ -2109,38 +2109,30 @@ export class Game {
 
     // Bosses get extra rendering passes (after the outline)
     if (t.id === 'bossOcular' && !outline) {
-      // Golden outer ring with pulse
+      // Pulsing golden outline ring so it's always visible
       const pulse = 0.5 + 0.5 * Math.sin(this.time * 4);
       ctx.strokeStyle = '#ffd166';
       ctx.lineWidth = 4;
-      ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 24;
+      ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 22;
       ctx.beginPath();
-      ctx.ellipse(e.x, e.y, s * 0.72 + pulse * 4, s * 0.45 + pulse * 2.5, 0, 0, TAU);
+      ctx.arc(e.x, e.y, s * 0.68 + pulse * 3, 0, TAU);
       ctx.stroke();
       ctx.shadowBlur = 0;
-      // White inner sclera
-      ctx.fillStyle = '#fffbe0';
-      ctx.beginPath();
-      ctx.ellipse(e.x, e.y, s * 0.65, s * 0.4, 0, 0, TAU);
-      ctx.fill();
-      // Iris (looks at player)
-      const dxp = this.player.x - e.x, dyp = this.player.y - e.y;
-      const dpl = Math.hypot(dxp, dyp) || 1;
-      const irisOffset = Math.min(s * 0.18, dpl * 0.4);
-      const irisX = e.x + (dxp / dpl) * irisOffset;
-      const irisY = e.y + (dyp / dpl) * irisOffset;
-      const irisGrad = ctx.createRadialGradient(irisX, irisY, 1, irisX, irisY, s * 0.25);
-      irisGrad.addColorStop(0, '#ff7a1a');
-      irisGrad.addColorStop(0.6, '#b51d28');
-      irisGrad.addColorStop(1, '#3a0808');
-      ctx.fillStyle = irisGrad;
-      ctx.beginPath(); ctx.arc(irisX, irisY, s * 0.22, 0, TAU); ctx.fill();
-      // Pupil
-      ctx.fillStyle = '#000';
-      ctx.beginPath(); ctx.arc(irisX, irisY, s * 0.09, 0, TAU); ctx.fill();
-      // Specular highlight
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(irisX - s * 0.05, irisY - s * 0.05, s * 0.04, 0, TAU); ctx.fill();
+      // White iris
+      ctx.fillStyle = '#fff8d0';
+      ctx.beginPath(); ctx.arc(e.x, e.y, s * 0.32, 0, TAU); ctx.fill();
+      // Black pupil following the player direction
+      let pdx = 0, pdy = 0;
+      if (this.player) {
+        const dx = this.player.x - e.x, dy = this.player.y - e.y;
+        const d = Math.hypot(dx, dy);
+        if (d > 0.001) { pdx = (dx / d) * s * 0.14; pdy = (dy / d) * s * 0.14; }
+      }
+      ctx.fillStyle = '#0a0510';
+      ctx.beginPath(); ctx.arc(e.x + pdx, e.y + pdy, s * 0.12, 0, TAU); ctx.fill();
+      // Red inner glow
+      ctx.fillStyle = '#ff3146';
+      ctx.beginPath(); ctx.arc(e.x + pdx, e.y + pdy, s * 0.05, 0, TAU); ctx.fill();
     }
     if (t.id === 'bossAida' && !outline) {
       ctx.fillStyle = '#000';

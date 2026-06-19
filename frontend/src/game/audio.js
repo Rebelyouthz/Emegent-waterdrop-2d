@@ -65,27 +65,34 @@ export const Audio = {
     else if (name === 'aegis') { tone(380, 0.20, 'triangle', 0.10); setTimeout(() => tone(540, 0.20, 'triangle', 0.10), 80); }
     else { tone(660, 0.10, 'square', 0.10); }
   },
-  startMusic() {
-    const c = ctx(); if (!c || _musicNode) return;
-    // Try uploaded MP3 BGM first (user's custom Waterdrop Survivor track)
+  _stopMusicNode() {
+    if (_musicNode) {
+      try { _musicNode.disconnect && _musicNode.disconnect(); } catch (e) {}
+      _musicNode = null;
+    }
+  },
+  _playUrl(url) {
     try {
-      // Use relative path so it works in both preview and production
-      const a = new window.Audio('/menu-music.mp3');
+      const a = new window.Audio(url);
       a.loop = true;
       a.volume = Math.max(0, Math.min(1, (_musicVol || 0.15) * 1.6));
-      a.play().catch((err) => console.warn('[Audio] menu mp3 autoplay blocked:', err));
+      a.play().catch(() => {});
       _musicNode = { disconnect: () => { try { a.pause(); a.currentTime = 0; } catch (e) {} }, _mp3: a, gain: { value: a.volume } };
-      return;
-    } catch (e) { console.warn('[Audio] mp3 load failed, falling back to procedural', e); }
-    // Fallback procedural drone
-    const o1 = c.createOscillator(); o1.type = 'sine'; o1.frequency.value = 110;
-    const o2 = c.createOscillator(); o2.type = 'sine'; o2.frequency.value = 110.5;
-    const o3 = c.createOscillator(); o3.type = 'triangle'; o3.frequency.value = 220;
-    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 600;
-    const g = c.createGain(); g.gain.value = _musicVol * 0.4;
-    o1.connect(f); o2.connect(f); o3.connect(f); f.connect(g).connect(_master);
-    o1.start(); o2.start(); o3.start();
-    _musicNode = g;
+    } catch (e) { console.warn('[Audio] play failed', e); }
+  },
+  startMusic() {
+    const c = ctx(); if (!c || _musicNode) return;
+    // Menu/Camp music: user-uploaded waterdrop survivor track
+    this._playUrl('/menu-music.mp3');
+  },
+  swapToGameMusic() {
+    this._stopMusicNode();
+    // In-game music: guitar-bagpipe synapse track
+    this._playUrl('https://customer-assets.emergentagent.com/job_progression-warrior/artifacts/hyp8e5j4_guitarbagpipe-synapse.mp3');
+  },
+  swapToMenuMusic() {
+    this._stopMusicNode();
+    this._playUrl('/menu-music.mp3');
   },
   stopMusic() { if (_musicNode) { try { _musicNode.disconnect(); } catch (e) {} _musicNode = null; } },
 };
