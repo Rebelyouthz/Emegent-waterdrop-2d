@@ -74,7 +74,7 @@
 - Spike Plates visual trap entity
 
 ### Zip download (latest)
-`https://drop-warrior.preview.emergentagent.com/waterdrop-survivor.zip` — now ~7 MB (includes custom mp3).
+`https://waterdrop-preview.preview.emergentagent.com/waterdrop-survivor.zip` — now ~7 MB (includes custom mp3).
 
 ## Iter 7 (2026-06-16) — Google login + Stripe paywall + Leaderboard
 [preserved]
@@ -155,7 +155,7 @@ User reported: after first level-up, modal kept showing the "same" level-up scre
 Wrapped `update/render/onTick` in try/catch with `requestAnimationFrame(this.frame)` ALWAYS re-queued, so no single exception can kill the game loop again (previously caused the "audio works but canvas frozen" symptom).
 
 ### Zip download
-`https://drop-warrior.preview.emergentagent.com/waterdrop-survivor.zip` (264 KB) — refreshed with all iter-6 fixes.
+`https://waterdrop-preview.preview.emergentagent.com/waterdrop-survivor.zip` (264 KB) — refreshed with all iter-6 fixes.
 
 ## Iter 5 (2026-06-16) — Restart fix + visual upgrades + death summary + mobile-fit
 [previous content preserved — see file history]
