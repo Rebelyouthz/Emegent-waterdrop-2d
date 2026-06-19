@@ -9,8 +9,6 @@ export default function HUD({ snap, onActiveSkill }) {
   const missionTimeLeft = snap.targetDuration && snap.targetDuration < 999 ? Math.max(0, snap.targetDuration - snap.time) : null;
 
   const skills = snap.activeSkills || [];
-  const combo = snap.combo;
-  const showCombo = combo && combo.count >= 3;
 
   return (
     <>
@@ -36,16 +34,7 @@ export default function HUD({ snap, onActiveSkill }) {
         </div>
       </div>
 
-      {/* COMBO METER */}
-      {showCombo && (
-        <div className="combo-hud" data-testid="combo-hud" key={combo.count}>
-          <div className="combo-text">COMBO x{combo.count}</div>
-          <div className="combo-sub">×{combo.mult.toFixed(1)} MULT</div>
-          <div className="combo-bar-wrap">
-            <div className="combo-bar-fill" style={{ width: Math.max(0, (combo.timer / 2.5) * 100) + '%' }} />
-          </div>
-        </div>
-      )}
+      {/* COMBO METER - removed */}
 
       <div className="weapon-strip">
         {snap.weapons.map(w => (

@@ -198,6 +198,18 @@ export const ACHIEVEMENTS = [
   { id: 'a_no_hit',       name: 'Untouchable',       icon: '👻', desc: 'Complete a mission without taking damage', metric: 'noHitRuns', goal: 1, rwd: { gold: 600, sp: 3 } },
   { id: 'a_challenge_4',  name: 'Trial Master',      icon: '🏆', desc: 'Complete all challenges', metric: 'challengesCompleted', goal: 4, rwd: { gold: 1500, sp: 5 } },
   { id: 'a_daily_7',      name: 'Devoted',           icon: '📅', desc: '7-day daily login streak', metric: 'dailyStreak', goal: 7, rwd: { gold: 500 } },
+  // Boss hunters
+  { id: 'a_necro',        name: 'Bone Collector',    icon: '💀', desc: 'Defeat The Necromancer',   metric: 'necroSlain', goal: 1, rwd: { gold: 500, sp: 2 } },
+  { id: 'a_void',         name: 'Titan Crusher',     icon: '🌌', desc: 'Defeat the Void Titan',    metric: 'voidSlain',  goal: 1, rwd: { gold: 800, sp: 3 } },
+  { id: 'a_horus',        name: 'Eye Closer',        icon: '👁', desc: 'Defeat the Eye of Horus',  metric: 'horusSlain', goal: 1, rwd: { gold: 300, sp: 1 } },
+  { id: 'a_endless',      name: 'Void Walker',       icon: '♾', desc: 'Reach Endless Mode',        metric: 'endlessReached', goal: 1, rwd: { gold: 2000, sp: 8 } },
+  // Progression milestones
+  { id: 'a_lvl_50',       name: 'Transcendent',      icon: '🌟', desc: 'Reach level 50 in a run',  metric: 'bestKills', goal: 50, rwd: { gold: 3000, sp: 10 } },
+  { id: 'a_kills_50k',    name: 'Reaper',            icon: '⚰', desc: '50,000 total kills',        metric: 'totalKills', goal: 50000, rwd: { gold: 10000, sp: 20 } },
+  { id: 'a_runs_100',     name: 'Centurion',         icon: '🎖', desc: '100 runs completed',        metric: 'runsCompleted', goal: 100, rwd: { gold: 5000, sp: 15 } },
+  { id: 'a_gold_50k',     name: 'Dragon Hoard',      icon: '💎', desc: 'Earn 50k lifetime gold',   metric: 'lifetimeGold', goal: 50000, rwd: { sp: 10 } },
+  { id: 'a_nohit_5',      name: 'Phantom',           icon: '🌫', desc: 'Complete 5 no-hit runs',   metric: 'noHitRuns', goal: 5, rwd: { gold: 2500, sp: 8 } },
+  { id: 'a_maps_all',     name: 'Cartographer',      icon: '🗺', desc: 'Complete all map stages',  metric: 'mapsCompleted', goal: 4, rwd: { gold: 5000, sp: 15 } },
 ];
 
 // ---------- STAGES (visual themes + spawn mods) ----------
@@ -322,3 +334,47 @@ export const KILL_FX = {
   orbit:      'ash',        // burnt to ash
   meteor:     'gibs',
 };
+
+// ---------- MAP STAGES (progression paths) ----------
+export const MAP_STAGES = [
+  {
+    id: 'lake', name: 'The Lake', icon: '🌊', color: '#4dc4ff',
+    desc: 'Where it all began. Corrupted slimes and bats swarm the shallows.',
+    unlock: null,
+    nodes: [
+      { id: 'lake_1', name: 'Shallows',  diff: 1, duration: 120, spawnMult: 1.0, enemyMix: ['slime','bat'],             rwd: { gold: 200 },         unlockGoal: null },
+      { id: 'lake_2', name: 'Undertow',  diff: 2, duration: 240, spawnMult: 1.3, enemyMix: ['slime','bat','ghoul'],     rwd: { gold: 450, sp: 1 },  unlockGoal: 'lake_1' },
+      { id: 'lake_3', name: 'The Abyss', diff: 3, duration: 420, spawnMult: 1.7, enemyMix: ['bat','ghoul','ranger'],    rwd: { gold: 900, sp: 2 },  unlockGoal: 'lake_2' },
+    ],
+  },
+  {
+    id: 'ruins', name: 'Sunken Ruins', icon: '🏛', color: '#ffd166',
+    desc: 'Forgotten halls where ranged threats lurk behind crumbling pillars.',
+    unlock: { metric: 'totalKills', goal: 200, label: '200 kills' },
+    nodes: [
+      { id: 'ruins_1', name: 'Outer Hall',    diff: 1, duration: 150, spawnMult: 1.1, enemyMix: ['ghoul','ranger'],          rwd: { gold: 350, sp: 1 }, unlockGoal: null },
+      { id: 'ruins_2', name: 'Inner Chamber', diff: 2, duration: 300, spawnMult: 1.4, enemyMix: ['ghoul','ranger','brute'],   rwd: { gold: 700, sp: 2 }, unlockGoal: 'ruins_1' },
+      { id: 'ruins_3', name: 'Throne Room',   diff: 3, duration: 480, spawnMult: 2.0, enemyMix: ['ranger','brute','charger'], rwd: { gold: 1400, sp: 4 }, unlockGoal: 'ruins_2' },
+    ],
+  },
+  {
+    id: 'void', name: 'Void Lab', icon: '🌌', color: '#b362ff',
+    desc: "A.I.D.A.'s abandoned research chambers. Eldritch fiends in every corridor.",
+    unlock: { metric: 'runsCompleted', goal: 5, label: '5 runs' },
+    nodes: [
+      { id: 'void_1', name: 'Corridor',  diff: 1, duration: 180, spawnMult: 1.2, enemyMix: ['bat','charger'],           rwd: { gold: 500, sp: 1 },  unlockGoal: null },
+      { id: 'void_2', name: 'Lab Core',  diff: 2, duration: 360, spawnMult: 1.6, enemyMix: ['charger','necron'],        rwd: { gold: 1000, sp: 3 }, unlockGoal: 'void_1' },
+      { id: 'void_3', name: 'Void Heart',diff: 3, duration: 540, spawnMult: 2.2, enemyMix: ['necron','charger','brute'],rwd: { gold: 2200, sp: 6 }, unlockGoal: 'void_2' },
+    ],
+  },
+  {
+    id: 'ship', name: 'Annunaki Ship', icon: '🛸', color: '#ff7a1a',
+    desc: 'The final frontier. Elite units guard the control deck. A.I.D.A. waits inside.',
+    unlock: { metric: 'aidaSlain', goal: 1, label: 'Defeat A.I.D.A.' },
+    nodes: [
+      { id: 'ship_1', name: 'Hangar Bay',   diff: 1, duration: 240, spawnMult: 1.4, enemyMix: ['brute','ranger'],           rwd: { gold: 800, sp: 2 },  unlockGoal: null },
+      { id: 'ship_2', name: 'Command Deck', diff: 2, duration: 420, spawnMult: 1.8, enemyMix: ['brute','charger','necron'], rwd: { gold: 1600, sp: 5 }, unlockGoal: 'ship_1' },
+      { id: 'ship_3', name: 'Core Override',diff: 3, duration: 600, spawnMult: 2.5, enemyMix: ['necron','charger','brute'], rwd: { gold: 3500, sp: 10 },unlockGoal: 'ship_2' },
+    ],
+  },
+];

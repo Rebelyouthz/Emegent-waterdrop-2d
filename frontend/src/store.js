@@ -32,6 +32,11 @@ export const DEFAULT_SAVE = {
   milestones: { claimed: {} },
   // stats
   aidaSlain: 0,
+  necroSlain: 0,
+  voidSlain: 0,
+  horusSlain: 0,
+  endlessReached: 0,
+  mapProgress: {},
 };
 
 export function loadSave() {
@@ -48,6 +53,7 @@ export function loadSave() {
     s.weaponParts = s.weaponParts || {};
     s.inventory = s.inventory || [];
     s.equipped = s.equipped || {};
+    s.mapProgress = s.mapProgress || {};
     return s;
   } catch { return { ...DEFAULT_SAVE }; }
 }

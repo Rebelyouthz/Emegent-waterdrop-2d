@@ -129,15 +129,14 @@ export class Game {
     this._aidaKilled = false;
     this._endlessAnnounced = false;
 
-    // Combo / kill-streak
-    this.combo = { count: 0, timer: 0, mult: 1 };
-    this._recentKillTimes = [];
-
     // Canvas visual effects state
     this._bossDeathFlash = 0;
     this._critPunch = 0;
     this._levelUpFlash = 0;
-    this._lights = [];       // [{x,y,r,color,life,max}]
+    // Boss-specific kill tracking
+    this._necroKilled = false;
+    this._voidKilled = false;
+    this._horusKilled = false;
 
     // Active skills slots and cooldowns
     this.activeSkills = (opts.activeSkills || []).slice(0, 4);
@@ -317,7 +316,9 @@ export class Game {
       challenge: this.challenge,
       aidaKilled: this._aidaKilled,
       endless: this._endlessAnnounced,
-      combo: { count: this.combo.count, timer: this.combo.timer, mult: this.combo.mult },
+      necroKilled: this._necroKilled,
+      voidKilled:  this._voidKilled,
+      horusKilled: this._horusKilled,
     };
   }
 
@@ -350,24 +351,10 @@ export class Game {
     this.spawnWave(dt);
     this.tickCardFlags(dt);
 
-    // Combo decay
-    if (this.combo.timer > 0) {
-      this.combo.timer -= dt;
-      if (this.combo.timer <= 0) {
-        this.combo.count = 0;
-        this.combo.mult = 1;
-        this._recentKillTimes = [];
-      }
-    }
     // Canvas effects decay
     this._bossDeathFlash = Math.max(0, this._bossDeathFlash - dt * 2.5);
     this._critPunch      = Math.max(0, this._critPunch - dt * 5);
     this._levelUpFlash   = Math.max(0, this._levelUpFlash - dt * 4);
-    // Point lights decay
-    for (let i = this._lights.length - 1; i >= 0; i--) {
-      this._lights[i].life -= dt;
-      if (this._lights[i].life <= 0) this._lights.splice(i, 1);
-    }
 
     if (this.nextBoss && this.run.time >= this.nextBoss.t && !this.bossActive) {
       this.spawnBoss(this.nextBoss.event);
@@ -1372,25 +1359,10 @@ export class Game {
     e.alive = false;
     this.run.kills += 1;
 
-    // ---- Combo tracking ----
-    const nowT = this.run.time;
-    this._recentKillTimes = this._recentKillTimes.filter(t => nowT - t < 1.5);
-    this._recentKillTimes.push(nowT);
-    if (this._recentKillTimes.length >= 3) {
-      const cnt = this._recentKillTimes.length;
-      if (cnt > this.combo.count || this.combo.timer <= 0) {
-        this.combo.count = cnt;
-        this.combo.mult = 1 + (cnt - 2) * 0.25;
-      }
-      this.combo.timer = 2.5;
-      if (cnt >= 3 && cnt !== (this.combo.count - 1)) {
-        Audio.crit(); // short audio sting for combo
-      }
-    }
-    // ---- Point light on kill ----
-    if (!t.boss && this._lights.length < 30) {
-      this._lights.push({ x: e.x, y: e.y, r: 55 + t.size * 1.2, color: t.color, life: 0.28, max: 0.28 });
-    }
+    // ---- Boss-specific kill tracking ----
+    if (t.id === 'bossNecromancer') this._necroKilled = true;
+    if (t.id === 'bossVoidTitan')   this._voidKilled = true;
+    if (t.id === 'bossOcular')      this._horusKilled = true;
     const inCascade = this._inCascade; this._inCascade = true;
     if (!inCascade) {
       if (s.voidBurst > 0 && Math.random() < s.voidBurst) {
@@ -1421,7 +1393,7 @@ export class Game {
     if (Math.random() < 0.6) {
       const g = this.gems.acquire();
       g.x = e.x + rand(-8, 8); g.y = e.y + rand(-8, 8); g.t = 0;
-      g.gold = Math.max(1, Math.floor(t.gold * s.goldMult * (this.combo.mult || 1)));
+      g.gold = Math.max(1, Math.floor(t.gold * s.goldMult));
       g.xp = 0;
     }
     if (t.boss) {
@@ -1498,7 +1470,7 @@ export class Game {
 
   addXp(amount) {
     const r = this.run;
-    r.xp += Math.floor(amount * r.stats.xpMult * (this.combo.mult || 1));
+    r.xp += Math.floor(amount * r.stats.xpMult);
     this._maybeLevelUp();
   }
 
@@ -1866,21 +1838,6 @@ export class Game {
         ctx.shadowBlur = 0;
       }
     });
-
-    // ---- Point lights (additive glow on kill, under enemies) ----
-    if (this._lights.length > 0) {
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      for (const l of this._lights) {
-        const a = (l.life / l.max) * 0.22;
-        ctx.globalAlpha = a;
-        ctx.fillStyle = l.color;
-        ctx.beginPath(); ctx.arc(l.x, l.y, l.r, 0, TAU); ctx.fill();
-      }
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = 1;
-      ctx.restore();
-    }
 
     // Enemies — each enemy in its own try/catch so a single broken render
     // can't kill the whole frame and make everything disappear

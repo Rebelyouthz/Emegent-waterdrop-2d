@@ -101,6 +101,15 @@ function AppInner() {
       }
     }
     if (result.victory) ns.aidaSlain = (ns.aidaSlain || 0) + 1;
+    if (result.necroKilled) ns.necroSlain = (ns.necroSlain || 0) + 1;
+    if (result.voidKilled)  ns.voidSlain  = (ns.voidSlain  || 0) + 1;
+    if (result.horusKilled) ns.horusSlain = (ns.horusSlain || 0) + 1;
+    if (result.endless)     ns.endlessReached = (ns.endlessReached || 0) + 1;
+    if (mission && mission.isMap && result.victory && mission.mapNodeId) {
+      ns.mapProgress = { ...(ns.mapProgress || {}), [mission.mapNodeId]: true };
+      ns.gold = (ns.gold || 0) + (mission.rwd?.gold || 0);
+      ns.sp   = (ns.sp   || 0) + (mission.rwd?.sp   || 0);
+    }
     addAccountXp(ns, result.kills * 2 + result.level * 5 + (result.victory ? 200 : 0) + Math.floor(result.time / 6));
     ns.sp = (ns.sp || 0) + 1 + Math.floor(result.level / 5);
     setSave(ns);

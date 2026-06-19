@@ -5,7 +5,7 @@ import { applyReward, DEFAULT_SAVE, saveLocal } from '../store';
 import SkillTree from './SkillTree';
 import Weaponsmith from './Weaponsmith';
 import Shop from './Shop';
-import { MissionsPanel, ChallengesPanel, AchievementsPanel, CardShopModal, ActiveLoadoutPanel, WeaponCrafting, SettingsPanel, PartsInventory } from './CampPanels';
+import { MissionsPanel, ChallengesPanel, AchievementsPanel, CardShopModal, ActiveLoadoutPanel, WeaponCrafting, SettingsPanel, PartsInventory, MapsPanel } from './CampPanels';
 import { Audio } from '../game/audio';
 
 const openChest = (chestId) => {
@@ -68,8 +68,10 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
               ★ {save.gold}<br />◆ {save.sp} SP
             </div>
           </div>
+          <div className="camp-scroll-hint">↓ scroll for more ↓</div>
           <div className="camp-tabs-scroll">
             <button className={`camp-tab ${tab === 'cards' ? 'active' : ''}`} onClick={() => setTab('cards')} data-testid="tab-cards">💠 META</button>
+            <button className={`camp-tab ${tab === 'maps' ? 'active' : ''}`} onClick={() => setTab('maps')} data-testid="tab-maps">🗺 MAPS</button>
             <button className={`camp-tab ${tab === 'missions' ? 'active' : ''}`} onClick={() => setTab('missions')} data-testid="tab-missions">📋 MISSIONS</button>
             <button className={`camp-tab ${tab === 'challenges' ? 'active' : ''}`} onClick={() => setTab('challenges')} data-testid="tab-challenges">🏆 CHALLENGES</button>
             <button className={`camp-tab ${tab === 'achievements' ? 'active' : ''}`} onClick={() => setTab('achievements')} data-testid="tab-ach">🎖 ACHIEVEMENTS</button>
@@ -123,6 +125,7 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
           )}
 
           {tab === 'missions' && <MissionsPanel save={save} setSave={setSave} onStart={onMission} />}
+          {tab === 'maps' && <MapsPanel save={save} setSave={setSave} onStart={(cfg) => onMission(cfg)} />}
           {tab === 'challenges' && <ChallengesPanel save={save} setSave={setSave} onStart={(c) => onMission({ ...c, isChallenge: true })} />}
           {tab === 'achievements' && <AchievementsPanel save={save} setSave={setSave} />}
 
@@ -160,6 +163,10 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
                 <Stat label="Best Run Time" val={fmtTime(save.bestRunTime)} />
                 <Stat label="Best Run Level" val={save.bestKills} />
                 <Stat label="A.I.D.A. Slain" val={save.aidaSlain} />
+                <Stat label="Necromancer Slain" val={save.necroSlain || 0} />
+                <Stat label="Void Titan Slain" val={save.voidSlain || 0} />
+                <Stat label="Eye of Horus Slain" val={save.horusSlain || 0} />
+                <Stat label="Endless Mode Reached" val={save.endlessReached || 0} />
                 <Stat label="Account Rank" val={save.profile.level} />
                 <Stat label="Skill Points" val={save.sp} />
                 <Stat label="Gold Hoarded" val={save.gold} />

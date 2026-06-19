@@ -1,6 +1,6 @@
 // Combined extended Camp panels in one file to save bundle weight.
 import React, { useState, useEffect } from 'react';
-import { MISSION_DEFS, MISSION_DAILY_LIMIT, MISSION_REGEN_MS, rollMissionRewards, ACHIEVEMENTS, CHALLENGES, STAGES, MILESTONE_BAR, SHOP_CARD_POOL, shopCardCost, rollShopPull, ACTIVE_SKILLS, ACTIVE_SKILL_KEYS, ADVANCED_CARDS, STARTER_WEAPONS, PART_RARITY_COLORS, PART_SLOTS, PART_SLOT_INFO, STAT_DISPLAY, rollPart } from '../game/data_ext2';
+import { MISSION_DEFS, MISSION_DAILY_LIMIT, MISSION_REGEN_MS, rollMissionRewards, ACHIEVEMENTS, CHALLENGES, STAGES, MILESTONE_BAR, SHOP_CARD_POOL, shopCardCost, rollShopPull, ACTIVE_SKILLS, ACTIVE_SKILL_KEYS, ADVANCED_CARDS, STARTER_WEAPONS, PART_RARITY_COLORS, PART_SLOTS, PART_SLOT_INFO, STAT_DISPLAY, rollPart, MAP_STAGES } from '../game/data_ext2';
 import { Audio } from '../game/audio';
 import { accountXpToNext } from '../game/data_ext';
 
@@ -110,6 +110,11 @@ export function AchievementsPanel({ save, setSave }) {
     if (k === 'chestsOpened') return save.chestsOpened || 0;
     if (k === 'lifetimeGold') return save.lifetimeGold || save.gold || 0;
     if (k === 'noHitRuns') return save.noHitRuns || 0;
+    if (k === 'necroSlain') return save.necroSlain || 0;
+    if (k === 'voidSlain')  return save.voidSlain  || 0;
+    if (k === 'horusSlain') return save.horusSlain || 0;
+    if (k === 'endlessReached') return save.endlessReached || 0;
+    if (k === 'mapsCompleted') return MAP_STAGES.filter(s => s.nodes.every(n => (save.mapProgress || {})[n.id])).length;
     return save[k] || 0;
   };
   const claim = (a) => {
@@ -591,5 +596,92 @@ export function PartsInventory({ save, setSave, onClose }) {
         </div>
       </div>
     </div>
+  );
+}
+
+
+const DIFF_LABEL = ['', 'EASY', 'MEDIUM', 'HARD'];
+const DIFF_COLOR = ['', '#4dffd4', '#ffd166', '#ff7a1a'];
+
+export function MapsPanel({ save, setSave, onStart }) {
+  const progress = save.mapProgress || {};
+
+  const canUnlockStage = (stage) => {
+    if (!stage.unlock) return true;
+    const val = save[stage.unlock.metric] || 0;
+    return val >= stage.unlock.goal;
+  };
+
+  const canStartNode = (stage, node) => {
+    if (!canUnlockStage(stage)) return false;
+    if (!node.unlockGoal) return true;
+    return !!progress[node.unlockGoal];
+  };
+
+  const startNode = (stage, node) => {
+    onStart({
+      isMap: true,
+      mapNodeId: node.id,
+      duration: node.duration,
+      spawnMult: node.spawnMult,
+      stageId: stage.id,
+      rwd: node.rwd,
+      name: `${stage.name} — ${node.name}`,
+    });
+  };
+
+  return (
+    <>
+      <div className="camp-header"><h1>World Map</h1></div>
+      <div className="maps-grid">
+        {MAP_STAGES.map(stage => {
+          const unlocked = canUnlockStage(stage);
+          const stageComplete = stage.nodes.every(n => progress[n.id]);
+          return (
+            <div className={`map-stage-card ${unlocked ? '' : 'locked'} ${stageComplete ? 'complete' : ''}`} key={stage.id} data-testid={`map-stage-${stage.id}`}
+              style={{ borderColor: unlocked ? stage.color + '88' : '#333', boxShadow: unlocked ? `0 0 18px ${stage.color}22` : 'none' }}>
+              <div className="map-stage-head" style={{ color: stage.color }}>
+                <span style={{ fontSize: 22 }}>{stage.icon}</span>
+                <span className="map-stage-name">{stage.name}</span>
+                {stageComplete && <span style={{ color: '#4dffd4', fontSize: 12, marginLeft: 'auto' }}>✓ DONE</span>}
+              </div>
+              <div className="map-stage-desc">{stage.desc}</div>
+              {!unlocked && stage.unlock && (
+                <div className="map-stage-lock">🔒 Unlock: {stage.unlock.label} ({save[stage.unlock.metric] || 0}/{stage.unlock.goal})</div>
+              )}
+              {unlocked && (
+                <div className="map-nodes">
+                  {stage.nodes.map(node => {
+                    const done = !!progress[node.id];
+                    const canStart = canStartNode(stage, node);
+                    const mins = Math.floor(node.duration / 60);
+                    const secs = node.duration % 60;
+                    const timeLabel = mins > 0 ? `${mins}m${secs > 0 ? secs + 's' : ''}` : `${secs}s`;
+                    return (
+                      <div className={`map-node ${done ? 'done' : ''} ${canStart ? '' : 'node-locked'}`} key={node.id} data-testid={`map-node-${node.id}`}>
+                        <div className="node-diff" style={{ color: DIFF_COLOR[node.diff] }}>{DIFF_LABEL[node.diff]}</div>
+                        <div className="node-name">{node.name}</div>
+                        <div className="node-meta">{timeLabel} · ×{node.spawnMult} spawn</div>
+                        <div className="node-rwd">
+                          {node.rwd.gold && <span>★ {node.rwd.gold}</span>}
+                          {node.rwd.sp   && <span> ◆ {node.rwd.sp} SP</span>}
+                        </div>
+                        {done
+                          ? <div style={{ color: '#4dffd4', fontFamily: 'VT323', letterSpacing: '0.2em', fontSize: 13 }}>✓ CLEARED</div>
+                          : <button disabled={!canStart} onClick={() => startNode(stage, node)}
+                              style={{ borderColor: canStart ? stage.color : '#444', color: canStart ? stage.color : '#555' }}>
+                              {canStart ? '▸ START' : '🔒 LOCKED'}
+                            </button>
+                        }
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }

@@ -1,6 +1,38 @@
 # Waterdrop Survivor — PRD
 
-## Iter 10 (2026-02-XX) — Bugfixes, Rarity Overhaul, UX & Audio
+## Iter 11 (2026-02) — Camp UI, HUD Fixes, Combo System & Canvas VFX
+
+### Camp UI Layout
+- Profile/avatar bar moved to TOP of sidebar (above all tab buttons)
+- Camp header "Forge Your Edge" reduced from 30px → 22px, centered
+- Tab buttons enlarged: padding 14px 18px, scroll hint updated to ::after on tabs
+- `camp-profile-bar` now has `border-bottom` (was border-top)
+
+### HUD Boss Bar Fix
+- Boss bar extracted from `.hud-top` → separate `position:fixed top:0` element
+- No longer overlaps weapon strip or XP bar
+- CSS: `.boss-active ~ .weapon-strip` pushes strip to top:160px when boss active
+
+### XP Audio Throttle
+- `_xpPingLastT` variable, xpPing limited to max 1 call per 100ms
+- Fixes inaudible rapid-fire XP sound when collecting multiple gems per frame
+
+### Combo / Kill-Streak System
+- Track kills within 1.5s rolling window in `_recentKillTimes`
+- 3+ kills → COMBO xN (gold/XP multiplier = 1 + (N-2)×0.25)
+- Combo resets after 2.5s inactivity
+- HUD: centered "COMBO xN / ×M.M MULT" overlay with animated pop + timer bar
+- Gold drops and XP gains multiplied by `combo.mult`
+
+### Canvas Visual Effects (60-120 FPS optimized)
+- **Muzzle flash**: radialGradient burst + 4 lens flare lines on fresh shots (recoil > 0.5)
+- **Point lights**: additive (`lighter` composite) glow blobs on each enemy kill, capped at 30
+- **Speed trails**: ghost-tails on enemies with speed > 88 (3-frame trail, decreasing alpha)
+- **Boss death flash**: full screen yellow flash + expanding ring on boss kill (`_bossDeathFlash`)
+- **Level-up flash**: teal radialGradient screen overlay + actual 55dmg shockwave to nearby enemies
+- **Crit screen-punch**: red vignette at screen edges + white center flash on crit (`_critPunch`)
+
+
 
 ### Rarity-system (slutgiltigt)
 - **6 nivåer**: Common (grå #9a8fa6) → Uncommon (grön #4dff91) → Rare (blå #4dc4ff) → Epic (lila #b362ff) → Legendary (orange #ff7a1a) → Mythical (röd #ff3146)
