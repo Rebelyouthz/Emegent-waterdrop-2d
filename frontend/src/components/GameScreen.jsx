@@ -181,7 +181,7 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
   return (
     <div className="game-stage">
       <canvas ref={canvasRef} id="game" data-testid="game-canvas" />
-      <HUD snap={snap} onActiveSkill={onActiveSkill} />
+      {!gameOverResult && <HUD snap={snap} onActiveSkill={onActiveSkill} />}
       <MobileControls onUpdate={onMobileUpdate} onReload={onMobileReload} onDashDir={onMobileDashDir} dashCD={snap ? snap.dashCD : 0} dashReady={snap ? snap.dashReady : false} visible={!gameOverResult} activeSkills={snap ? snap.activeSkills : []} onActiveSkill={onActiveSkill} />
       {levelUpChoices && <LevelUpModal choices={levelUpChoices} onPick={pickCard} playerLevel={snap ? snap.level : 1} />}
       {paused && !gameOverResult && (
