@@ -126,6 +126,8 @@ export class Game {
     this.bossActive = null;
     this.nextBoss = nextBossEvent(0);
     this.bossesKilled = 0;
+    this._aidaKilled = false;
+    this._endlessAnnounced = false;
 
     // Active skills slots and cooldowns
     this.activeSkills = (opts.activeSkills || []).slice(0, 4);
@@ -169,7 +171,7 @@ export class Game {
       squish: 0, tilt: 0, bob: 0,
       recoil: 0,
       orbitAngle: 0,
-      shockwaveCD: 0, scytheCD: 0, beamCD: 0, boltCD: 0,
+      shockwaveCD: 0, scytheCD: 0, beamCD: 0, boltCD: 0, teslaCD: 0,
       meteorCD: 0,
       dashCD: 0, dashing: 0, dashVX: 0, dashVY: 0,
       shieldCharge: 1, shieldCD: 0,
@@ -350,9 +352,13 @@ export class Game {
       if (this.callbacks.onGameOver) this.callbacks.onGameOver({ ...this.snapshot(), victory: true, completed: 'duration' });
     }
 
-    if (this.bossActive === null && this.run.time >= 580 && this.bossesKilled >= 3) {
-      this.victory = true; this.over = true;
-      if (this.callbacks.onGameOver) this.callbacks.onGameOver({ ...this.snapshot(), victory: true });
+    if (this._aidaKilled && !this._endlessAnnounced) {
+      this._endlessAnnounced = true;
+      this.cam.shake = 22; this.cam.slowmo = 0.25;
+      this.spawnDamageNumber(this.player.x, this.player.y - 80, '∞ ENDLESS', '#ff4dff');
+      this.spawnDamageNumber(this.player.x, this.player.y - 50, '+500 GOLD', '#ffd166');
+      this.run.gold += 500;
+      this.spawnRing(this.player.x, this.player.y, 200, '#ff4dff', 0.6);
     }
 
     if (this.player.hp <= 0 && !this.over) {
@@ -708,6 +714,7 @@ export class Game {
         case 'aoe':     stats._behaviour = w.behaviour; w.id === 'shockwave' ? this.weaponShockwave(stats, dt) : this.weaponScythe(stats, dt); break;
         case 'beam':    stats._behaviour = w.behaviour; this.weaponBeam(stats, dt); break;
         case 'meteor':  stats._behaviour = w.behaviour; this.weaponMeteor(stats, dt); break;
+        case 'chain':   stats._behaviour = w.behaviour; this.weaponChain(stats, dt); break;
         default: break;
       }
     }
@@ -807,12 +814,23 @@ export class Game {
     p.scytheCD = 1 / fr;
     const r = (s.area || 120) * rs.areaMult;
     const dmg = this.rollDamage(s.damage * rs.damageMult);
+    const aimAng = Math.atan2(p.aimY, p.aimX);
     let hits = 0;
     this.enemies.forEach(e => {
-      if (dist2(e.x, e.y, p.x, p.y) <= r * r) { this.dealDamage(e, dmg.dmg, dmg.crit, s.knockback || 0, p.x, p.y); hits++; }
+      const edx = e.x - p.x, edy = e.y - p.y;
+      const ed = Math.hypot(edx, edy);
+      if (ed > r) return;
+      // Only hit enemies in the forward 180° arc (within 90° of aim direction)
+      const eAng = Math.atan2(edy, edx);
+      let da = eAng - aimAng;
+      while (da > Math.PI) da -= TAU;
+      while (da < -Math.PI) da += TAU;
+      if (Math.abs(da) <= Math.PI * 0.55) {
+        this.dealDamage(e, dmg.dmg, dmg.crit, s.knockback || 0, p.x, p.y); hits++;
+      }
     });
-    // visual arc
-    this.spawnArc(p.x, p.y, r, s.color);
+    // visual sweeping arc in aim direction
+    this.spawnArc(p.x, p.y, r, s.color, aimAng);
   }
 
   weaponOrbit(s, dt) {
@@ -1042,6 +1060,66 @@ export class Game {
             ep.life = 3.5;
             ep.color = t.color;
             ep.size = 7;
+          }
+        }
+      }
+
+      // === Eye of Horus: flyr vid 50% HP ===
+      if (t.id === 'bossOcular') {
+        if (!e._hasFleed && e.hp < e.maxHp * 0.5) {
+          e._hasFleed = true; e._fleeing = true; e._fleeTimer = 15;
+          this.spawnDamageNumber(e.x, e.y - 35, 'FLEES!', '#ffd166');
+          this.cam.shake = 10;
+        }
+        if (e._fleeing) {
+          e._fleeTimer -= dt;
+          if (e._fleeTimer <= 0) {
+            e._fleeing = false;
+            const retAng = Math.random() * TAU;
+            const retDist = Math.max(this.W, this.H) * 0.75;
+            e.x = p.x + Math.cos(retAng) * retDist;
+            e.y = p.y + Math.sin(retAng) * retDist;
+            e.kbX = 0; e.kbY = 0;
+            this.spawnDamageNumber(e.x, e.y - 35, 'RETURNS!', '#ff3146');
+          } else {
+            const fdx = e.x - p.x, fdy = e.y - p.y;
+            const fd = Math.hypot(fdx, fdy) || 1;
+            e.x += (fdx / fd) * t.speed * 2.8 * dt;
+            e.y += (fdy / fd) * t.speed * 2.8 * dt;
+            e.hit = Math.max(0, e.hit - dt);
+            return; // skip normal movement + player collision
+          }
+        }
+      }
+
+      // === Nekromansen: kallar in skelettar ===
+      if (t.id === 'bossNecromancer') {
+        e._summonCD = (e._summonCD !== undefined ? e._summonCD : 5) - dt;
+        if (e._summonCD <= 0) {
+          e._summonCD = 6;
+          for (let si = 0; si < 3; si++) {
+            const sa = Math.random() * TAU;
+            const sm = this.enemies.acquire();
+            sm.x = e.x + Math.cos(sa) * 70; sm.y = e.y + Math.sin(sa) * 70;
+            sm.t = ENEMIES.ghoul; sm.maxHp = 45; sm.hp = 45;
+            sm.hit = 0; sm.cd = 0; sm.dz = 0; sm.kbX = 0; sm.kbY = 0;
+          }
+          this.spawnDamageNumber(e.x, e.y - 42, 'RISE!', '#7ad96b');
+          this.cam.shake = Math.max(this.cam.shake, 4);
+        }
+      }
+
+      // === Void Titan: spiralskjuter void-orbs ===
+      if (t.id === 'bossVoidTitan') {
+        e._voidCD = (e._voidCD !== undefined ? e._voidCD : 2) - dt;
+        if (e._voidCD <= 0) {
+          e._voidCD = 2.2;
+          for (let vi = 0; vi < 6; vi++) {
+            const va = (vi / 6) * TAU + this.time * 0.4;
+            const evp = this.eprojs.acquire();
+            evp.x = e.x; evp.y = e.y;
+            evp.vx = Math.cos(va) * 155; evp.vy = Math.sin(va) * 155;
+            evp.dmg = t.dmg * 0.45; evp.life = 5.5; evp.color = '#b362ff'; evp.size = 11;
           }
         }
       }
@@ -1294,6 +1372,7 @@ export class Game {
     if (t.boss) {
       this.cam.shake = 18; this.cam.slowmo = 0.5;
       this.bossesKilled += 1; this.bossActive = null;
+      if (t.id === 'bossAida') { this._aidaKilled = true; }
       for (let i = 0; i < 12; i++) {
         const g = this.gems.acquire();
         const a = Math.random() * TAU;
@@ -1372,7 +1451,7 @@ export class Game {
     if (r.xp < r.xpToNext) return;
     r.xp -= r.xpToNext;
     r.level += 1;
-    r.xpToNext = Math.floor(r.xpToNext * 1.42 + 3);
+    r.xpToNext = Math.floor(r.xpToNext * 1.38 + 3);
     this.levelUpQueue += 1;
     this.cam.slowmo = 0.3;
     this.cam.shake = 10;
@@ -1483,10 +1562,55 @@ export class Game {
     p.life = life; p.max = life; p.color = color; p.size = r; p.type = 'ring';
   }
 
-  spawnArc(x, y, r, color) {
+  spawnArc(x, y, r, color, angle) {
     const p = this.parts.acquire();
     p.x = x; p.y = y; p.vx = 0; p.vy = 0;
-    p.life = 0.22; p.max = 0.22; p.color = color; p.size = r; p.type = 'arc';
+    p.life = 0.32; p.max = 0.32; p.color = color; p.size = r; p.type = 'arc';
+    p._ang = angle != null ? angle : 0;
+  }
+
+  // Arc Tesla — bouncing chain lightning weapon
+  weaponChain(s, dt) {
+    const p = this.player; const rs = this.run.stats;
+    p.teslaCD -= dt;
+    const fr = s.fireRate * rs.fireRateMult;
+    if (p.teslaCD > 0) return;
+    p.teslaCD = 1 / fr;
+    const range = (s.range || 320) * rs.areaMult;
+    const dmg = this.rollDamage(s.damage * rs.damageMult);
+    const chainCount = Math.floor((s.chainCount || 3) + (rs.projBonus || 0));
+    const chainRange = (s.chainRange || 200) * rs.areaMult;
+
+    const first = this.nearestEnemy(p.x, p.y, range);
+    if (!first) return;
+
+    this.dealDamage(first, dmg.dmg, dmg.crit, 30, p.x, p.y);
+
+    // Initial bolt: player → first target
+    const lp0 = this.parts.acquire();
+    lp0.x = p.x; lp0.y = p.y;
+    lp0.vx = first.x; lp0.vy = first.y;
+    lp0.life = 0.20; lp0.max = 0.20; lp0.color = s.color || '#a0e4ff'; lp0.size = 4; lp0.type = 'lightning';
+
+    // Chain to nearby enemies
+    let prev = first;
+    const hit = new Set([first]);
+    for (let ci = 0; ci < chainCount; ci++) {
+      let next = null; let bestD = chainRange;
+      this.enemies.forEach(e => {
+        if (hit.has(e)) return;
+        const cd = Math.hypot(e.x - prev.x, e.y - prev.y);
+        if (cd < bestD) { bestD = cd; next = e; }
+      });
+      if (!next) break;
+      const lp = this.parts.acquire();
+      lp.x = prev.x; lp.y = prev.y;
+      lp.vx = next.x; lp.vy = next.y;
+      lp.life = 0.20; lp.max = 0.20; lp.color = s.color || '#a0e4ff'; lp.size = 4; lp.type = 'lightning';
+      this.dealDamage(next, dmg.dmg * 0.65, dmg.crit, 20, prev.x, prev.y);
+      this.spawnSpark(next.x, next.y, s.color || '#a0e4ff');
+      hit.add(next); prev = next;
+    }
   }
 
   // ====== LEVEL UP CHOICES ======
@@ -1645,18 +1769,27 @@ export class Game {
       ctx.fill();
     }
 
-    // XP gems / coins
+    // XP gems / coins — blue glow, 4 sizes based on xp value
     this.gems.forEach(g => {
       const wobble = Math.sin(g.t * 6) * 2;
       if (g.xp > 0) {
-        ctx.fillStyle = '#4dffd4';
-        ctx.shadowColor = '#4dffd4'; ctx.shadowBlur = 12;
+        const gSize = g.xp <= 2 ? 3 : g.xp <= 6 ? 5 : g.xp <= 15 ? 7.5 : 11;
+        const gGlow = g.xp > 15 ? '#ffffff' : '#a0c8ff';
+        ctx.fillStyle = '#5ba3ff';
+        ctx.shadowColor = gGlow; ctx.shadowBlur = 7 + gSize;
         ctx.beginPath();
-        ctx.moveTo(g.x, g.y - 5 + wobble);
-        ctx.lineTo(g.x + 4, g.y + wobble);
-        ctx.lineTo(g.x, g.y + 5 + wobble);
-        ctx.lineTo(g.x - 4, g.y + wobble);
+        ctx.moveTo(g.x, g.y - gSize + wobble);
+        ctx.lineTo(g.x + gSize * 0.68, g.y + wobble);
+        ctx.lineTo(g.x, g.y + gSize + wobble);
+        ctx.lineTo(g.x - gSize * 0.68, g.y + wobble);
         ctx.closePath(); ctx.fill();
+        // white core sparkle for medium/large gems
+        if (g.xp > 6) {
+          ctx.fillStyle = 'rgba(220,240,255,0.85)';
+          ctx.beginPath();
+          ctx.arc(g.x, g.y + wobble, gSize * 0.28, 0, TAU);
+          ctx.fill();
+        }
         ctx.shadowBlur = 0;
       } else {
         ctx.fillStyle = '#ffd166';
@@ -1920,13 +2053,30 @@ export class Game {
         ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.stroke();
         ctx.globalAlpha = 1;
       } else if (p.type === 'arc') {
+        // Directional 180° sweeping scythe arc
+        const sweepFrac = Math.min(1, (1 - a) * 2.5 + 0.15);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p._ang || 0);
         ctx.strokeStyle = p.color;
         ctx.globalAlpha = a;
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 7 - (1 - a) * 3;
+        ctx.shadowColor = p.color; ctx.shadowBlur = 18 * a;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * (0.8 + (1 - a) * 0.3), -Math.PI * 0.2, Math.PI * 1.2);
+        ctx.arc(0, 0, p.size * (0.82 + (1-a) * 0.22), -Math.PI * 0.5, -Math.PI * 0.5 + Math.PI * sweepFrac);
         ctx.stroke();
-        ctx.globalAlpha = 1;
+        // Bright leading edge
+        if (sweepFrac < 0.98) {
+          const tipAng = -Math.PI * 0.5 + Math.PI * sweepFrac;
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size * (0.82 + (1-a) * 0.22), tipAng - 0.18, tipAng + 0.04);
+          ctx.lineWidth = 10 * a;
+          ctx.strokeStyle = '#fff';
+          ctx.globalAlpha = a * 0.7;
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.shadowBlur = 0; ctx.globalAlpha = 1;
       } else if (p.type === 'spark') {
         ctx.fillStyle = p.color;
         ctx.globalAlpha = a;
@@ -2089,8 +2239,22 @@ export class Game {
         }
         ctx.closePath(); break;
       case 'bossOcular': {
-        // Big visible eye — drawn as a circle (stable rendering, no crash potential)
         ctx.arc(e.x, e.y, s * 0.6, 0, TAU);
+        break;
+      }
+      case 'bossNecromancer': {
+        // Skull-like shape: a circle with eye-sockets
+        ctx.arc(e.x, e.y, s * 0.55, 0, TAU);
+        break;
+      }
+      case 'bossVoidTitan': {
+        // Massive hexagonal titan
+        ctx.moveTo(e.x + s * 0.6, e.y);
+        for (let i = 1; i <= 6; i++) {
+          const a = (i / 6) * TAU;
+          ctx.lineTo(e.x + Math.cos(a) * s * 0.6, e.y + Math.sin(a) * s * 0.6);
+        }
+        ctx.closePath();
         break;
       }
       case 'bossAida':
@@ -2139,6 +2303,37 @@ export class Game {
       ctx.beginPath(); ctx.arc(e.x, e.y, s * 0.18, 0, TAU); ctx.fill();
       ctx.fillStyle = '#ff7a1a';
       ctx.beginPath(); ctx.arc(e.x, e.y, s * 0.08, 0, TAU); ctx.fill();
+    }
+    if (t.id === 'bossNecromancer' && !outline) {
+      // Green glowing eye sockets
+      const pulse = 0.5 + 0.5 * Math.sin(this.time * 5);
+      ctx.shadowColor = '#7ad96b'; ctx.shadowBlur = 18 * pulse;
+      ctx.fillStyle = '#7ad96b';
+      ctx.beginPath(); ctx.arc(e.x - s * 0.18, e.y - s * 0.08, s * 0.10, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(e.x + s * 0.18, e.y - s * 0.08, s * 0.10, 0, TAU); ctx.fill();
+      ctx.shadowBlur = 0;
+      // Teeth
+      ctx.fillStyle = '#e8f5e0';
+      for (let ti = 0; ti < 5; ti++) {
+        const tx = e.x - s * 0.28 + ti * s * 0.14;
+        ctx.fillRect(tx, e.y + s * 0.22, s * 0.09, s * 0.16);
+      }
+    }
+    if (t.id === 'bossVoidTitan' && !outline) {
+      const pulse = 0.5 + 0.5 * Math.sin(this.time * 3);
+      // Void eye glow
+      ctx.shadowColor = '#b362ff'; ctx.shadowBlur = 30 * pulse;
+      ctx.fillStyle = '#b362ff';
+      ctx.beginPath(); ctx.arc(e.x, e.y, s * 0.20, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(e.x, e.y, s * 0.08, 0, TAU); ctx.fill();
+      ctx.shadowBlur = 0;
+      // Rotating void ring
+      ctx.strokeStyle = 'rgba(179,98,255,0.5)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, s * 0.7 + pulse * 4, 0, TAU);
+      ctx.stroke();
     }
   }
 

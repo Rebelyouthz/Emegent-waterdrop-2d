@@ -307,6 +307,7 @@ canvas#game {
 .card.r-rare      { --rar: #ffd166; }
 .card.r-epic      { --rar: #b362ff; }
 .card.r-legendary { --rar: #ff7a1a; }
+.card.r-mythical  { --rar: #ff4dff; }
 .card-rarity {
   font-family: 'VT323', monospace;
   letter-spacing: 0.3em;
@@ -1010,6 +1011,8 @@ canvas#game {
 .part-chip.r-rare { --rar: #ffd166; }
 .part-chip.r-epic { --rar: #b362ff; }
 .part-chip.r-legendary { --rar: #ff7a1a; box-shadow: var(--pixel-edge), 0 0 0 2px var(--rar), 0 0 16px var(--rar); }
+.part-chip.r-mythical  { --rar: #ff4dff; box-shadow: var(--pixel-edge), 0 0 0 2px #ff4dff, 0 0 20px #ff4dff, 0 0 38px rgba(255,77,255,0.5); animation: mythPulse 600ms ease-in-out infinite alternate; }
+@keyframes mythPulse { from { box-shadow: var(--pixel-edge), 0 0 0 2px #ff4dff, 0 0 14px #ff4dff; } to { box-shadow: var(--pixel-edge), 0 0 0 2px #ff4dff, 0 0 28px #ff4dff, 0 0 50px rgba(255,77,255,0.45); } }
 
 /* Settings rows */
 .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px dashed #ffffff11; font-family: 'VT323', monospace; font-size: 16px; }
@@ -1471,6 +1474,7 @@ canvas#game {
 .slot-cell.cs-glow.rar-rare      { color: #b362ff; box-shadow: inset 0 0 0 2px #b362ff, inset 0 0 14px #00000080, 0 0 22px #b362ffaa; }
 .slot-cell.cs-glow.rar-epic      { color: #ff7a1a; box-shadow: inset 0 0 0 2px #ff7a1a, inset 0 0 14px #00000080, 0 0 26px #ff7a1acc; }
 .slot-cell.cs-glow.rar-legendary { color: #ffd166; box-shadow: inset 0 0 0 2px #ffd166, inset 0 0 18px #00000080, 0 0 32px #ffd166dd; animation: legPulse 700ms ease-in-out infinite alternate; }
+.slot-cell.cs-glow.rar-mythical  { color: #ff4dff; box-shadow: inset 0 0 0 2px #ff4dff, inset 0 0 20px #00000080, 0 0 40px #ff4dffee; animation: legPulse 500ms ease-in-out infinite alternate; }
 @keyframes legPulse {
   from { box-shadow: inset 0 0 0 2px #ffd166, inset 0 0 18px #00000080, 0 0 26px #ffd166aa; }
   to   { box-shadow: inset 0 0 0 2px #fff,    inset 0 0 22px #00000080, 0 0 44px #ffd166ff; }

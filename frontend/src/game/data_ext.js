@@ -181,6 +181,24 @@ export const WEAPON_PART_OVERRIDES = {
     barrel:   { name: 'Blade',          icon: '🌑', tierNames: ['Standard', 'Heavy', 'Long', 'Annunaki'] },
     bullets:  { name: 'Edge Type',      icon: '🩸', tierNames: ['Plain', 'Bleeding', 'Burning', 'Voidedge'] },
   },
+  hydropistol: {
+    magazine: { name: 'Water Chamber',  icon: '💧', tierNames: ['Standard', 'Extended', 'Pressurized', 'Cosmic'] },
+    sight:    { name: 'Scope',          icon: '🎯', tierNames: ['Iron', 'Red Dot', 'Tactical', 'Eye of Horus'] },
+    barrel:   { name: 'Nozzle',         icon: '🔫', tierNames: ['Short', 'Standard', 'Long', 'Annunaki'] },
+    bullets:  { name: 'Ammo Type',      icon: '💦', tierNames: ['Aqua', 'Burst', 'Pressurized', 'Voidwater'] },
+  },
+  bloodscythe: {
+    magazine: { name: 'Blade Width',    icon: '🌑', tierNames: ['Thin', 'Standard', 'Wide', 'Void-Forged'] },
+    sight:    { name: 'Blood Sense',    icon: '🩸', tierNames: ['None', 'Aware', 'Keen', 'Eye of Horus'] },
+    barrel:   { name: 'Blade Edge',     icon: '⚔️', tierNames: ['Dull', 'Sharp', 'Razor', 'Annunaki'] },
+    bullets:  { name: 'Cut Type',       icon: '🔪', tierNames: ['Slash', 'Bleeding', 'Vorpal', 'Voidedge'] },
+  },
+  arcTesla: {
+    magazine: { name: 'Voltage Cell',   icon: '🔋', tierNames: ['Standard', 'Extended', 'Capacitor', 'Cosmic'] },
+    sight:    { name: 'Conductor',      icon: '⚡', tierNames: ['Copper', 'Silver', 'Gold', 'Eye of Horus'] },
+    barrel:   { name: 'Arc Range',      icon: '🌩️', tierNames: ['Short', 'Standard', 'Long', 'Annunaki'] },
+    bullets:  { name: 'Tesla Type',     icon: '🔌', tierNames: ['Static', 'Pulse', 'Chain', 'Voidbolt'] },
+  },
 };
 
 // ---------- EQUIPMENT (chest drops) ----------
@@ -198,6 +216,7 @@ export const EQUIP_RARITY = {
   rare:      { mult: 2.0, slots: 3, color: '#ffd166', cls: 'r-rare' },
   epic:      { mult: 2.7, slots: 4, color: '#b362ff', cls: 'r-epic' },
   legendary: { mult: 3.6, slots: 5, color: '#ff7a1a', cls: 'r-legendary' },
+  mythical:  { mult: 5.5, slots: 6, color: '#ff4dff', cls: 'r-mythical' },
 };
 const EQUIP_NAMES = {
   head: ['Helm of Tides', 'Drowned Crown', 'Visor of Horus', 'Skull of A.I.D.A.', 'Cap of Echoes'],

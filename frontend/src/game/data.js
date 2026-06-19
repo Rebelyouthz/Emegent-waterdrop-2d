@@ -6,11 +6,12 @@ export const RARITY = {
   rare:      { name: 'RARE',      weight: 9,  color: '#ffd166', cls: 'r-rare',      mult: 2.4 },
   epic:      { name: 'EPIC',      weight: 2.5,color: '#b362ff', cls: 'r-epic',      mult: 3.6 },
   legendary: { name: 'LEGENDARY', weight: 0.5,color: '#ff7a1a', cls: 'r-legendary', mult: 5.0 },
+  mythical:  { name: 'MYTHICAL',  weight: 0.05,color: '#ff4dff', cls: 'r-mythical',  mult: 7.5 },
 };
 
 export function rollRarity(luck = 0) {
   // luck shifts roll up
-  const keys = ['common', 'magic', 'rare', 'epic', 'legendary'];
+  const keys = ['common', 'magic', 'rare', 'epic', 'legendary', 'mythical'];
   const weights = keys.map((k, i) => RARITY[k].weight * (1 + luck * i * 0.5));
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
@@ -146,6 +147,24 @@ export const WEAPONS = {
       { stat: 'damage', mult: 1.5, evolve: true },
     ],
   },
+  arcTesla: {
+    id: 'arcTesla',
+    name: 'Arc Tesla',
+    icon: '⚡',
+    type: 'auto',
+    behaviour: 'chain',
+    desc: 'Studsande blixt som kedjar till 3 fiender.',
+    base: { damage: 28, fireRate: 1.0, range: 320, chainCount: 3, chainRange: 200, color: '#a0e4ff' },
+    levelUps: [
+      { stat: 'chainCount', add: 1 },
+      { stat: 'damage', mult: 1.22 },
+      { stat: 'fireRate', mult: 1.15 },
+      { stat: 'chainRange', mult: 1.2 },
+      { stat: 'damage', mult: 1.3 },
+      { stat: 'chainCount', add: 1 },
+      { stat: 'damage', mult: 1.55, evolve: true },
+    ],
+  },
 };
 
 export const WEAPON_KEYS = Object.keys(WEAPONS);
@@ -153,19 +172,19 @@ export const WEAPON_KEYS = Object.keys(WEAPONS);
 // ---------- ENEMIES ----------
 export const ENEMIES = {
   slime: {
-    id: 'slime', name: 'Slime', size: 18, hp: 22, dmg: 8, speed: 60, color: '#7ad96b',
+    id: 'slime', name: 'Slime', size: 18, hp: 29, dmg: 8, speed: 60, color: '#7ad96b',
     xp: 2, gold: 1, ai: 'chase',
   },
   bat: {
-    id: 'bat', name: 'Voidbat', size: 14, hp: 14, dmg: 6, speed: 120, color: '#b362ff',
+    id: 'bat', name: 'Voidbat', size: 14, hp: 18, dmg: 6, speed: 120, color: '#b362ff',
     xp: 2, gold: 1, ai: 'chase',
   },
   brute: {
-    id: 'brute', name: 'Brute', size: 26, hp: 70, dmg: 16, speed: 48, color: '#c97050',
+    id: 'brute', name: 'Brute', size: 26, hp: 91, dmg: 16, speed: 48, color: '#c97050',
     xp: 6, gold: 3, ai: 'chase',
   },
   ranger: {
-    id: 'ranger', name: 'Ranger', size: 20, hp: 30, dmg: 10, speed: 70, color: '#ffd166',
+    id: 'ranger', name: 'Ranger', size: 20, hp: 39, dmg: 10, speed: 70, color: '#ffd166',
     xp: 4, gold: 2, ai: 'ranged', shootRange: 320, shootCD: 1.8, projSpeed: 320,
   },
   charger: {
@@ -173,7 +192,7 @@ export const ENEMIES = {
     xp: 5, gold: 3, ai: 'charge',
   },
   ghoul: {
-    id: 'ghoul', name: 'Ghoul', size: 19, hp: 35, dmg: 9, speed: 95, color: '#9aa6b2',
+    id: 'ghoul', name: 'Ghoul', size: 19, hp: 45, dmg: 9, speed: 95, color: '#9aa6b2',
     xp: 3, gold: 2, ai: 'chase',
   },
   necron: {
@@ -184,6 +203,14 @@ export const ENEMIES = {
   bossOcular: {
     id: 'bossOcular', name: 'Eye of Horus', size: 90, hp: 1200, dmg: 18, speed: 55, color: '#ffd166',
     xp: 200, gold: 220, ai: 'boss', boss: true, shootCD: 1.8,
+  },
+  bossNecromancer: {
+    id: 'bossNecromancer', name: 'Nekromansen', size: 75, hp: 2800, dmg: 22, speed: 50, color: '#7ad96b',
+    xp: 400, gold: 450, ai: 'boss', boss: true, shootCD: 1.4,
+  },
+  bossVoidTitan: {
+    id: 'bossVoidTitan', name: 'Void Titan', size: 100, hp: 5000, dmg: 35, speed: 32, color: '#b362ff',
+    xp: 600, gold: 600, ai: 'boss', boss: true, shootCD: 0.8,
   },
   bossAida: {
     id: 'bossAida', name: 'A.I.D.A.', size: 80, hp: 6000, dmg: 40, speed: 60, color: '#b362ff',
@@ -247,10 +274,18 @@ export const WAVE_TIMELINE = [
   { t: 110, spawn: 3.0, types: ['ghoul', 'ranger', 'brute'], event: 'bossOcular' },
   { t: 170, spawn: 3.4, types: ['brute', 'ranger', 'charger'] },
   { t: 230, spawn: 3.8, types: ['brute', 'charger', 'bat', 'ghoul'] },
-  { t: 290, spawn: 4.2, types: ['charger', 'ranger', 'necron'], event: 'bossOcular' },
-  { t: 380, spawn: 4.8, types: ['brute', 'charger', 'necron', 'ghoul'] },
+  { t: 280, spawn: 4.0, types: ['charger', 'ranger', 'necron'], event: 'bossNecromancer' },
+  { t: 370, spawn: 4.5, types: ['charger', 'ranger', 'necron'], event: 'bossOcular' },
+  { t: 430, spawn: 5.0, types: ['necron', 'charger', 'brute'], event: 'bossVoidTitan' },
   { t: 480, spawn: 5.4, types: ['necron', 'charger', 'brute'] },
   { t: 540, spawn: 6.0, types: ['necron', 'charger', 'brute'], event: 'bossAida' },
+  // Endless waves (after A.I.D.A. besegras)
+  { t: 620, spawn: 7.0, types: ['necron', 'charger', 'brute', 'ranger'] },
+  { t: 720, spawn: 8.0, types: ['necron', 'charger', 'brute'], event: 'bossOcular' },
+  { t: 840, spawn: 9.5, types: ['necron', 'charger', 'brute', 'ranger'] },
+  { t: 960, spawn: 11.0, types: ['necron', 'charger', 'brute'], event: 'bossNecromancer' },
+  { t: 1100, spawn: 12.5, types: ['necron', 'charger', 'brute', 'ranger'] },
+  { t: 1240, spawn: 14.0, types: ['necron', 'charger', 'brute'], event: 'bossVoidTitan' },
 ];
 
 export function waveAt(t) {
