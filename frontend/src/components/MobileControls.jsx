@@ -59,6 +59,10 @@ export default function MobileControls({ onUpdate, onDashDir, dashCD, dashReady,
     };
 
     const onTouchStart = (e) => {
+      // Don't intercept when UI overlays are open (level-up modal, pause, game-over)
+      // React's onClick relies on synthetic mouse events generated from touch, which
+      // preventDefault() suppresses.
+      if (document.querySelector('.levelup-overlay, .modal-overlay, .pause-overlay')) return;
       e.preventDefault();
       for (const t of e.changedTouches) {
         const side = sideOf(t.clientX);
@@ -75,7 +79,10 @@ export default function MobileControls({ onUpdate, onDashDir, dashCD, dashReady,
     };
 
     const onTouchMove = (e) => {
-      e.preventDefault();
+      // Only prevent default if we're actually driving a joystick
+      if (tracking.current.left !== null || tracking.current.right !== null) {
+        e.preventDefault();
+      }
       for (const t of e.changedTouches) {
         const side = tracking.current.left === t.identifier ? 'left'
                    : tracking.current.right === t.identifier ? 'right' : null;
