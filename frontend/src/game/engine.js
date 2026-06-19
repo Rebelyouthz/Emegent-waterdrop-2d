@@ -61,7 +61,7 @@ export class Game {
     this.fps = 60;
 
     // Pools
-    this.enemies = new Pool(() => ({ alive: false, x: 0, y: 0, vx: 0, vy: 0, hp: 0, maxHp: 0, t: null, hit: 0, cd: 0, dz: 0 }), 600);
+    this.enemies = new Pool(() => ({ alive: false, x: 0, y: 0, vx: 0, vy: 0, hp: 0, maxHp: 0, t: null, hit: 0, cd: 0, dz: 0, kbX: 0, kbY: 0 }), 600);
     this.projs = new Pool(() => ({ alive: false, x: 0, y: 0, vx: 0, vy: 0, dmg: 0, pierce: 0, life: 0, hit: new Set(), color: '', size: 4, homing: 0, friendly: true, crit: false }), 400);
     this.eprojs = new Pool(() => ({ alive: false, x: 0, y: 0, vx: 0, vy: 0, dmg: 0, life: 0, color: '#ff3146', size: 5 }), 200);
     this.parts = new Pool(() => ({ alive: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 0, color: '', size: 1, type: 'blood' }), 1200);
@@ -985,7 +985,7 @@ export class Game {
     e.t = t;
     e.maxHp = Math.floor(t.hp * (1 + this.run.time / 600));
     e.hp = e.maxHp;
-    e.hit = 0; e.cd = 0; e.dz = 0;
+    e.hit = 0; e.cd = 0; e.dz = 0; e.kbX = 0; e.kbY = 0;
     this.bossActive = e;
     this.cam.shake = 18;
     this.cam.slowmo = 0.6;

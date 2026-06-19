@@ -1743,8 +1743,8 @@ canvas#game {
 .hud-bottom-stack .skill-btn,
 .hud-bottom-stack button { pointer-events: auto; }
 
-/* Hide old static joystick visuals */
-.joy, .joy-stick, .joy-dash-ring, .dyn-joy-area { display: none !important; }
+/* Hide old static joystick visuals and old dynamic hint divs */
+.joy, .joy-stick, .joy-dash-ring, .dyn-joy-area, .dyn-hint { display: none !important; }
 
 /* Persistent finger-position hints — always visible so player knows where to touch */
 .dyn-hint {
@@ -1781,6 +1781,77 @@ canvas#game {
   0%, 100% { opacity: 0.40; transform: scale(0.96); }
   50%      { opacity: 0.85; transform: scale(1.04); }
 }
+
+/* ============================================================
+   STATIC TWIN JOYSTICKS — fixed position, always visible
+   Ring CSS center positions (must match MobileControls.jsx):
+     Left:  left:27px  bottom:70px  size:126px → center (90px, vh-133px)
+     Right: right:27px bottom:70px  size:126px → center (vw-90px, vh-133px)
+   ============================================================ */
+.static-ring {
+  position: fixed;
+  width: 126px; height: 126px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 101;
+  background: rgba(0, 0, 0, 0.40);
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.static-ring-left {
+  left: 27px; bottom: 70px;
+  border: 3px solid rgba(77, 255, 212, 0.50);
+  box-shadow: inset 0 0 22px rgba(0,0,0,0.6), 0 0 22px rgba(77, 255, 212, 0.22);
+}
+.static-ring-right {
+  right: 27px; bottom: 70px;
+  border: 3px solid rgba(255, 122, 26, 0.50);
+  box-shadow: inset 0 0 22px rgba(0,0,0,0.6), 0 0 22px rgba(255, 122, 26, 0.22);
+}
+.static-ring-left.active {
+  border-color: rgba(77, 255, 212, 0.90);
+  box-shadow: inset 0 0 18px rgba(0,0,0,0.6), 0 0 32px rgba(77, 255, 212, 0.55);
+}
+.static-ring-right.active {
+  border-color: rgba(255, 122, 26, 0.90);
+  box-shadow: inset 0 0 18px rgba(0,0,0,0.6), 0 0 32px rgba(255, 122, 26, 0.55);
+}
+
+/* Knobs — CSS centers at ring center; offset by JS transform */
+.static-knob {
+  position: fixed;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 102;
+  border: 2px solid rgba(0, 0, 0, 0.55);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.65);
+  will-change: transform;
+}
+/* Center: x=90, y=vh-133 → left: 90-26=64, bottom: 133-26=107 */
+.static-knob-left {
+  left: 64px; bottom: 107px;
+  background: radial-gradient(circle at 35% 30%, #aef9ff, #1a5d99 70%);
+}
+/* Center: x=vw-90, y=vh-133 → right: 90-26=64, bottom: 133-26=107 */
+.static-knob-right {
+  right: 64px; bottom: 107px;
+  background: radial-gradient(circle at 35% 30%, #ffe8c2, #b54a08 70%);
+}
+
+/* Labels under rings */
+.joy-lbl {
+  position: fixed;
+  bottom: 46px;
+  font-family: 'VT323', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.38);
+  pointer-events: none;
+  z-index: 100;
+  white-space: nowrap;
+}
+.joy-lbl-left  { left: 30px; }
+.joy-lbl-right { right: 30px; }
 
 
 

@@ -1,143 +1,171 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-// Robust dynamic twin joysticks. Touch listeners are attached to DOCUMENT
-// (not to a div) so element z-index / pointer-events can never block them.
-// Touches on the LEFT half of the viewport drive movement; RIGHT half = aim.
-// Touch-and-flick on LEFT = dash gesture.
+// Static twin joysticks — fixed position, always visible.
+// Touch listeners on document with passive:false → preventDefault stops browser zoom/scroll.
+// Entire left half = left joystick zone, entire right half = right joystick zone.
+// Direction is computed from ring CENTER, not touch start point.
+// Left joystick: swipe-to-dash gesture.
 
-const RING = 140;     // outer ring diameter (px)
-const KNOB = 64;      // inner knob diameter (px)
-const MAX_DELTA = (RING - KNOB) / 2;
+const MAX_D = 44;  // max knob travel px from ring center
+
+// These must match the CSS ring center positions:
+//   Left ring:  left:27px  bottom:70px  size:126px  → center (90, vh-133)
+//   Right ring: right:27px bottom:70px  size:126px  → center (vw-90, vh-133)
+const ringCenter = (side) => ({
+  x: side === 'left' ? 90 : window.innerWidth - 90,
+  y: window.innerHeight - 133,
+});
+
+const computeVec = (side, touchX, touchY) => {
+  const c = ringCenter(side);
+  const dx = touchX - c.x;
+  const dy = touchY - c.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  const clamped = Math.min(dist, MAX_D);
+  return {
+    vx: (dx / dist) * (clamped / MAX_D),
+    vy: (dy / dist) * (clamped / MAX_D),
+  };
+};
 
 export default function MobileControls({ onUpdate, onDashDir, dashCD, dashReady, fireOnAim = true }) {
-  const [show, setShow] = useState(true);
-  const [left, setLeft] = useState({ active: false, cx: 0, cy: 0, vx: 0, vy: 0 });
-  const [right, setRight] = useState({ active: false, cx: 0, cy: 0, vx: 0, vy: 0 });
-  const tracking = useRef({ left: null, right: null }); // touchId per side
-  const startInfo = useRef({ left: null, right: null }); // for swipe-dash
-  const lastSwipeRef = useRef(0);
-  const cbRef = useRef({ onUpdate, onDashDir });
-  cbRef.current = { onUpdate, onDashDir };
+  const [show, setShow] = useState(false);
+  const [leftVis,  setLeftVis]  = useState({ active: false, vx: 0, vy: 0 });
+  const [rightVis, setRightVis] = useState({ active: false, vx: 0, vy: 0 });
 
-  // Hide on real desktop (mouse-only); show on touch devices AND on narrow viewports
+  const leftVec   = useRef({ vx: 0, vy: 0 });
+  const rightVec  = useRef({ vx: 0, vy: 0 });
+  const tracking  = useRef({ left: null, right: null });
+  const dashStart = useRef(null);
+  const lastDash  = useRef(0);
+  const cbRef     = useRef({ onUpdate, onDashDir });
+  cbRef.current   = { onUpdate, onDashDir };
+
   useEffect(() => {
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const isNarrow = window.innerWidth <= 900;
-    setShow(isTouch || isNarrow);
+    setShow(isTouch || window.innerWidth <= 900);
   }, []);
 
   useEffect(() => {
     if (!show) return;
 
-    const sideOf = (clientX) => clientX < window.innerWidth / 2 ? 'left' : 'right';
+    const sideOf = (cx) => cx < window.innerWidth / 2 ? 'left' : 'right';
 
-    const setter = (side, val) => (side === 'left' ? setLeft(val) : setRight(val));
+    const pushUpdate = () => {
+      const { vx: lx, vy: ly } = leftVec.current;
+      const { vx: rx, vy: ry } = rightVec.current;
+      const firing = fireOnAim && (Math.abs(rx) > 0.15 || Math.abs(ry) > 0.15);
+      cbRef.current.onUpdate({ x: lx, y: ly }, { x: rx, y: ry }, firing);
+    };
 
     const onTouchStart = (e) => {
+      e.preventDefault();
       for (const t of e.changedTouches) {
         const side = sideOf(t.clientX);
         if (tracking.current[side] != null) continue;
         tracking.current[side] = t.identifier;
-        startInfo.current[side] = { x: t.clientX, y: t.clientY, time: performance.now(), fired: false };
-        setter(side, { active: true, cx: t.clientX, cy: t.clientY, vx: 0, vy: 0 });
+        if (side === 'left') {
+          dashStart.current = { x: t.clientX, y: t.clientY, time: performance.now(), fired: false };
+        }
+        const vec = computeVec(side, t.clientX, t.clientY);
+        if (side === 'left') { leftVec.current = vec; setLeftVis({ active: true, ...vec }); }
+        else                  { rightVec.current = vec; setRightVis({ active: true, ...vec }); }
+        pushUpdate();
       }
     };
+
     const onTouchMove = (e) => {
+      e.preventDefault();
       for (const t of e.changedTouches) {
-        const side = (tracking.current.left === t.identifier) ? 'left'
-                    : (tracking.current.right === t.identifier) ? 'right' : null;
+        const side = tracking.current.left === t.identifier ? 'left'
+                   : tracking.current.right === t.identifier ? 'right' : null;
         if (!side) continue;
-        const state = side === 'left' ? left : right;
-        const cx = state.cx, cy = state.cy;
-        const dx = t.clientX - cx, dy = t.clientY - cy;
-        const max = 70;
-        const l = Math.hypot(dx, dy) || 1;
-        const cl = Math.min(l, max);
-        const vx = (dx / l) * (cl / max);
-        const vy = (dy / l) * (cl / max);
-        setter(side, { active: true, cx, cy, vx, vy });
-        // Swipe-dash on left
-        if (side === 'left' && startInfo.current.left && !startInfo.current.left.fired) {
-          const elapsed = performance.now() - startInfo.current.left.time;
-          const sx = t.clientX - startInfo.current.left.x;
-          const sy = t.clientY - startInfo.current.left.y;
+        const vec = computeVec(side, t.clientX, t.clientY);
+        if (side === 'left') { leftVec.current = vec; setLeftVis({ active: true, ...vec }); }
+        else                  { rightVec.current = vec; setRightVis({ active: true, ...vec }); }
+        pushUpdate();
+
+        // Swipe-to-dash on left stick
+        if (side === 'left' && dashStart.current && !dashStart.current.fired) {
+          const elapsed = performance.now() - dashStart.current.time;
+          const sx = t.clientX - dashStart.current.x;
+          const sy = t.clientY - dashStart.current.y;
           const sLen = Math.hypot(sx, sy);
-          if (elapsed > 0 && elapsed < 180 && sLen > 40) {
-            startInfo.current.left.fired = true;
+          if (elapsed < 200 && sLen > 38) {
+            dashStart.current.fired = true;
             const now = performance.now();
-            if (now - lastSwipeRef.current > 220) {
-              lastSwipeRef.current = now;
+            if (now - lastDash.current > 250) {
+              lastDash.current = now;
               cbRef.current.onDashDir && cbRef.current.onDashDir(sx / sLen, sy / sLen);
             }
           }
         }
       }
     };
+
     const onTouchEnd = (e) => {
       for (const t of e.changedTouches) {
-        const side = (tracking.current.left === t.identifier) ? 'left'
-                    : (tracking.current.right === t.identifier) ? 'right' : null;
+        const side = tracking.current.left === t.identifier ? 'left'
+                   : tracking.current.right === t.identifier ? 'right' : null;
         if (!side) continue;
         tracking.current[side] = null;
-        startInfo.current[side] = null;
-        setter(side, { active: false, cx: 0, cy: 0, vx: 0, vy: 0 });
+        if (side === 'left') {
+          leftVec.current = { vx: 0, vy: 0 };
+          setLeftVis({ active: false, vx: 0, vy: 0 });
+          dashStart.current = null;
+        } else {
+          rightVec.current = { vx: 0, vy: 0 };
+          setRightVis({ active: false, vx: 0, vy: 0 });
+        }
+        pushUpdate();
       }
     };
 
-    document.addEventListener('touchstart', onTouchStart, { passive: true });
-    document.addEventListener('touchmove', onTouchMove, { passive: true });
-    document.addEventListener('touchend', onTouchEnd);
+    document.addEventListener('touchstart',  onTouchStart,  { passive: false });
+    document.addEventListener('touchmove',   onTouchMove,   { passive: false });
+    document.addEventListener('touchend',    onTouchEnd);
     document.addEventListener('touchcancel', onTouchEnd);
     return () => {
-      document.removeEventListener('touchstart', onTouchStart);
-      document.removeEventListener('touchmove', onTouchMove);
-      document.removeEventListener('touchend', onTouchEnd);
+      document.removeEventListener('touchstart',  onTouchStart);
+      document.removeEventListener('touchmove',   onTouchMove);
+      document.removeEventListener('touchend',    onTouchEnd);
       document.removeEventListener('touchcancel', onTouchEnd);
     };
-  }, [show, left, right]);
-
-  // Push current vec to engine on every change
-  useEffect(() => {
-    const moveVec = { x: left.vx, y: left.vy };
-    const aimVec = { x: right.vx, y: right.vy };
-    const firing = fireOnAim && (Math.abs(aimVec.x) > 0.15 || Math.abs(aimVec.y) > 0.15);
-    cbRef.current.onUpdate(moveVec, aimVec, firing);
-  }, [left.vx, left.vy, right.vx, right.vy, fireOnAim]);
+  }, [show, fireOnAim]);
 
   if (!show) return null;
 
-  const renderStick = (side, s) => {
-    if (!s.active) return null;
-    const tx = s.vx * MAX_DELTA;
-    const ty = s.vy * MAX_DELTA;
-    return (
-      <React.Fragment key={side}>
-        <div className={`dyn-joy-ring dyn-${side}`}
-             style={{ left: s.cx - RING / 2, top: s.cy - RING / 2, width: RING, height: RING }} />
-        <div className={`dyn-joy-knob dyn-${side}`}
-             style={{ left: s.cx - KNOB / 2 + tx, top: s.cy - KNOB / 2 + ty, width: KNOB, height: KNOB }} />
-      </React.Fragment>
-    );
-  };
-
   return (
     <>
-      {/* Persistent hint circles in bottom-left & bottom-right so player knows where to touch */}
-      <div className="dyn-hint dyn-hint-left"  data-testid="dyn-hint-left">
-        <div className="dyn-hint-ring" />
-        <div className="dyn-hint-label">MOVE · SWIPE TO DASH</div>
-      </div>
-      <div className="dyn-hint dyn-hint-right" data-testid="dyn-hint-right">
-        <div className="dyn-hint-ring" />
-        <div className="dyn-hint-label">AIM · FIRE</div>
-      </div>
+      {/* Static ring — always visible, glows when active */}
+      <div
+        className={`static-ring static-ring-left${leftVis.active ? ' active' : ''}`}
+        data-testid="joy-ring-left"
+      />
+      <div
+        className={`static-ring static-ring-right${rightVis.active ? ' active' : ''}`}
+        data-testid="joy-ring-right"
+      />
 
-      {renderStick('left', left)}
-      {renderStick('right', right)}
+      {/* Knobs — positioned at ring center via CSS, offset by transform */}
+      <div
+        className="static-knob static-knob-left"
+        data-testid="joy-knob-left"
+        style={{ transform: `translate(${leftVis.vx * MAX_D}px, ${leftVis.vy * MAX_D}px)` }}
+      />
+      <div
+        className="static-knob static-knob-right"
+        data-testid="joy-knob-right"
+        style={{ transform: `translate(${rightVis.vx * MAX_D}px, ${rightVis.vy * MAX_D}px)` }}
+      />
+
+      {/* Labels */}
+      <div className="joy-lbl joy-lbl-left">MOVE · SWIPE DASH</div>
+      <div className="joy-lbl joy-lbl-right">AIM · FIRE</div>
 
       {dashReady !== undefined && (
         <div className={`dash-pip ${dashCD > 0 ? 'cooldown' : 'ready'}`} data-testid="dash-pip">
-          {dashCD > 0 ? `dash ${Math.ceil(dashCD)}s` : '⚡ swipe to dash'}
+          {dashCD > 0 ? `${Math.ceil(dashCD)}s` : '⚡ swipe'}
         </div>
       )}
     </>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import MainMenu from './components/MainMenu';
 import Welcome from './components/Welcome';
 import IntroDialogue from './components/IntroDialogue';
@@ -107,12 +108,10 @@ function AppInner() {
     // Submit to leaderboard (fire-and-forget; backend ignores if not authenticated)
     if (user) {
       const API = (process.env.REACT_APP_BACKEND_URL || '') + '/api';
-      import('axios').then(({ default: axios }) => {
-        axios.post(`${API}/leaderboard/submit`, {
-          time: result.time, level: result.level, kills: result.kills,
-          victory: !!result.victory, no_hit: !!result.noHit,
-        }, { withCredentials: true }).catch(() => {});
-      });
+      axios.post(`${API}/leaderboard/submit`, {
+        time: result.time, level: result.level, kills: result.kills,
+        victory: !!result.victory, no_hit: !!result.noHit,
+      }, { withCredentials: true }).catch(() => {});
     }
   };
 
