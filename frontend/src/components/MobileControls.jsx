@@ -1,34 +1,28 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 // Static twin joysticks — fixed position, always visible.
-// Touch listeners on document with passive:false → preventDefault stops browser zoom/scroll.
-// Entire left half = left joystick zone, entire right half = right joystick zone.
-// Direction is computed from ring CENTER, not touch start point.
-// Left joystick: swipe-to-dash gesture.
+// Touch listeners on document with passive:false → prevents browser zoom/scroll.
+// Skill buttons at top of each ring trigger active skills.
+// Left ring color changes with dash cooldown state.
 
-const MAX_D = 44;  // max knob travel px from ring center
-
-// These must match the CSS ring center positions:
-//   Left ring:  left:27px  bottom:70px  size:126px  → center (90, vh-133)
-//   Right ring: right:27px bottom:70px  size:126px  → center (vw-90, vh-133)
+const MAX_D = 44;
 const ringCenter = (side) => ({
   x: side === 'left' ? 90 : window.innerWidth - 90,
   y: window.innerHeight - 133,
 });
-
 const computeVec = (side, touchX, touchY) => {
   const c = ringCenter(side);
   const dx = touchX - c.x;
   const dy = touchY - c.y;
   const dist = Math.hypot(dx, dy) || 1;
-  const clamped = Math.min(dist, MAX_D);
-  return {
-    vx: (dx / dist) * (clamped / MAX_D),
-    vy: (dy / dist) * (clamped / MAX_D),
-  };
+  const cl = Math.min(dist, MAX_D);
+  return { vx: (dx / dist) * (cl / MAX_D), vy: (dy / dist) * (cl / MAX_D) };
 };
 
-export default function MobileControls({ onUpdate, onDashDir, dashCD, dashReady, fireOnAim = true }) {
+export default function MobileControls({
+  onUpdate, onDashDir, dashCD = 0, dashReady = true, fireOnAim = true,
+  visible = true, activeSkills = [], onActiveSkill,
+}) {
   const [show, setShow] = useState(false);
   const [leftVis,  setLeftVis]  = useState({ active: false, vx: 0, vy: 0 });
   const [rightVis, setRightVis] = useState({ active: false, vx: 0, vy: 0 });
@@ -47,10 +41,9 @@ export default function MobileControls({ onUpdate, onDashDir, dashCD, dashReady,
   }, []);
 
   useEffect(() => {
-    if (!show) return;
+    if (!show || !visible) return;
 
     const sideOf = (cx) => cx < window.innerWidth / 2 ? 'left' : 'right';
-
     const pushUpdate = () => {
       const { vx: lx, vy: ly } = leftVec.current;
       const { vx: rx, vy: ry } = rightVec.current;
@@ -59,18 +52,15 @@ export default function MobileControls({ onUpdate, onDashDir, dashCD, dashReady,
     };
 
     const onTouchStart = (e) => {
-      // Don't intercept when UI overlays are open (level-up modal, pause, game-over)
-      // React's onClick relies on synthetic mouse events generated from touch, which
-      // preventDefault() suppresses.
-      if (document.querySelector('.levelup-overlay, .modal-overlay, .pause-overlay')) return;
+      // Skip when UI overlays are open (level-up, pause, game-over, skill buttons)
+      if (e.target.closest('[data-joy-skill]')) return;
+      if (document.querySelector('.levelup-overlay, .modal-overlay, .pause-overlay, .gameover')) return;
       e.preventDefault();
       for (const t of e.changedTouches) {
         const side = sideOf(t.clientX);
         if (tracking.current[side] != null) continue;
         tracking.current[side] = t.identifier;
-        if (side === 'left') {
-          dashStart.current = { x: t.clientX, y: t.clientY, time: performance.now(), fired: false };
-        }
+        if (side === 'left') dashStart.current = { x: t.clientX, y: t.clientY, time: performance.now(), fired: false };
         const vec = computeVec(side, t.clientX, t.clientY);
         if (side === 'left') { leftVec.current = vec; setLeftVis({ active: true, ...vec }); }
         else                  { rightVec.current = vec; setRightVis({ active: true, ...vec }); }
@@ -79,10 +69,7 @@ export default function MobileControls({ onUpdate, onDashDir, dashCD, dashReady,
     };
 
     const onTouchMove = (e) => {
-      // Only prevent default if we're actually driving a joystick
-      if (tracking.current.left !== null || tracking.current.right !== null) {
-        e.preventDefault();
-      }
+      if (tracking.current.left !== null || tracking.current.right !== null) e.preventDefault();
       for (const t of e.changedTouches) {
         const side = tracking.current.left === t.identifier ? 'left'
                    : tracking.current.right === t.identifier ? 'right' : null;
@@ -91,8 +78,6 @@ export default function MobileControls({ onUpdate, onDashDir, dashCD, dashReady,
         if (side === 'left') { leftVec.current = vec; setLeftVis({ active: true, ...vec }); }
         else                  { rightVec.current = vec; setRightVis({ active: true, ...vec }); }
         pushUpdate();
-
-        // Swipe-to-dash on left stick
         if (side === 'left' && dashStart.current && !dashStart.current.fired) {
           const elapsed = performance.now() - dashStart.current.time;
           const sx = t.clientX - dashStart.current.x;
@@ -138,43 +123,50 @@ export default function MobileControls({ onUpdate, onDashDir, dashCD, dashReady,
       document.removeEventListener('touchend',    onTouchEnd);
       document.removeEventListener('touchcancel', onTouchEnd);
     };
-  }, [show, fireOnAim]);
+  }, [show, visible, fireOnAim]);
 
-  if (!show) return null;
+  if (!show || !visible) return null;
+
+  // Dash state classes for left ring
+  const dashCls = dashReady ? ' dash-ready' : dashCD > 0 ? ' dash-cd' : '';
+
+  const renderSkillBtn = (skillIdx, side) => {
+    const sk = activeSkills[skillIdx];
+    if (!sk || !onActiveSkill) return null;
+    const ready = sk.cd <= 0;
+    const pct = sk.maxCd > 0 ? Math.max(0, Math.min(100, (sk.cd / sk.maxCd) * 100)) : 0;
+    return (
+      <button
+        key={side}
+        className={`joy-skill-btn joy-skill-${side}${ready ? ' ready' : ''}`}
+        data-joy-skill={skillIdx}
+        data-testid={`joy-skill-${skillIdx}`}
+        onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); onActiveSkill(skillIdx); }}
+      >
+        <span className="joy-skill-icon">{sk.icon || skillIdx + 1}</span>
+        {!ready && <div className="joy-skill-cd-mask" style={{ height: `${pct}%` }} />}
+        {!ready && <span className="joy-skill-cd-txt">{Math.ceil(sk.cd)}</span>}
+      </button>
+    );
+  };
 
   return (
     <>
-      {/* Static ring — always visible, glows when active */}
-      <div
-        className={`static-ring static-ring-left${leftVis.active ? ' active' : ''}`}
-        data-testid="joy-ring-left"
-      />
-      <div
-        className={`static-ring static-ring-right${rightVis.active ? ' active' : ''}`}
-        data-testid="joy-ring-right"
-      />
+      {/* Static ring — always visible, glow matches state */}
+      <div className={`static-ring static-ring-left${leftVis.active ? ' active' : ''}${dashCls}`}  data-testid="joy-ring-left" />
+      <div className={`static-ring static-ring-right${rightVis.active ? ' active' : ''}`} data-testid="joy-ring-right" />
 
-      {/* Knobs — positioned at ring center via CSS, offset by transform */}
-      <div
-        className="static-knob static-knob-left"
-        data-testid="joy-knob-left"
-        style={{ transform: `translate(${leftVis.vx * MAX_D}px, ${leftVis.vy * MAX_D}px)` }}
-      />
-      <div
-        className="static-knob static-knob-right"
-        data-testid="joy-knob-right"
-        style={{ transform: `translate(${rightVis.vx * MAX_D}px, ${rightVis.vy * MAX_D}px)` }}
-      />
+      {/* Knobs */}
+      <div className="static-knob static-knob-left"  data-testid="joy-knob-left"  style={{ transform: `translate(${leftVis.vx * MAX_D}px, ${leftVis.vy * MAX_D}px)` }} />
+      <div className="static-knob static-knob-right" data-testid="joy-knob-right" style={{ transform: `translate(${rightVis.vx * MAX_D}px, ${rightVis.vy * MAX_D}px)` }} />
 
-      {/* Labels */}
-      <div className="joy-lbl joy-lbl-left">MOVE · SWIPE DASH</div>
-      <div className="joy-lbl joy-lbl-right">AIM · FIRE</div>
+      {/* Active skill buttons at top of each ring */}
+      {renderSkillBtn(0, 'left')}
+      {renderSkillBtn(1, 'right')}
 
-      {dashReady !== undefined && (
-        <div className={`dash-pip ${dashCD > 0 ? 'cooldown' : 'ready'}`} data-testid="dash-pip">
-          {dashCD > 0 ? `${Math.ceil(dashCD)}s` : '⚡ swipe'}
-        </div>
-      )}
+      {/* Labels — minimal, no "SWIPE" text */}
+      <div className="joy-lbl joy-lbl-left">MOVE</div>
+      <div className="joy-lbl joy-lbl-right">AIM</div>
     </>
   );
 }
