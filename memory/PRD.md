@@ -1,6 +1,34 @@
 # Waterdrop Survivor — PRD
 
-## Iter 11 (2026-02) — Camp UI, HUD Fixes, Combo System & Canvas VFX
+## Iter 12 (2026-02) — Cleanup, Maps System & New Achievements
+
+### Removals
+- Combo meter completely removed (engine.js, HUD.jsx, index.css)
+- Point lights (blinking rings under enemies on kill) removed
+
+### Camp UI Scroll Hint Fix
+- Added static `.camp-scroll-hint` div between profile bar and tabs
+- Animated bounce hint "↓ scroll for more ↓" always visible above first tab button
+
+### Maps System (P2 complete)
+- 4 world stages: The Lake, Sunken Ruins, Void Lab, Annunaki Ship
+- Each stage: 3 nodes (Easy/Medium/Hard) with duration, spawn multiplier, node chaining
+- MAP_STAGES in data_ext2.js; save.mapProgress in store.js
+- MapsPanel in CampPanels.jsx; 🗺 MAPS tab in Camp.jsx
+- Completing a node unlocks the next; stages lock until requirements met
+- Rewards (gold + SP) awarded to save on run victory
+
+### New Achievements (+12)
+- Boss hunters: Bone Collector (necro), Titan Crusher (void), Eye Closer (horus)
+- Endless Walker (endlessReached), Transcendent (lvl 50), Reaper (50k kills)
+- Centurion (100 runs), Dragon Hoard (50k gold), Phantom (5 no-hit), Cartographer (all maps)
+- Tracked via new save fields: necroSlain, voidSlain, horusSlain, endlessReached, mapProgress
+
+### Boss Kill Tracking
+- engine.js tracks _necroKilled, _voidKilled, _horusKilled in snapshot
+- App.js onRunEnd increments save fields accordingly
+
+
 
 ### Camp UI Layout
 - Profile/avatar bar moved to TOP of sidebar (above all tab buttons)
