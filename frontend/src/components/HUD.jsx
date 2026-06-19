@@ -8,12 +8,23 @@ export default function HUD({ snap, onActiveSkill }) {
   const hpPct = (snap.hp / snap.maxHp) * 100;
   const missionTimeLeft = snap.targetDuration && snap.targetDuration < 999 ? Math.max(0, snap.targetDuration - snap.time) : null;
 
-  // All active skills go to right column — no center button between joysticks
   const skills = snap.activeSkills || [];
+  const combo = snap.combo;
+  const showCombo = combo && combo.count >= 3;
 
   return (
     <>
-      <div className="hud-top">
+      {/* Boss bar ABOVE the main hud — fixed, full width centered at very top */}
+      {snap.bossActive && (
+        <div className="hud-boss-bar" data-testid="hud-boss-bar">
+          <div className="hud-boss-name">⚠ {snap.bossName} ⚠</div>
+          <div className="hud-boss-bar-track">
+            <div className="hud-boss-bar-fill" style={{ width: ((snap.bossHp / snap.bossMaxHp) * 100) + '%' }} />
+          </div>
+        </div>
+      )}
+
+      <div className={`hud-top${snap.bossActive ? ' boss-active' : ''}`}>
         <div className="hud-timer" data-testid="hud-timer">{missionTimeLeft != null ? fmt(missionTimeLeft) : fmt(snap.time)}</div>
         <div className="hud-wave">
           {snap.killGoal > 0 ? `KILLS ${snap.kills} / ${snap.killGoal}` : `WAVE ${Math.ceil(snap.time / 30)}`} · KILLS {snap.kills} · ★ {snap.gold}
@@ -23,15 +34,18 @@ export default function HUD({ snap, onActiveSkill }) {
           <div className="hud-xpbar-fill" style={{ width: xpPct + '%' }} />
           <div className="hud-level">LV {snap.level}</div>
         </div>
-        {snap.bossActive && (
-          <div className="hud-boss-bar">
-            <div className="hud-boss-name">⚠ {snap.bossName} ⚠</div>
-            <div className="hud-boss-bar-track">
-              <div className="hud-boss-bar-fill" style={{ width: ((snap.bossHp / snap.bossMaxHp) * 100) + '%' }} />
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* COMBO METER */}
+      {showCombo && (
+        <div className="combo-hud" data-testid="combo-hud" key={combo.count}>
+          <div className="combo-text">COMBO x{combo.count}</div>
+          <div className="combo-sub">×{combo.mult.toFixed(1)} MULT</div>
+          <div className="combo-bar-wrap">
+            <div className="combo-bar-fill" style={{ width: Math.max(0, (combo.timer / 2.5) * 100) + '%' }} />
+          </div>
+        </div>
+      )}
 
       <div className="weapon-strip">
         {snap.weapons.map(w => (

@@ -129,6 +129,16 @@ export class Game {
     this._aidaKilled = false;
     this._endlessAnnounced = false;
 
+    // Combo / kill-streak
+    this.combo = { count: 0, timer: 0, mult: 1 };
+    this._recentKillTimes = [];
+
+    // Canvas visual effects state
+    this._bossDeathFlash = 0;
+    this._critPunch = 0;
+    this._levelUpFlash = 0;
+    this._lights = [];       // [{x,y,r,color,life,max}]
+
     // Active skills slots and cooldowns
     this.activeSkills = (opts.activeSkills || []).slice(0, 4);
     this.skillCD = {};
@@ -307,6 +317,7 @@ export class Game {
       challenge: this.challenge,
       aidaKilled: this._aidaKilled,
       endless: this._endlessAnnounced,
+      combo: { count: this.combo.count, timer: this.combo.timer, mult: this.combo.mult },
     };
   }
 
@@ -338,6 +349,25 @@ export class Game {
     this.updateDmgNums(dt);
     this.spawnWave(dt);
     this.tickCardFlags(dt);
+
+    // Combo decay
+    if (this.combo.timer > 0) {
+      this.combo.timer -= dt;
+      if (this.combo.timer <= 0) {
+        this.combo.count = 0;
+        this.combo.mult = 1;
+        this._recentKillTimes = [];
+      }
+    }
+    // Canvas effects decay
+    this._bossDeathFlash = Math.max(0, this._bossDeathFlash - dt * 2.5);
+    this._critPunch      = Math.max(0, this._critPunch - dt * 5);
+    this._levelUpFlash   = Math.max(0, this._levelUpFlash - dt * 4);
+    // Point lights decay
+    for (let i = this._lights.length - 1; i >= 0; i--) {
+      this._lights[i].life -= dt;
+      if (this._lights[i].life <= 0) this._lights.splice(i, 1);
+    }
 
     if (this.nextBoss && this.run.time >= this.nextBoss.t && !this.bossActive) {
       this.spawnBoss(this.nextBoss.event);
@@ -1315,7 +1345,7 @@ export class Game {
     let head = false;
     if (!e.t.boss && s.headshot > 0 && Math.random() < s.headshot) { dmg = e.hp + 1; head = true; }
     s._lastHitDmg = dmg; s._lastHitWeapon = s._behaviour || 'projectile';
-    if (crit) Audio.crit();
+    if (crit) { Audio.crit(); this._critPunch = Math.min(0.22, this._critPunch + 0.18); }
     if ((s.flags || {}).burnDoT) e._burn = Math.max(e._burn || 0, 3);
     if ((s.flags || {}).vampire && !silent) {
       this.player.hp = Math.min(this.player.maxHp, this.player.hp + dmg * 0.05);
@@ -1341,6 +1371,26 @@ export class Game {
     if (e._decoy !== undefined) { this.enemies.release(e); return; }
     e.alive = false;
     this.run.kills += 1;
+
+    // ---- Combo tracking ----
+    const nowT = this.run.time;
+    this._recentKillTimes = this._recentKillTimes.filter(t => nowT - t < 1.5);
+    this._recentKillTimes.push(nowT);
+    if (this._recentKillTimes.length >= 3) {
+      const cnt = this._recentKillTimes.length;
+      if (cnt > this.combo.count || this.combo.timer <= 0) {
+        this.combo.count = cnt;
+        this.combo.mult = 1 + (cnt - 2) * 0.25;
+      }
+      this.combo.timer = 2.5;
+      if (cnt >= 3 && cnt !== (this.combo.count - 1)) {
+        Audio.crit(); // short audio sting for combo
+      }
+    }
+    // ---- Point light on kill ----
+    if (!t.boss && this._lights.length < 30) {
+      this._lights.push({ x: e.x, y: e.y, r: 55 + t.size * 1.2, color: t.color, life: 0.28, max: 0.28 });
+    }
     const inCascade = this._inCascade; this._inCascade = true;
     if (!inCascade) {
       if (s.voidBurst > 0 && Math.random() < s.voidBurst) {
@@ -1371,12 +1421,17 @@ export class Game {
     if (Math.random() < 0.6) {
       const g = this.gems.acquire();
       g.x = e.x + rand(-8, 8); g.y = e.y + rand(-8, 8); g.t = 0;
-      g.gold = Math.max(1, Math.floor(t.gold * s.goldMult));
+      g.gold = Math.max(1, Math.floor(t.gold * s.goldMult * (this.combo.mult || 1)));
       g.xp = 0;
     }
     if (t.boss) {
       this.cam.shake = 18; this.cam.slowmo = 0.5;
       this.bossesKilled += 1; this.bossActive = null;
+      this._bossDeathFlash = 1.4;
+      // Massive boss death rings
+      this.spawnRing(e.x, e.y, 240, '#ff7a1a', 0.8);
+      this.spawnRing(e.x, e.y, 160, '#ffd166', 0.6);
+      this.spawnRing(e.x, e.y, 80,  '#fff', 0.4);
       if (t.id === 'bossAida') { this._aidaKilled = true; }
       for (let i = 0; i < 12; i++) {
         const g = this.gems.acquire();
@@ -1443,7 +1498,7 @@ export class Game {
 
   addXp(amount) {
     const r = this.run;
-    r.xp += Math.floor(amount * r.stats.xpMult);
+    r.xp += Math.floor(amount * r.stats.xpMult * (this.combo.mult || 1));
     this._maybeLevelUp();
   }
 
@@ -1460,6 +1515,7 @@ export class Game {
     this.levelUpQueue += 1;
     this.cam.slowmo = 0.3;
     this.cam.shake = 10;
+    this._levelUpFlash = 1.0;
     Audio.levelUp();
     // BIG level-up blast — visual + KNOCKBACK ONLY (no damage so we never trigger
     // kill-cascades / chain-XP that previously could hang the loop during gem pickup).
@@ -1478,6 +1534,11 @@ export class Game {
       e.kbX += (dx / d) * 380;
       e.kbY += (dy / d) * 380;
       e.iframes = Math.max(e.iframes || 0, 0.25);
+      // Deal shockwave damage (guarded by _inCascade to prevent chain XP loops)
+      const prevCascade = this._inCascade;
+      this._inCascade = true;
+      this.dealDamage(e, 55 * (r.stats.damageMult || 1), false, 0, p.x, p.y, true);
+      this._inCascade = prevCascade;
     }
     this.spawnRing(p.x, p.y, blastR, '#ffd166', 0.55);
     this.spawnRing(p.x, p.y, blastR * 0.55, '#4dffd4', 0.45);
@@ -1806,11 +1867,39 @@ export class Game {
       }
     });
 
+    // ---- Point lights (additive glow on kill, under enemies) ----
+    if (this._lights.length > 0) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (const l of this._lights) {
+        const a = (l.life / l.max) * 0.22;
+        ctx.globalAlpha = a;
+        ctx.fillStyle = l.color;
+        ctx.beginPath(); ctx.arc(l.x, l.y, l.r, 0, TAU); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
     // Enemies — each enemy in its own try/catch so a single broken render
     // can't kill the whole frame and make everything disappear
     this.enemies.forEach(e => {
       try {
         const t = e.t;
+        // Speed trail for fast enemies (ghost-tail)
+        if (t.speed > 88 && e.vx !== undefined) {
+          const trail = 3;
+          for (let ti = 1; ti <= trail; ti++) {
+            const ta = (1 - ti / (trail + 1)) * 0.28;
+            ctx.globalAlpha = ta;
+            ctx.fillStyle = t.color;
+            ctx.beginPath();
+            ctx.arc(e.x - e.vx * ti * 0.032, e.y - e.vy * ti * 0.032, t.size * (0.45 + ti * 0.06), 0, TAU);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
         // shadow
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.beginPath(); ctx.ellipse(e.x, e.y + t.size * 0.45, t.size * 0.45, t.size * 0.18, 0, 0, TAU); ctx.fill();
@@ -2171,6 +2260,48 @@ export class Game {
       ctx.fillStyle = 'rgba(77,196,255,' + Math.min(0.2, this.cam.slowmo * 0.4) + ')';
       ctx.fillRect(0, 0, W, H);
     }
+
+    // ---- Boss death flash ----
+    if (this._bossDeathFlash > 0) {
+      const a = Math.min(1, this._bossDeathFlash);
+      ctx.fillStyle = 'rgba(255,220,100,' + (a * 0.55) + ')';
+      ctx.fillRect(0, 0, W, H);
+      // expanding ring drawn in screen-space center
+      const ringR = (1.4 - this._bossDeathFlash) * Math.max(W, H) * 0.85;
+      ctx.strokeStyle = 'rgba(255,200,50,' + (a * 0.7) + ')';
+      ctx.lineWidth = 8 * a;
+      ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 28 * a;
+      ctx.beginPath(); ctx.arc(W / 2, H / 2, ringR, 0, TAU); ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // ---- Level-up flash ----
+    if (this._levelUpFlash > 0) {
+      const a = Math.min(1, this._levelUpFlash) * 0.5;
+      const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H) * 0.6);
+      grad.addColorStop(0, 'rgba(77,255,212,' + a + ')');
+      grad.addColorStop(0.5, 'rgba(77,196,255,' + (a * 0.5) + ')');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // ---- Crit screen-punch vignette ----
+    if (this._critPunch > 0) {
+      const a = Math.min(1, this._critPunch);
+      // Red vignette edges
+      const vg = ctx.createRadialGradient(W/2, H/2, Math.min(W,H)*0.3, W/2, H/2, Math.max(W,H)*0.72);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, 'rgba(255,49,70,' + (a * 0.38) + ')');
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, W, H);
+      // Brief scale aberration — quick zoom-in offset at canvas level is too costly,
+      // so we simulate micro-punch with a white-flash center dot
+      if (a > 0.6) {
+        ctx.fillStyle = 'rgba(255,255,255,' + ((a - 0.6) * 0.25) + ')';
+        ctx.beginPath(); ctx.arc(W/2, H/2, 12 * a, 0, TAU); ctx.fill();
+      }
+    }
   }
 
   drawGround() {
@@ -2435,9 +2566,31 @@ export class Game {
     ctx.globalAlpha = 1;
     // muzzle glow if recently fired
     if (p.recoil > 0.05) {
+      const muzzleX = 30, muzzleR = 3 + p.recoil * 5;
+      // Bright core glow
       ctx.fillStyle = accentColor;
-      ctx.shadowColor = accentColor; ctx.shadowBlur = 12;
-      ctx.beginPath(); ctx.arc(30, 0, 3 + p.recoil * 5, 0, TAU); ctx.fill();
+      ctx.shadowColor = accentColor; ctx.shadowBlur = 20;
+      ctx.beginPath(); ctx.arc(muzzleX, 0, muzzleR, 0, TAU); ctx.fill();
+      // Radial flash burst on fresh shots (recoil > 0.5)
+      if (p.recoil > 0.5) {
+        const flashR = muzzleR * 3.5;
+        const grad = ctx.createRadialGradient(muzzleX, 0, 0, muzzleX, 0, flashR);
+        grad.addColorStop(0, accentColor + 'dd');
+        grad.addColorStop(0.35, accentColor + '66');
+        grad.addColorStop(1, accentColor + '00');
+        ctx.fillStyle = grad;
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = p.recoil * 0.9;
+        ctx.beginPath(); ctx.arc(muzzleX, 0, flashR, 0, TAU); ctx.fill();
+        ctx.globalAlpha = 1;
+        // tiny lens flare lines
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 0.8; ctx.globalAlpha = p.recoil * 0.5;
+        for (let fi = 0; fi < 4; fi++) {
+          const fa = (fi / 4) * TAU;
+          ctx.beginPath(); ctx.moveTo(muzzleX + Math.cos(fa) * muzzleR, Math.sin(fa) * muzzleR); ctx.lineTo(muzzleX + Math.cos(fa) * flashR * 0.85, Math.sin(fa) * flashR * 0.85); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
       ctx.shadowBlur = 0;
     }
     // reload indicator

@@ -5,6 +5,7 @@ let _muted = false;
 let _sfxVol = 0.4;
 let _musicVol = 0.15;
 let _musicNode = null;
+let _xpPingLastT = 0;
 
 function ctx() {
   if (!_ctx) {
@@ -53,9 +54,12 @@ export const Audio = {
   kill()  { noise(0.12, 0.12, 800); tone(160, 0.10, 'sawtooth', 0.08, 60); },
   reload(){ tone(380, 0.08, 'square', 0.06, 540); },
   levelUp(){ tone(523, 0.10, 'triangle', 0.12); setTimeout(() => tone(659, 0.10, 'triangle', 0.12), 90); setTimeout(() => tone(784, 0.18, 'triangle', 0.14), 180); },
-  // XP pickup — pitch rises as XP bar fills (Halls of Torment style)
+  // XP pickup — pitch rises as XP bar fills (Halls of Torment style), throttled to max 10/s
   xpPing(progress = 0) {
     const c = ctx(); if (!c || _muted) return;
+    const now = c.currentTime;
+    if (now - _xpPingLastT < 0.1) return;
+    _xpPingLastT = now;
     const freq = 480 + progress * 1400; // 480 Hz (empty) → 1880 Hz (full)
     const g = c.createGain();
     g.gain.setValueAtTime(_sfxVol * 0.18, c.currentTime);

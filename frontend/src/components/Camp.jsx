@@ -58,6 +58,16 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
     <div className="app-shell">
       <div className="camp" data-testid="camp-screen">
         <div className="camp-sidebar">
+          <div className="camp-profile-bar">
+            <span style={{ fontSize: 28 }}>{avatar.icon}</span>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--ink)' }}>{save.profile.name || 'Wanderer'}</div>
+              <div style={{ fontSize: 11, color: 'var(--rune)', letterSpacing: '0.2em' }}>RANK {save.profile.level}</div>
+            </div>
+            <div style={{ marginLeft: 'auto', fontFamily: 'VT323', color: 'var(--ink-dim)', fontSize: 15, lineHeight: 1.6, textAlign: 'right' }}>
+              ★ {save.gold}<br />◆ {save.sp} SP
+            </div>
+          </div>
           <div className="camp-tabs-scroll">
             <button className={`camp-tab ${tab === 'cards' ? 'active' : ''}`} onClick={() => setTab('cards')} data-testid="tab-cards">💠 META</button>
             <button className={`camp-tab ${tab === 'missions' ? 'active' : ''}`} onClick={() => setTab('missions')} data-testid="tab-missions">📋 MISSIONS</button>
@@ -74,16 +84,6 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
             <button className="camp-tab" onClick={() => setForgeOpen(true)} data-testid="open-forge">🔨 SMITH</button>
             <button className="camp-tab" onClick={() => setChestOpen(true)} data-testid="open-chest">📦 CHESTS</button>
             <button className="camp-tab" onClick={() => setSettingsOpen(true)} data-testid="open-settings">⚙ SETTINGS</button>
-          </div>
-          <div className="camp-profile-bar">
-            <span style={{ fontSize: 24 }}>{avatar.icon}</span>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--ink)' }}>{save.profile.name || 'Wanderer'}</div>
-              <div style={{ fontSize: 10, color: 'var(--rune)', letterSpacing: '0.2em' }}>RANK {save.profile.level}</div>
-            </div>
-            <div style={{ marginLeft: 'auto', fontFamily: 'VT323', color: 'var(--ink-dim)', fontSize: 13, lineHeight: 1.6, textAlign: 'right' }}>
-              ★ {save.gold}<br />◆ {save.sp} SP
-            </div>
           </div>
         </div>
 
