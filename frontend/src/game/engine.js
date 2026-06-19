@@ -305,6 +305,8 @@ export class Game {
       targetDuration: this.targetDuration,
       killGoal: this.killGoal,
       challenge: this.challenge,
+      aidaKilled: this._aidaKilled,
+      endless: this._endlessAnnounced,
     };
   }
 
@@ -815,7 +817,6 @@ export class Game {
     const r = (s.area || 120) * rs.areaMult;
     const dmg = this.rollDamage(s.damage * rs.damageMult);
     const aimAng = Math.atan2(p.aimY, p.aimX);
-    let hits = 0;
     this.enemies.forEach(e => {
       const edx = e.x - p.x, edy = e.y - p.y;
       const ed = Math.hypot(edx, edy);
@@ -826,7 +827,7 @@ export class Game {
       while (da > Math.PI) da -= TAU;
       while (da < -Math.PI) da += TAU;
       if (Math.abs(da) <= Math.PI * 0.55) {
-        this.dealDamage(e, dmg.dmg, dmg.crit, s.knockback || 0, p.x, p.y); hits++;
+        this.dealDamage(e, dmg.dmg, dmg.crit, s.knockback || 0, p.x, p.y);
       }
     });
     // visual sweeping arc in aim direction
@@ -1596,18 +1597,19 @@ export class Game {
     let prev = first;
     const hit = new Set([first]);
     for (let ci = 0; ci < chainCount; ci++) {
+      const chainFrom = prev;
       let next = null; let bestD = chainRange;
       this.enemies.forEach(e => {
         if (hit.has(e)) return;
-        const cd = Math.hypot(e.x - prev.x, e.y - prev.y);
+        const cd = Math.hypot(e.x - chainFrom.x, e.y - chainFrom.y);
         if (cd < bestD) { bestD = cd; next = e; }
       });
       if (!next) break;
       const lp = this.parts.acquire();
-      lp.x = prev.x; lp.y = prev.y;
+      lp.x = chainFrom.x; lp.y = chainFrom.y;
       lp.vx = next.x; lp.vy = next.y;
       lp.life = 0.20; lp.max = 0.20; lp.color = s.color || '#a0e4ff'; lp.size = 4; lp.type = 'lightning';
-      this.dealDamage(next, dmg.dmg * 0.65, dmg.crit, 20, prev.x, prev.y);
+      this.dealDamage(next, dmg.dmg * 0.65, dmg.crit, 20, chainFrom.x, chainFrom.y);
       this.spawnSpark(next.x, next.y, s.color || '#a0e4ff');
       hit.add(next); prev = next;
     }

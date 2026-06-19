@@ -1,6 +1,52 @@
 # Waterdrop Survivor — PRD
 
+## Iter 9 (2026-02-XX) — 6-Step Gameplay Overhaul
+
+### What was built
+
+**1. Scythe — riktig 180° svänganimation**
+- Träffar nu bara fiender i framåtriktad halvbåge (90° från siktoriktning)
+- Visuell svepande ljusbåge animeras från -90° till +90° relativt aim-vinkeln
+- Ljusbrant ledande kant-effekt under svängen
+
+**2. Arc Tesla — nytt vapen (studsande blixt)**
+- `behaviour: 'chain'` — drabbar närmaste fiende, studsar sedan till 3 ytterligare
+- Visuell blixtlinje (lightning-partiklar) mellan varje hopp
+- Weapon parts: Voltage Cell / Conductor / Arc Range / Tesla Type
+
+**3. 6:e sällsynthetsnivå — Mythical**
+- `mythical` (vikt 0.05, färg #ff4dff) lagd till RARITY + EQUIP_RARITY
+- CSS: `.r-mythical` med pulserande magenta glow-animation
+- Slot machine: `rar-mythical` slot cell
+
+**4. XP Gems — blå, 4 storlekar**
+- Färg ändrad från teal #4dffd4 → blå #5ba3ff med vit glow
+- 4 storlekar: tiny(xp≤2), small(xp≤6), medium(xp≤15), large(xp>15)
+- Stor/medium gems har vit kärnglimt
+
+**5. Boss-uppdateringar**
+- Eye of Horus flyr vid 50% HP i 15s, återvänder sedan med meddelande
+- Ny boss: **Nekromansen** (t=280) — kallar 3 ghouls var 6:e sekund, grönögd skalle-rendering
+- Ny boss: **Void Titan** (t=430) — avfyrar 6 void-orbs spiralformigt, hexagonal med pulserande void-öga
+- WAVE_TIMELINE utökad med endless-vågor efter A.I.D.A. (t=620–1240)
+- Spelet slutar INTE automatiskt efter Aida — endless mode annonseras med +500 gold bonus
+- GameOverScreen visar "ENDLESS SURVIVOR" + "∞ ENDLESS MODE" rubrik om endless uppnåtts
+
+**6. Balansering**
+- Tidiga fiender +30% HP: slime 22→29, bat 14→18, brute 70→91, ranger 30→39, ghoul 35→45
+- XP-kurva mjukare: multiplikator 1.42 → 1.38
+- Weapon parts: hydropistol + bloodscythe + arcTesla tillagda till WEAPON_PART_OVERRIDES
+
 ## Iter 8 (2026-06-18) — Mobile UX overhaul + Slot machine + Eye of Horus + Per-weapon parts + Custom music
+[preserved]
+
+## Backlog (P1–P3)
+- Fler achievements/milstolpar med belöningar (P1)
+- Camp scroll: spelarprofilnivå fastnar ovanför menyn (P2)
+- Kartor med progressionsstigar (P2)
+- Apple Sign-In (P3, kräver $99/yr Apple Developer)
+- Per-account cloud save sync (P3)
+
 
 ### What was built (high-impact items from user feature list, ~95 credits target)
 

@@ -16,15 +16,16 @@ export default function GameOver({ result, extras, onCamp, onRetry, onMenu }) {
   if (ex.isBestTime)   badges.push({ icon: '🏆', label: 'NEW BEST TIME' });
   if (ex.isBestKills)  badges.push({ icon: '⚡', label: 'NEW LEVEL RECORD' });
   if (ex.noHit)        badges.push({ icon: '💎', label: 'FLAWLESS RUN' });
-  if (result.victory)  badges.push({ icon: '👑', label: 'A.I.D.A. SLAIN' });
+  if (result.victory || result.aidaKilled) badges.push({ icon: '👑', label: 'A.I.D.A. SLAIN' });
+  if (result.endless)  badges.push({ icon: '∞', label: 'ENDLESS SURVIVOR' });
   if (ex.challengeBonus) badges.push({ icon: '🎯', label: 'CHALLENGE CLEARED' });
 
   return (
     <div className="modal-overlay">
-      <div className={'gameover go-modern' + (result.victory ? ' is-victory' : '')} data-testid="game-over">
-        <div className="go-title">{result.victory ? 'A.I.D.A. SLAIN' : 'YOU FELL'}</div>
+      <div className={'gameover go-modern' + (result.victory || result.aidaKilled ? ' is-victory' : '')} data-testid="game-over">
+        <div className="go-title">{result.endless ? '∞ ENDLESS MODE' : (result.victory || result.aidaKilled ? 'A.I.D.A. SLAIN' : 'YOU FELL')}</div>
         <div className="go-sub">
-          {result.victory ? 'The lake awakens. The collective remembers your name.' : 'The lake mourns. Return stronger.'}
+          {result.endless ? 'Aida is gone. The void remains. How long can you last?' : (result.victory || result.aidaKilled ? 'The lake awakens. The collective remembers your name.' : 'The lake mourns. Return stronger.')}
         </div>
 
         <div className="go-stats-grid">
