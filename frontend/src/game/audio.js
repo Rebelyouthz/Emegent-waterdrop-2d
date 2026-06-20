@@ -54,30 +54,21 @@ export const Audio = {
   kill()  { noise(0.12, 0.12, 800); tone(160, 0.10, 'sawtooth', 0.08, 60); },
   reload(){ tone(380, 0.08, 'square', 0.06, 540); },
   levelUp(){ tone(523, 0.10, 'triangle', 0.12); setTimeout(() => tone(659, 0.10, 'triangle', 0.12), 90); setTimeout(() => tone(784, 0.18, 'triangle', 0.14), 180); },
-  // Water-drop claim sound — quick descending pitch sweep, no throttle
+  // Water-drop claim: low start → dip → rises UP = positiv känsla
   claimPing() {
     const c = ctx(); if (!c || _muted) return;
     const now = c.currentTime;
-    // First drop: high → mid
-    const o1 = c.createOscillator(); const g1 = c.createGain();
-    o1.connect(g1); g1.connect(_master);
-    o1.type = 'sine';
-    o1.frequency.setValueAtTime(1400, now);
-    o1.frequency.exponentialRampToValueAtTime(680, now + 0.14);
-    g1.gain.setValueAtTime(0.001, now);
-    g1.gain.exponentialRampToValueAtTime(_sfxVol * 0.65, now + 0.01);
-    g1.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-    o1.start(now); o1.stop(now + 0.2);
-    // Tiny echo drop
-    const o2 = c.createOscillator(); const g2 = c.createGain();
-    o2.connect(g2); g2.connect(_master);
-    o2.type = 'sine';
-    o2.frequency.setValueAtTime(1000, now + 0.18);
-    o2.frequency.exponentialRampToValueAtTime(500, now + 0.30);
-    g2.gain.setValueAtTime(0.001, now + 0.18);
-    g2.gain.exponentialRampToValueAtTime(_sfxVol * 0.35, now + 0.19);
-    g2.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
-    o2.start(now + 0.18); o2.stop(now + 0.35);
+    const o = c.createOscillator(); const g = c.createGain();
+    o.connect(g); g.connect(_master);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(480, now);
+    o.frequency.exponentialRampToValueAtTime(240, now + 0.09);
+    o.frequency.exponentialRampToValueAtTime(860, now + 0.26);
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.exponentialRampToValueAtTime(_sfxVol * 0.68, now + 0.02);
+    g.gain.linearRampToValueAtTime(_sfxVol * 0.5, now + 0.12);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.30);
+    o.start(now); o.stop(now + 0.32);
   },
   xpPing(progress = 0) {
     const c = ctx(); if (!c || _muted) return;
