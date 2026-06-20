@@ -1367,7 +1367,58 @@ canvas#game {
   gap: 6px; z-index: 30;
 }
 
-/* end Camp */
+/* ---- PROFILE LEVEL-UP OVERLAY ---- */
+.lu-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: #000000bb; backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.lu-confetti {
+  position: absolute; top: -14px;
+  width: 9px; height: 12px; border-radius: 2px;
+  animation: luFall 2.4s ease-in infinite;
+}
+@keyframes luFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(108vh) rotate(540deg); opacity: 0.15; }
+}
+.lu-laser {
+  position: absolute; top: 50%; left: 50%;
+  width: 60vw; height: 2px;
+  transform-origin: left center;
+  background: linear-gradient(90deg, #ffd16688 0%, transparent 100%);
+  animation: luLaserPulse 1.8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes luLaserPulse { from { opacity: 0.15; } to { opacity: 0.55; } }
+.lu-card {
+  position: relative; z-index: 10;
+  background: linear-gradient(160deg, #1a0e28ee, #0e0816ee);
+  border: 2px solid #ffd16688;
+  box-shadow: 0 0 50px #ffd16633, 0 0 120px #ff7a1a22;
+  padding: 30px 36px 24px; min-width: 280px; max-width: 360px;
+  text-align: center;
+  animation: luPop 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+@keyframes luPop { from { transform: scale(0.55); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.lu-avatar { font-size: 78px; line-height: 1; margin-bottom: 6px; display: block; animation: luBounce 1.4s ease-in-out infinite alternate; }
+@keyframes luBounce { from { transform: scale(1) rotate(-3deg); } to { transform: scale(1.1) rotate(3deg); } }
+.lu-title { font-family: 'VT323', monospace; font-size: 42px; color: #ffd166; letter-spacing: 0.35em; text-shadow: 0 0 22px #ff7a1a, 0 0 50px #ff7a1a44; }
+.lu-rank  { font-family: 'VT323', monospace; font-size: 22px; color: #4dffd4; letter-spacing: 0.22em; margin-bottom: 14px; }
+.lu-xp    { height: 7px; background: #00000066; border: 1px solid #ffffff18; margin-bottom: 20px; overflow: hidden; border-radius: 0; }
+.lu-xp-fill { height: 100%; background: linear-gradient(90deg, #4dffd4, #ffd166, #ff7a1a); animation: luXp 2s ease-out forwards; }
+@keyframes luXp { 0% { width: 0%; } 68% { width: 100%; } 70% { width: 0%; } 100% { width: 60%; } }
+.lu-rewards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+.lu-rwd { font-family: 'VT323', monospace; font-size: 24px; color: #ffd166; letter-spacing: 0.15em; }
+.lu-collect {
+  font-family: 'VT323', monospace; font-size: 24px; letter-spacing: 0.3em;
+  padding: 11px 30px; background: #ffd16618; border: 2px solid #ffd166; color: #ffd166;
+  cursor: pointer; transition: background 0.15s, transform 0.1s;
+  width: 100%;
+}
+.lu-collect:hover { background: #ffd16638; transform: scale(1.02); }
+/* end Level-Up Overlay */
 
 /* ---------- MAPS PANEL ---------- */
 .maps-grid {

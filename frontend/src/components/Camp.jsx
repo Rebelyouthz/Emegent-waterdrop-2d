@@ -200,6 +200,19 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
       {craftOpen && <WeaponCrafting save={save} setSave={setSave} onClose={() => setCraftOpen(false)} />}
       {settingsOpen && <SettingsPanel save={save} setSave={setSave} onClose={() => setSettingsOpen(false)} onReset={handleReset} />}
       {partsOpen && <PartsInventory save={save} setSave={setSave} onClose={() => setPartsOpen(false)} />}
+      {save.pendingLevelUp && (
+        <LevelUpOverlay save={save} onCollect={() => {
+          const r = save.pendingLevelUp;
+          setSave({
+            ...save,
+            pendingLevelUp: null,
+            gold: (save.gold || 0) + r.gold,
+            sp:   (save.sp   || 0) + r.sp,
+            freeShopSpins: (save.freeShopSpins || 0) + (r.freeSpin ? 1 : 0),
+          });
+          Audio.claimPing();
+        }} />
+      )}
     </div>
   );
 }
@@ -208,3 +221,36 @@ function Stat({ label, val }) {
   return (<div className="stat-cell"><div className="stat-lbl">{label}</div><div className="stat-val">{val}</div></div>);
 }
 function fmtTime(t) { if (!t) return '00:00'; const m = Math.floor(t / 60); const s = Math.floor(t % 60); return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
+
+const _CF = [
+  {l:6,d:0,c:'#ff3146'},{l:14,d:.4,c:'#ffd166'},{l:23,d:.8,c:'#4dffd4'},
+  {l:33,d:.2,c:'#b362ff'},{l:44,d:1.1,c:'#ff8c00'},{l:55,d:.6,c:'#4dc4ff'},
+  {l:66,d:1.5,c:'#ffd700'},{l:76,d:.3,c:'#ff3146'},{l:85,d:.9,c:'#4dffd4'},
+  {l:93,d:.1,c:'#b362ff'},{l:10,d:1.8,c:'#ffd166'},{l:29,d:1.3,c:'#ff8c00'},
+  {l:50,d:1.0,c:'#4dc4ff'},{l:70,d:1.7,c:'#ff3146'},{l:88,d:.5,c:'#ffd700'},
+  {l:19,d:1.4,c:'#4dffd4'},
+];
+const _LASERS = [0,45,90,135,180,225,270,315];
+
+function LevelUpOverlay({ save, onCollect }) {
+  const r = save.pendingLevelUp;
+  const av = AVATARS[save.profile.avatar] || AVATARS[0];
+  return (
+    <div className="lu-overlay" data-testid="levelup-overlay">
+      {_CF.map((c,i) => <div key={i} className="lu-confetti" style={{left:`${c.l}%`,animationDelay:`${c.d}s`,background:c.c}} />)}
+      {_LASERS.map(a => <div key={a} className="lu-laser" style={{transform:`translate(-50%,-50%) rotate(${a}deg)`}} />)}
+      <div className="lu-card">
+        <div className="lu-avatar">{av.icon}</div>
+        <div className="lu-title">RANK UP!</div>
+        <div className="lu-rank">★ RANK {r.level} ★</div>
+        <div className="lu-xp"><div className="lu-xp-fill" /></div>
+        <div className="lu-rewards">
+          <div className="lu-rwd">★ +{r.gold} Gold</div>
+          <div className="lu-rwd">◆ +{r.sp} SP</div>
+          {r.freeSpin && <div className="lu-rwd" style={{color:'#4dffd4',textShadow:'0 0 10px #4dffd4'}}>🎰 Free Shop Spin!</div>}
+        </div>
+        <button className="lu-collect" onClick={onCollect} data-testid="levelup-collect">COLLECT ▸</button>
+      </div>
+    </div>
+  );
+}

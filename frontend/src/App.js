@@ -105,6 +105,11 @@ function AppInner() {
     if (result.voidKilled)  ns.voidSlain  = (ns.voidSlain  || 0) + 1;
     if (result.horusKilled) ns.horusSlain = (ns.horusSlain || 0) + 1;
     if (result.endless)     ns.endlessReached = (ns.endlessReached || 0) + 1;
+    if (mission && mission.isDailyChallenge && result.victory && mission.doneKey) {
+      ns.dailyChallengesDone = { ...(ns.dailyChallengesDone || {}), [mission.doneKey]: true };
+      ns.gold = (ns.gold || 0) + (mission.rwd?.gold || 0);
+      ns.sp   = (ns.sp   || 0) + (mission.rwd?.sp   || 0);
+    }
     if (mission && mission.isMap && result.victory && mission.mapNodeId) {
       ns.mapProgress = { ...(ns.mapProgress || {}), [mission.mapNodeId]: true };
       ns.gold = (ns.gold || 0) + (mission.rwd?.gold || 0);
