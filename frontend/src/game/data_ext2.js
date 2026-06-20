@@ -335,6 +335,26 @@ export const KILL_FX = {
   meteor:     'gibs',
 };
 
+// ---------- DAILY CHALLENGES ----------
+export const DAILY_CHALLENGE_POOL = [
+  { id: 'dc_blitz',   name: 'Blitz Run',       icon: '⚡', desc: 'Survive 60 seconds',         duration: 60,  killGoal: 0, spawnMult: 2.2, rwd: { gold: 400, sp: 2 } },
+  { id: 'dc_hunter',  name: 'Bounty Hunt',      icon: '🎯', desc: 'Kill 80 enemies in 90s',     duration: 90,  killGoal: 80, spawnMult: 1.8, rwd: { gold: 600, sp: 2 } },
+  { id: 'dc_void',    name: 'Void Rush',         icon: '🌌', desc: 'Survive 3 minutes (hard)',   duration: 180, killGoal: 0, spawnMult: 2.5, rwd: { gold: 800, sp: 3 } },
+  { id: 'dc_swarm',   name: 'Swarm Protocol',   icon: '🐝', desc: 'Kill 200 enemies',           duration: 999, killGoal: 200, spawnMult: 2.8, rwd: { gold: 1000, sp: 4 } },
+  { id: 'dc_undying', name: 'Undying',           icon: '❤', desc: 'Survive 2 min: no pickups',  duration: 120, killGoal: 0, spawnMult: 1.5, rwd: { gold: 700, sp: 3 } },
+  { id: 'dc_bullet',  name: 'Bullet Hell',       icon: '💢', desc: 'Kill 50 enemies in 45s',     duration: 45,  killGoal: 50, spawnMult: 3.0, rwd: { gold: 900, sp: 4 } },
+  { id: 'dc_elite',   name: 'Elite Gauntlet',   icon: '🏆', desc: 'Survive 5 minutes',         duration: 300, killGoal: 0, spawnMult: 2.0, rwd: { gold: 1500, sp: 6 } },
+  { id: 'dc_boss',    name: 'Boss Rush',         icon: '💀', desc: '90s high-density survival',  duration: 90,  killGoal: 0, spawnMult: 2.0, rwd: { gold: 1200, sp: 5 } },
+];
+
+export function getDailyChallenges() {
+  const day = Math.floor(Date.now() / 86400000);
+  return [
+    DAILY_CHALLENGE_POOL[day % DAILY_CHALLENGE_POOL.length],
+    DAILY_CHALLENGE_POOL[(day + 3) % DAILY_CHALLENGE_POOL.length],
+  ];
+}
+
 // ---------- MAP STAGES (progression paths) ----------
 export const MAP_STAGES = [
   {

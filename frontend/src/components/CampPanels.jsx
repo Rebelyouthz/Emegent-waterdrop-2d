@@ -1,6 +1,6 @@
 // Combined extended Camp panels in one file to save bundle weight.
 import React, { useState, useEffect } from 'react';
-import { MISSION_DEFS, MISSION_DAILY_LIMIT, MISSION_REGEN_MS, rollMissionRewards, ACHIEVEMENTS, CHALLENGES, STAGES, MILESTONE_BAR, SHOP_CARD_POOL, shopCardCost, rollShopPull, ACTIVE_SKILLS, ACTIVE_SKILL_KEYS, ADVANCED_CARDS, STARTER_WEAPONS, PART_RARITY_COLORS, PART_SLOTS, PART_SLOT_INFO, STAT_DISPLAY, rollPart, MAP_STAGES } from '../game/data_ext2';
+import { MISSION_DEFS, MISSION_DAILY_LIMIT, MISSION_REGEN_MS, rollMissionRewards, ACHIEVEMENTS, CHALLENGES, STAGES, MILESTONE_BAR, SHOP_CARD_POOL, shopCardCost, rollShopPull, ACTIVE_SKILLS, ACTIVE_SKILL_KEYS, ADVANCED_CARDS, STARTER_WEAPONS, PART_RARITY_COLORS, PART_SLOTS, PART_SLOT_INFO, STAT_DISPLAY, rollPart, MAP_STAGES, DAILY_CHALLENGE_POOL, getDailyChallenges } from '../game/data_ext2';
 import { Audio } from '../game/audio';
 import { accountXpToNext } from '../game/data_ext';
 
@@ -65,6 +65,36 @@ export function MissionsPanel({ save, setSave, onStart }) {
           </div>
         ))}
       </div>
+
+      {/* ---- DAILY CHALLENGES ---- */}
+      <div className="camp-header" style={{ marginTop: 22 }}>
+        <h1 style={{ color: '#ff7a1a' }}>Daily Challenges</h1>
+        <div className="camp-currency" style={{ fontSize: 12, color: 'var(--ink-dim)' }}>Resets at midnight</div>
+      </div>
+      <div className="upgrade-grid">
+        {getDailyChallenges().map(dc => {
+          const dayKey = Math.floor(Date.now() / 86400000);
+          const doneKey = `${dayKey}_${dc.id}`;
+          const done = !!(save.dailyChallengesDone || {})[doneKey];
+          return (
+            <div className={`upgrade-card daily-challenge-card ${done ? 'dc-done' : ''}`} key={dc.id} data-testid={`dc-${dc.id}`}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ fontSize: 28 }}>{dc.icon}</div>
+                <div>
+                  <div className="name" style={{ color: '#ff7a1a' }}>{dc.name}</div>
+                  <div className="lvl">DAILY CHALLENGE</div>
+                </div>
+              </div>
+              <div className="desc">{dc.desc}</div>
+              <div style={{ fontSize: 13, color: '#ffd166' }}>★ {dc.rwd.gold} gold · ◆ {dc.rwd.sp} SP</div>
+              {done
+                ? <div style={{ color: '#4dffd4', fontFamily: 'VT323', letterSpacing: '0.2em', fontSize: 14 }}>✓ COMPLETED</div>
+                : <button onClick={() => onStart({ ...dc, isDailyChallenge: true, dcId: dc.id, doneKey })} data-testid={`start-dc-${dc.id}`}>▸ ACCEPT</button>
+              }
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 }
@@ -125,7 +155,7 @@ export function AchievementsPanel({ save, setSave }) {
     if (a.rwd.gold) ns.gold = (ns.gold || 0) + a.rwd.gold;
     if (a.rwd.sp) ns.sp = (ns.sp || 0) + a.rwd.sp;
     setSave(ns);
-    Audio.levelUp();
+    Audio.claimPing();
   };
   return (
     <>
@@ -167,7 +197,7 @@ export function MilestoneBar({ save, setSave }) {
     const ns = { ...save, milestoneBar: { ...cl, [m.atLevel]: true } };
     if (m.rwd.gold) ns.gold = (ns.gold || 0) + m.rwd.gold;
     if (m.rwd.sp) ns.sp = (ns.sp || 0) + m.rwd.sp;
-    setSave(ns); Audio.levelUp();
+    setSave(ns); Audio.claimPing();
   };
   return (
     <div className="milestone-bar" data-testid="milestone-bar">

@@ -37,6 +37,10 @@ export const DEFAULT_SAVE = {
   horusSlain: 0,
   endlessReached: 0,
   mapProgress: {},
+  // level-up
+  pendingLevelUp: null,
+  freeShopSpins: 0,
+  dailyChallengesDone: {},
 };
 
 export function loadSave() {
@@ -97,10 +101,20 @@ export function ensureDailyQuests(save) {
 }
 
 export function addAccountXp(save, amount) {
+  const prevLevel = save.profile.level;
   save.profile.xp += amount;
   while (save.profile.xp >= accountXpToNext(save.profile.level)) {
     save.profile.xp -= accountXpToNext(save.profile.level);
     save.profile.level += 1;
+  }
+  if (save.profile.level > prevLevel) {
+    const lv = save.profile.level;
+    save.pendingLevelUp = {
+      level: lv,
+      gold: 100 + lv * 40,
+      sp: Math.max(1, Math.floor(lv / 3)),
+      freeSpin: lv % 10 === 0,
+    };
   }
 }
 
