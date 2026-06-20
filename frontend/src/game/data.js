@@ -250,6 +250,8 @@ export const META_UPGRADES = [
   { id: 'm_spd',    name: 'Lightfoot',         icon: '🥾', desc: '+3% move speed per level',     stat: 'mspd',      amount: 0.03, max: 10, baseCost: 60,  curve: 1.6 },
   { id: 'm_crit',   name: 'Eye of Fortune',    icon: '💢', desc: '+2% crit chance per level',    stat: 'crit',      amount: 0.02, max: 10, baseCost: 90,  curve: 1.7 },
   { id: 'm_critd',  name: 'Vorpal Mind',       icon: '🩸', desc: '+10% crit damage per level',   stat: 'critd',     amount: 0.10, max: 10, baseCost: 110, curve: 1.7 },
+  { id: 'm_superCrit', name: 'Super Strike',  icon: '💥', desc: '+4% Super Crit chance / lvl',  stat: 'superCrit', amount: 0.04, max: 5,  baseCost: 150, curve: 1.9 },
+  { id: 'm_megaCrit',  name: 'Mega Strike',   icon: '💢', desc: '+2% Mega Crit chance / lvl',   stat: 'megaCrit',  amount: 0.02, max: 5,  baseCost: 250, curve: 2.1 },
   { id: 'm_armor',  name: 'Annunaki Plating',  icon: '🛡️', desc: '+1 armor per level',          stat: 'armor',     amount: 1,    max: 10, baseCost: 100, curve: 1.7 },
   { id: 'm_regen',  name: 'Flow of Nirvana',   icon: '🌿', desc: '+0.2 HP/s per level',          stat: 'regen',     amount: 0.2,  max: 10, baseCost: 120, curve: 1.7 },
   { id: 'm_pickup', name: 'Tidal Pull',        icon: '🧲', desc: '+10% pickup range per level',  stat: 'pickup',    amount: 0.10, max: 8,  baseCost: 70,  curve: 1.6 },

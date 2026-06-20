@@ -22,6 +22,8 @@ function buildMetaEffects(save) {
     mspd:     metaSum('m_spd', 0.03) + (shopB.mspd || 0),
     crit:     metaSum('m_crit', 0.02) + (shopB.crit || 0),
     critd:    metaSum('m_critd', 0.10) + (shopB.critd || 0),
+    superCrit: metaSum('m_superCrit', 0.04),
+    megaCrit:  metaSum('m_megaCrit',  0.02),
     armor:    metaSum('m_armor', 1) + (shopB.armor || 0),
     regen:    metaSum('m_regen', 0.2),
     pickup:   metaSum('m_pickup', 0.10) + (shopB.pickup || 0),
@@ -39,7 +41,7 @@ function buildMetaEffects(save) {
   Object.entries(sk).forEach(([id, lvl]) => {
     const s = SKILL_INDEX[id]; if (!s || lvl < 1) return;
     const amt = s.amount * lvl;
-    if (['dmg','crit','critd','atks','mspd','armor','regen','pickup','xp','gold','luck','dodge','area','proj','pierce','headshot','dashcd','bossDmg','voidBurst'].includes(s.stat)) {
+    if (['dmg','crit','critd','atks','mspd','armor','regen','pickup','xp','gold','luck','dodge','area','proj','pierce','headshot','dashcd','bossDmg','voidBurst','superCrit','megaCrit'].includes(s.stat)) {
       result[s.stat] = (result[s.stat] || 0) + amt;
     } else if (s.stat === 'maxhp') result.maxHp += amt;
     else if (s.stat === 'berserk') result.berserk = true;

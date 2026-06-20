@@ -651,13 +651,17 @@ export function MapsPanel({ save, setSave, onStart }) {
               )}
               {unlocked && (
                 <div className="map-nodes">
-                  {stage.nodes.map(node => {
+                  {stage.nodes.map((node, idx) => {
                     const done = !!progress[node.id];
                     const canStart = canStartNode(stage, node);
                     const mins = Math.floor(node.duration / 60);
                     const secs = node.duration % 60;
                     const timeLabel = mins > 0 ? `${mins}m${secs > 0 ? secs + 's' : ''}` : `${secs}s`;
                     return (
+                      <React.Fragment key={node.id}>
+                        {idx > 0 && (
+                          <div className="node-connector" style={{ color: done ? '#4dffd4' : canStart ? stage.color : '#ffffff22' }}>▼</div>
+                        )}
                       <div className={`map-node ${done ? 'done' : ''} ${canStart ? '' : 'node-locked'}`} key={node.id} data-testid={`map-node-${node.id}`}>
                         <div className="node-diff" style={{ color: DIFF_COLOR[node.diff] }}>{DIFF_LABEL[node.diff]}</div>
                         <div className="node-name">{node.name}</div>
@@ -674,6 +678,7 @@ export function MapsPanel({ save, setSave, onStart }) {
                             </button>
                         }
                       </div>
+                      </React.Fragment>
                     );
                   })}
                 </div>

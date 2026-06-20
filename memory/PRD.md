@@ -1,6 +1,35 @@
 # Waterdrop Survivor — PRD
 
-## Iter 12 (2026-02) — Cleanup, Maps System & New Achievements
+## Iter 13 (2026-02) — Crit Tiers, Magnet Fix, Weapon/Skill Caps, Map Path
+
+### Crit Hit Tier System
+- Normal hit: shows damage number (white)
+- CRIT: shows "CRIT" in orange (#ff8c00) — replaces damage number
+- SUPER: shows "SUPER" in red (#ff4444) — replaces damage number
+- MEGA: shows "MEGA" in deep red (#cc0000) — replaces damage number
+- HEAD!: shows "HEAD!" in pure red (#ff0000) — replaces damage number
+- critTier logic in rollDamage, stored in s._lastCritTier, read in dealDamage
+- Upgradeable via: m_superCrit meta (+4% per level, max 5), m_megaCrit meta (+2% per level, max 5)
+- GameScreen.jsx buildMetaEffects adds superCrit, megaCrit stats
+
+### Magnet / Pickup Range Fix
+- Base pickup radius reduced 60 → 18 (nearly 0 at start)
+- Player must upgrade via skill tree / meta / run cards to get meaningful pull
+
+### Weapon Cap
+- MAX_ACTIVE_WEAPONS: 4 → 10 (data_ext.js + engine.js buildLevelUpChoices)
+
+### Passive Skill Max Levels (Skill Tree)
+- All non-active passive skills: max 3-5 → 15-20 levels
+- Active skills (dash, blink, shield, revive, headshot, berserk, aegis, phoenix, aida, void, chest): unchanged (max 1)
+
+### Audio
+- SFX volume: 0.4 → 0.54 (+35%)
+
+### Maps Visual Path
+- Node connectors (▼ arrow) between map nodes, colored by unlock/completion state
+
+
 
 ### Removals
 - Combo meter completely removed (engine.js, HUD.jsx, index.css)

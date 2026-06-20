@@ -89,6 +89,8 @@ export class Game {
         armor: (this.meta.armor || 0),
         crit: 0.05 + (this.meta.crit || 0),
         critDmgMult: 1.5 + (this.meta.critd || 0),
+        superCritChance: (this.meta.superCrit || 0),
+        megaCritChance:  (this.meta.megaCrit  || 0),
         areaMult: 1.0 + (this.meta.area || 0),
         projBonus: (this.meta.proj || 0),
         pickupMult: 1.0 + (this.meta.pickup || 0),
@@ -972,8 +974,16 @@ export class Game {
     if (f.doubleHit && Math.random() < 0.20) dmg *= 2.0;
     const c = (baseCrit || 0) + s.crit;
     const isCrit = Math.random() < c;
-    if (isCrit) dmg *= s.critDmgMult;
-    return { dmg, crit: isCrit };
+    let critTier = 0;
+    if (isCrit) {
+      critTier = 1;
+      if ((s.superCritChance || 0) > 0 && Math.random() < s.superCritChance) critTier = 2;
+      if (critTier >= 2 && (s.megaCritChance || 0) > 0 && Math.random() < s.megaCritChance) critTier = 3;
+    }
+    const critMults = [1, s.critDmgMult, s.critDmgMult * 2.0, s.critDmgMult * 3.5];
+    if (isCrit) dmg *= critMults[critTier];
+    s._lastCritTier = critTier;
+    return { dmg: Math.floor(dmg), crit: isCrit, critTier };
   }
 
   // ====== ENEMIES ======
@@ -1293,7 +1303,7 @@ export class Game {
 
   updateGems(dt) {
     const p = this.player;
-    const pickupR = 60 * this.run.stats.pickupMult;
+    const pickupR = 18 * this.run.stats.pickupMult;
     const magnetR = pickupR * 2.2;
     this.gems.forEach(g => {
       if (!g.alive) return;
@@ -1344,10 +1354,17 @@ export class Game {
       const d = Math.hypot(dx, dy) || 1;
       e.kbX += (dx / d) * kb; e.kbY += (dy / d) * kb;
     }
-    if (!silent) this.spawnDamageNumber(e.x + rand(-6, 6), e.y - 14,
-      head ? 'HEAD!' : Math.floor(dmg).toString(),
-      head ? '#ff3146' : (crit ? '#ffd166' : '#fff'),
-      head ? 22 : (crit ? 18 : 14));
+    if (!silent) {
+      const tier = head ? 4 : (crit ? (s._lastCritTier || 1) : 0);
+      if (tier > 0) {
+        const critLabels = ['', 'CRIT', 'SUPER', 'MEGA', 'HEAD!'];
+        const critColors = ['', '#ff8c00', '#ff4444', '#cc0000', '#ff0000'];
+        const critSizes  = [ 0,       18,       20,       22,       24];
+        this.spawnDamageNumber(e.x + rand(-6, 6), e.y - 14, critLabels[tier], critColors[tier], critSizes[tier]);
+      } else {
+        this.spawnDamageNumber(e.x + rand(-6, 6), e.y - 14, Math.floor(dmg).toString(), '#fff', 14);
+      }
+    }
     if (Math.random() < 0.55) this.spawnBlood(e.x, e.y, e.t.color);
     if (e.hp <= 0) this.killEnemy(e);
   }
@@ -1661,7 +1678,7 @@ export class Game {
 
     // Weapon upgrade options (allow infinite stacking past list)
     const newWeaponIds = Object.keys(WEAPONS).filter(id => !owned.includes(id));
-    const canAddWeapon = owned.length < 4 && newWeaponIds.length > 0;
+    const canAddWeapon = owned.length < 10 && newWeaponIds.length > 0;
 
     // We want a mix; produce up to 4 choices, then random 3
     const pool = [];

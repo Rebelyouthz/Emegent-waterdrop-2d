@@ -18,30 +18,30 @@ export const SKILL_TREE = {
   combat: {
     name: 'COMBAT', color: '#ff3146', icon: '⚔️',
     skills: [
-      { id: 'sk_atk',     name: 'Edge',          icon: '⚔️',  max: 5, costPerLvl: 1, req: null,           desc: '+3% damage / lvl',                 stat: 'dmg',     amount: 0.03 },
-      { id: 'sk_crit',    name: 'Sharp Eye',     icon: '👁',  max: 5, costPerLvl: 1, req: 'sk_atk',       desc: '+2% crit chance / lvl',           stat: 'crit',    amount: 0.02 },
+      { id: 'sk_atk',     name: 'Edge',          icon: '⚔️',  max: 20, costPerLvl: 1, req: null,           desc: '+3% damage / lvl',                 stat: 'dmg',     amount: 0.03 },
+      { id: 'sk_crit',    name: 'Sharp Eye',     icon: '👁',  max: 20, costPerLvl: 1, req: 'sk_atk',       desc: '+2% crit chance / lvl',           stat: 'crit',    amount: 0.02 },
       { id: 'sk_headshot',name: 'Headshot',      icon: '🎯', max: 1, costPerLvl: 3, req: 'sk_crit',       desc: 'ACTIVE: 8% chance to one-shot non-bosses', stat: 'headshot', amount: 0.08, active: true },
       { id: 'sk_berserk', name: 'Berserker',     icon: '🩸', max: 1, costPerLvl: 4, req: 'sk_headshot',   desc: 'ACTIVE: +40% dmg below 30% HP',   stat: 'berserk', amount: 1, active: true },
-      { id: 'sk_pierce',  name: 'Piercing',      icon: '➰', max: 3, costPerLvl: 2, req: 'sk_atk',        desc: '+1 pierce / lvl',                 stat: 'pierce',  amount: 1 },
-      { id: 'sk_proj',    name: 'Multishot',     icon: '🎯', max: 2, costPerLvl: 3, req: 'sk_pierce',     desc: '+1 projectile / lvl',             stat: 'proj',    amount: 1 },
+      { id: 'sk_pierce',  name: 'Piercing',      icon: '➰', max: 15, costPerLvl: 2, req: 'sk_atk',        desc: '+1 pierce / lvl',                 stat: 'pierce',  amount: 1 },
+      { id: 'sk_proj',    name: 'Multishot',     icon: '🎯', max: 8,  costPerLvl: 3, req: 'sk_pierce',     desc: '+1 projectile / lvl',             stat: 'proj',    amount: 1 },
     ],
   },
   mobility: {
     name: 'MOBILITY', color: '#4dffd4', icon: '🥾',
     skills: [
-      { id: 'sk_spd',     name: 'Light Step',    icon: '🥾', max: 5, costPerLvl: 1, req: null,            desc: '+3% move speed / lvl',            stat: 'mspd',    amount: 0.03 },
+      { id: 'sk_spd',     name: 'Light Step',    icon: '🥾', max: 20, costPerLvl: 1, req: null,            desc: '+3% move speed / lvl',            stat: 'mspd',    amount: 0.03 },
       { id: 'sk_dash',    name: 'Dash',          icon: '💨', max: 1, costPerLvl: 2, req: 'sk_spd',        desc: 'ACTIVE: SHIFT to dash (i-frames)', stat: 'dash',   amount: 1, active: true },
-      { id: 'sk_dashcd',  name: 'Quick Recall',  icon: '⏱',  max: 3, costPerLvl: 2, req: 'sk_dash',       desc: '-15% dash cooldown / lvl',        stat: 'dashcd',  amount: 0.15 },
+      { id: 'sk_dashcd',  name: 'Quick Recall',  icon: '⏱',  max: 15, costPerLvl: 2, req: 'sk_dash',       desc: '-15% dash cooldown / lvl',        stat: 'dashcd',  amount: 0.15 },
       { id: 'sk_blink',   name: 'Blink',         icon: '🌀', max: 1, costPerLvl: 4, req: 'sk_dashcd',     desc: 'ACTIVE: Dash teleports & deals AoE', stat: 'blink', amount: 1, active: true },
-      { id: 'sk_dodge',   name: 'Phasing',       icon: '👻', max: 3, costPerLvl: 2, req: 'sk_spd',        desc: '+3% dodge / lvl',                 stat: 'dodge',   amount: 0.03 },
+      { id: 'sk_dodge',   name: 'Phasing',       icon: '👻', max: 15, costPerLvl: 2, req: 'sk_spd',        desc: '+3% dodge / lvl',                 stat: 'dodge',   amount: 0.03 },
     ],
   },
   defense: {
     name: 'DEFENSE', color: '#ffd166', icon: '🛡',
     skills: [
-      { id: 'sk_hp',      name: 'Vital',         icon: '❤️', max: 5, costPerLvl: 1, req: null,            desc: '+12 max HP / lvl',                stat: 'maxhp',   amount: 12 },
-      { id: 'sk_armor',   name: 'Plated',        icon: '🛡', max: 4, costPerLvl: 2, req: 'sk_hp',         desc: '+1 armor / lvl',                  stat: 'armor',   amount: 1 },
-      { id: 'sk_regen',   name: 'Regrowth',      icon: '🌿', max: 4, costPerLvl: 2, req: 'sk_hp',         desc: '+0.2 HP/s / lvl',                 stat: 'regen',   amount: 0.2 },
+      { id: 'sk_hp',      name: 'Vital',         icon: '❤️', max: 20, costPerLvl: 1, req: null,            desc: '+12 max HP / lvl',                stat: 'maxhp',   amount: 12 },
+      { id: 'sk_armor',   name: 'Plated',        icon: '🛡', max: 15, costPerLvl: 2, req: 'sk_hp',         desc: '+1 armor / lvl',                  stat: 'armor',   amount: 1 },
+      { id: 'sk_regen',   name: 'Regrowth',      icon: '🌿', max: 15, costPerLvl: 2, req: 'sk_hp',         desc: '+0.2 HP/s / lvl',                 stat: 'regen',   amount: 0.2 },
       { id: 'sk_shield',  name: 'Aegis',         icon: '✨', max: 1, costPerLvl: 4, req: 'sk_armor',      desc: 'ACTIVE: Absorb 1 hit / 25s',      stat: 'shield',  amount: 1, active: true },
       { id: 'sk_revive',  name: 'Phoenix',       icon: '🪽', max: 1, costPerLvl: 6, req: 'sk_regen',      desc: 'ACTIVE: Revive once at 50% HP',   stat: 'revive',  amount: 1, active: true },
     ],
@@ -49,19 +49,19 @@ export const SKILL_TREE = {
   greed: {
     name: 'GREED', color: '#ffd700', icon: '💰',
     skills: [
-      { id: 'sk_gold',    name: 'Greed',         icon: '💰', max: 5, costPerLvl: 1, req: null,            desc: '+8% gold / lvl',                  stat: 'gold',    amount: 0.08 },
-      { id: 'sk_xp',      name: 'Wisdom',        icon: '📖', max: 5, costPerLvl: 1, req: null,            desc: '+5% XP / lvl',                    stat: 'xp',      amount: 0.05 },
-      { id: 'sk_magnet',  name: 'Magnet',        icon: '🧲', max: 4, costPerLvl: 2, req: 'sk_gold',       desc: '+12% pickup range / lvl',         stat: 'pickup',  amount: 0.12 },
-      { id: 'sk_luck',    name: 'Fortune',       icon: '🍀', max: 4, costPerLvl: 2, req: 'sk_xp',         desc: '+0.5 luck / lvl (better rolls)',  stat: 'luck',    amount: 0.5 },
+      { id: 'sk_gold',    name: 'Greed',         icon: '💰', max: 20, costPerLvl: 1, req: null,            desc: '+8% gold / lvl',                  stat: 'gold',    amount: 0.08 },
+      { id: 'sk_xp',      name: 'Wisdom',        icon: '📖', max: 20, costPerLvl: 1, req: null,            desc: '+5% XP / lvl',                    stat: 'xp',      amount: 0.05 },
+      { id: 'sk_magnet',  name: 'Magnet',        icon: '🧲', max: 15, costPerLvl: 2, req: 'sk_gold',       desc: '+12% pickup range / lvl',         stat: 'pickup',  amount: 0.12 },
+      { id: 'sk_luck',    name: 'Fortune',       icon: '🍀', max: 15, costPerLvl: 2, req: 'sk_xp',         desc: '+0.5 luck / lvl (better rolls)',  stat: 'luck',    amount: 0.5 },
       { id: 'sk_chest',   name: 'Chest Sense',   icon: '📦', max: 1, costPerLvl: 4, req: 'sk_magnet',     desc: 'ACTIVE: Chest enemies spawn 2x more often', stat: 'chestSense', amount: 1, active: true },
     ],
   },
   arcane: {
     name: 'ARCANE', color: '#b362ff', icon: '🔮',
     skills: [
-      { id: 'sk_area',    name: 'Wider Wake',    icon: '🌀', max: 5, costPerLvl: 1, req: null,            desc: '+5% area / lvl',                  stat: 'area',    amount: 0.05 },
-      { id: 'sk_atks',    name: 'Quickened',     icon: '⏱',  max: 5, costPerLvl: 1, req: null,            desc: '+3% atk speed / lvl',             stat: 'atks',    amount: 0.03 },
-      { id: 'sk_critdmg', name: 'Critical Will', icon: '🩸', max: 4, costPerLvl: 2, req: 'sk_atks',       desc: '+10% crit damage / lvl',          stat: 'critd',   amount: 0.10 },
+      { id: 'sk_area',    name: 'Wider Wake',    icon: '🌀', max: 20, costPerLvl: 1, req: null,            desc: '+5% area / lvl',                  stat: 'area',    amount: 0.05 },
+      { id: 'sk_atks',    name: 'Quickened',     icon: '⏱',  max: 20, costPerLvl: 1, req: null,            desc: '+3% atk speed / lvl',             stat: 'atks',    amount: 0.03 },
+      { id: 'sk_critdmg', name: 'Critical Will', icon: '🩸', max: 15, costPerLvl: 2, req: 'sk_atks',       desc: '+10% crit damage / lvl',          stat: 'critd',   amount: 0.10 },
       { id: 'sk_aida',    name: 'A.I.D.A. Link', icon: '👁', max: 1, costPerLvl: 6, req: 'sk_critdmg',    desc: 'ACTIVE: Bonus damage to bosses +30%', stat: 'bossDmg', amount: 0.30, active: true },
       { id: 'sk_void',    name: 'Voidcaller',    icon: '🌌', max: 1, costPerLvl: 4, req: 'sk_area',       desc: 'ACTIVE: 10% chance to spawn void burst on kill', stat: 'voidBurst', amount: 0.10, active: true },
     ],
@@ -396,4 +396,4 @@ export const AIDA_INTRO = [
 ];
 
 // ---------- HELP CONSTANTS ----------
-export const MAX_ACTIVE_WEAPONS = 4;
+export const MAX_ACTIVE_WEAPONS = 10;
