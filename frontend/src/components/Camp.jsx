@@ -8,6 +8,7 @@ import Shop from './Shop';
 import CharacterPanel from './CharacterPanel';
 import TalentTree from './TalentTree';
 import CampaignPanel from './CampaignPanel';
+import PetPanel from './PetPanel';
 import { MissionsPanel, ChallengesPanel, AchievementsPanel, CardShopModal, ActiveLoadoutPanel, WeaponCrafting, SettingsPanel, PartsInventory, MapsPanel } from './CampPanels';
 import { Audio } from '../game/audio';
 
@@ -31,6 +32,7 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
 
   const [characterOpen, setCharacterOpen] = useState(false);
   const [talentOpen, setTalentOpen] = useState(false);
+  const [petOpen, setPetOpen] = useState(false);
 
   const popFeedback = (id) => { setPopCard(id); setTimeout(() => setPopCard(null), 550); };
 
@@ -74,13 +76,17 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
               <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--ink)' }}>{save.profile.name || 'Wanderer'}</div>
               <div style={{ fontSize: 11, color: 'var(--rune)', letterSpacing: '0.2em' }}>RANK {save.profile.level}</div>
             </div>
-            <div style={{ marginLeft: 'auto', fontFamily: 'VT323', color: 'var(--ink-dim)', fontSize: 15, lineHeight: 1.6, textAlign: 'right' }}>
-              ★ {save.gold}<br />◆ {save.sp} SP
+            <div style={{ marginLeft: 'auto', fontFamily: 'VT323', color: 'var(--ink-dim)', fontSize: 13, lineHeight: 1.5, textAlign: 'right' }}>
+              <div>★ {save.gold}</div>
+              <div style={{ color: '#4dffd4' }}>💎 {save.gems || 0}</div>
+              <div style={{ color: '#ffcc00' }}>🎰 {save.slotCoins || 0}</div>
+              <div style={{ color: '#4dff91' }}>🌿 {save.talentPoints || 0} TP</div>
+              <div>◆ {save.sp} SP</div>
             </div>
           </div>
           <div className="camp-scroll-hint">↓ scroll for more ↓</div>
           <div className="camp-tabs-scroll">
-            <button className={`camp-tab ${tab === 'cards' ? 'active' : ''}`} onClick={() => setTab('cards')} data-testid="tab-cards">💠 META</button>
+            <button className={`camp-tab ${tab==='campaign'?'active':''}`} onClick={() => setTab('campaign')} data-testid="tab-campaign">📜 CAMPAIGN</button>
             <button className={`camp-tab ${tab === 'maps' ? 'active' : ''}`} onClick={() => setTab('maps')} data-testid="tab-maps">🗺 MAPS</button>
             <button className={`camp-tab ${tab === 'missions' ? 'active' : ''}`} onClick={() => setTab('missions')} data-testid="tab-missions">📋 MISSIONS</button>
             <button className={`camp-tab ${tab === 'challenges' ? 'active' : ''}`} onClick={() => setTab('challenges')} data-testid="tab-challenges">🏆 CHALLENGES</button>
@@ -88,18 +94,19 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
             <button className={`camp-tab ${tab === 'milestones' ? 'active' : ''}`} onClick={() => setTab('milestones')} data-testid="tab-milestones">⭐ MILESTONES</button>
             <button className={`camp-tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')} data-testid="tab-stats">📊 STATS</button>
             <div className="camp-tab-divider" />
-            <button className="camp-tab" onClick={() => setShopOpen(true)} data-testid="open-card-shop">🎰 CARD SHOP</button>
-            <button className="camp-tab" onClick={() => setLoadoutOpen(true)} data-testid="open-loadout">🎯 LOADOUT</button>
-            <button className="camp-tab" onClick={() => setCraftOpen(true)} data-testid="open-craft">📜 BLUEPRINTS</button>
-            <button className="camp-tab" onClick={() => setPartsOpen(true)} data-testid="open-parts">🔧 PARTS</button>
+            <button className="camp-tab" onClick={() => setCharacterOpen(true)} data-testid="tab-character">👤 CHARACTER</button>
+            <button className="camp-tab" onClick={() => setPetOpen(true)} data-testid="tab-pets">🐾 PETS</button>
+            <button className="camp-tab" onClick={() => setTalentOpen(true)} data-testid="tab-talent">🌿 TALENTS</button>
             <button className="camp-tab" onClick={() => setSkillOpen(true)} data-testid="open-skills">🧠 SKILLS</button>
+            <button className={`camp-tab ${tab === 'cards' ? 'active' : ''}`} onClick={() => setTab('cards')} data-testid="tab-cards">💠 META</button>
+            <div className="camp-tab-divider" />
+            <button className="camp-tab" onClick={() => setShopOpen(true)} data-testid="open-card-shop">🎰 CARD SHOP</button>
             <button className="camp-tab" onClick={() => setForgeOpen(true)} data-testid="open-forge">🔨 SMITH</button>
             <button className="camp-tab" onClick={() => setChestOpen(true)} data-testid="open-chest">📦 CHESTS</button>
+            <button className="camp-tab" onClick={() => setLoadoutOpen(true)} data-testid="open-loadout">🎯 LOADOUT</button>
+            <button className="camp-tab" onClick={() => setPartsOpen(true)} data-testid="open-parts">🔧 PARTS</button>
+            <button className="camp-tab" onClick={() => setCraftOpen(true)} data-testid="open-craft">📐 BLUEPRINTS</button>
             <button className="camp-tab" onClick={() => setSettingsOpen(true)} data-testid="open-settings">⚙ SETTINGS</button>
-            <div className="camp-tab-divider" />
-            <button className="camp-tab" onClick={() => setCharacterOpen(true)} data-testid="tab-character">👤 CHARACTER</button>
-            <button className="camp-tab" onClick={() => setTalentOpen(true)} data-testid="tab-talent">🌿 TALENTS</button>
-            <button className={`camp-tab ${tab==='campaign'?'active':''}`} onClick={() => setTab('campaign')} data-testid="tab-campaign">📜 CAMPAIGN</button>
           </div>
         </div>
 
@@ -125,9 +132,15 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
                         <div className="name">{upg.icon} {upg.name}</div>
                         <div className="lvl">{lvl}/{upg.max}</div>
                       </div>
-                      <div className="pips">
-                        {Array.from({ length: upg.max }, (_, i) => <span key={i} className={'pip ' + (i < lvl ? 'on' : '')} />)}
-                      </div>
+                      {upg.max > 20 ? (
+                        <div style={{ height:5, background:'#1a0a2e', borderRadius:3, overflow:'hidden', margin:'4px 0' }}>
+                          <div style={{ width:`${(lvl/upg.max)*100}%`, height:'100%', background: maxed ? '#ffd700' : 'var(--rune)', transition:'width 0.3s' }} />
+                        </div>
+                      ) : (
+                        <div className="pips">
+                          {Array.from({ length: upg.max }, (_, i) => <span key={i} className={'pip ' + (i < lvl ? 'on' : '')} />)}
+                        </div>
+                      )}
                       <div className="desc">{upg.desc}</div>
                       {maxed ? <div style={{ color: 'var(--accent-2)', fontFamily: 'VT323', letterSpacing: '0.2em' }}>MAX</div> :
                         <button onClick={() => buy(upg)} disabled={!canAfford} data-testid={`buy-${upg.id}`}>★ {cost}</button>}
@@ -217,6 +230,7 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
       {settingsOpen && <SettingsPanel save={save} setSave={setSave} onClose={() => setSettingsOpen(false)} onReset={handleReset} />}
       {characterOpen && <CharacterPanel save={save} setSave={setSave} onClose={() => setCharacterOpen(false)} />}
       {talentOpen && <TalentTree save={save} setSave={setSave} onClose={() => setTalentOpen(false)} />}
+      {petOpen && <PetPanel save={save} setSave={setSave} onClose={() => setPetOpen(false)} />}
       {partsOpen && <PartsInventory save={save} setSave={setSave} onClose={() => setPartsOpen(false)} />}
       {save.pendingLevelUp && (
         <LevelUpOverlay save={save} onCollect={() => {
@@ -227,6 +241,9 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
             pendingLevelUp: null,
             gold: (save.gold || 0) + r.gold,
             sp:   (save.sp   || 0) + r.sp,
+            gems: (save.gems || 0) + (r.gems || 0),
+            slotCoins: (save.slotCoins || 0) + (r.slotCoins || 0),
+            talentPoints: (save.talentPoints || 0) + (r.talentPoints || 0),
             freeShopSpins: (save.freeShopSpins || 0) + (r.freeSpin ? 1 : 0),
             character: { ...char, pieces: (char.pieces || 0) + (r.pieces || 0), shards: (char.shards || 0) + (r.shards || 0) },
           });
@@ -264,9 +281,12 @@ function LevelUpOverlay({ save, onCollect }) {
         <div className="lu-title">RANK UP!</div>
         <div className="lu-rank">★ RANK {r.level} ★</div>
         <div className="lu-xp"><div className="lu-xp-fill" /></div>
-        <div className="lu-rewards">
+          <div className="lu-rewards">
           <div className="lu-rwd">★ +{r.gold} Gold</div>
           <div className="lu-rwd">◆ +{r.sp} SP</div>
+          {r.talentPoints > 0 && <div className="lu-rwd" style={{color:'#4dff91'}}>🌿 +{r.talentPoints} TP</div>}
+          {r.gems > 0 && <div className="lu-rwd" style={{color:'#4dffd4'}}>💎 +{r.gems} Gems</div>}
+          {r.slotCoins > 0 && <div className="lu-rwd" style={{color:'#ffcc00'}}>🎰 +{r.slotCoins} Slot Coin{r.slotCoins > 1 ? 's' : ''}!</div>}
           {r.freeSpin && <div className="lu-rwd" style={{color:'#4dffd4',textShadow:'0 0 10px #4dffd4'}}>🎰 Free Shop Spin!</div>}
           {r.pieces > 0 && <div className="lu-rwd" style={{color:'#b362ff',textShadow:'0 0 10px #b362ff88'}}>🔷 +{r.pieces} Char. Pieces</div>}
           {r.shards > 0 && <div className="lu-rwd" style={{color:'#ff7a1a',textShadow:'0 0 10px #ff7a1a88'}}>💎 +{r.shards} Evo. Shards</div>}

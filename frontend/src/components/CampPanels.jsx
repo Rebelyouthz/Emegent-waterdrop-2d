@@ -235,7 +235,11 @@ export function CardShopModal({ save, setSave, onClose }) {
   const cost = shopCardCost(pullCount);
   const luck = (save.meta?.m_luck || 0) * 0.5 + (save.skills?.sk_luck || 0) * 0.5;
   const freeSpins = save.freeShopSpins || 0;
+  const slotCoins = save.slotCoins || 0;
   const isFree = freeSpins > 0;
+  const hasCoin = slotCoins > 0;
+  // Cost: free > slot coin > gold fallback (500 gold)
+  const goldFallbackCost = 500;
 
   const SECTIONS = [
     { id: 'passive', label: 'PASSIVE',  icon: '🛡️', desc: 'Permanent stat boosts' },
@@ -245,7 +249,8 @@ export function CardShopModal({ save, setSave, onClose }) {
   ];
 
   const pull = () => {
-    if ((!isFree && save.gold < cost) || spinning || !section) return;
+    const canPull = isFree || hasCoin || save.gold >= goldFallbackCost;
+    if (!canPull || spinning || !section) return;
     setSpinning(true); setResult(null); setJackpot(false); setTwoMatch(false);
     setStopped([false, false, false]);
     setReelRarity('common');
@@ -273,8 +278,14 @@ export function CardShopModal({ save, setSave, onClose }) {
       if (pullResult.jackpot) { Audio.levelUp(); setTimeout(() => Audio.claimPing(), 200); }
       else Audio.levelUp();
 
-      const ns = { ...save, gold: isFree ? save.gold : save.gold - cost, shopPulls: pullCount + 1 };
-      if (isFree) ns.freeShopSpins = freeSpins - 1;
+      const ns = { ...save, shopPulls: pullCount + 1 };
+      if (isFree) {
+        ns.freeShopSpins = freeSpins - 1;
+      } else if (hasCoin) {
+        ns.slotCoins = slotCoins - 1;
+      } else {
+        ns.gold = (save.gold || 0) - goldFallbackCost;
+      }
       const w = pullResult.winner;
       if (w.effect.unlockSkill) {
         ns.unlockedActives = { ...(ns.unlockedActives || {}), [w.effect.unlockSkill]: true };
@@ -305,7 +316,11 @@ export function CardShopModal({ save, setSave, onClose }) {
       <div className={`forge-panel cs-modal ${jackpot ? 'cs-jackpot-flash' : ''}`} style={{ maxWidth: 680, textAlign: 'center' }}>
         <div className="forge-header">
           <div className="forge-title">🎰 CARD SHOP</div>
-          <div className="forge-gold">★ {save.gold}</div>
+          <div style={{ fontFamily:'VT323', fontSize:14, color:'var(--ink-dim)', display:'flex', gap:12 }}>
+            {freeSpins > 0 && <span style={{color:'#4dffd4'}}>Free: {freeSpins}</span>}
+            <span style={{color:'#ffcc00'}}>🎰 {slotCoins}</span>
+            <span>★ {save.gold}</span>
+          </div>
           <button onClick={onClose} style={{ padding: '6px 12px', fontSize: 12 }}>✕</button>
         </div>
 
@@ -369,7 +384,7 @@ export function CardShopModal({ save, setSave, onClose }) {
             </div>
 
             <button onClick={pull} disabled={(!isFree && save.gold < cost) || spinning} style={{ marginTop: 18, width: '100%' }} data-testid="shop-pull">
-              {isFree ? `🎰 FREE PULL! (${freeSpins} left)` : spinning ? 'PULLING…' : `★ ${cost} — PULL #${pullCount + 1}`}
+              {isFree ? `🎰 FREE PULL! (${freeSpins} left)` : hasCoin ? `🎰 COIN SPIN (${slotCoins} left)` : spinning ? 'PULLING…' : `★ ${goldFallbackCost} gold — PULL #${pullCount + 1}`}
             </button>
           </>
         )}

@@ -254,6 +254,39 @@ export const ENEMIES = {
     id: 'necron', name: 'Necron', size: 28, hp: 220, dmg: 24, speed: 55, color: '#4dffd4',
     xp: 22, gold: 14, ai: 'chase', boss: false,
   },
+  // --- New enemy types (appear after each boss) ---
+  crystalite: {
+    id: 'crystalite', name: 'Crystalite', size: 20, hp: 110, dmg: 11, speed: 35, color: '#88eeff',
+    xp: 6, gold: 3, ai: 'chase', armor: 4,
+  },
+  soulshard: {
+    id: 'soulshard', name: 'Soul Shard', size: 16, hp: 50, dmg: 16, speed: 95, color: '#ccaaff',
+    xp: 5, gold: 2, ai: 'chase', noKnockback: true,
+  },
+  bonewalker: {
+    id: 'bonewalker', name: 'Bone Walker', size: 23, hp: 180, dmg: 18, speed: 48, color: '#ddd8c4',
+    xp: 10, gold: 5, ai: 'chase', regen: 4,
+  },
+  voidspawn: {
+    id: 'voidspawn', name: 'Void Spawn', size: 18, hp: 75, dmg: 24, speed: 65, color: '#9933ff',
+    xp: 8, gold: 4, ai: 'charge',
+  },
+  steelbrute: {
+    id: 'steelbrute', name: 'Steel Brute', size: 30, hp: 300, dmg: 28, speed: 28, color: '#778899',
+    xp: 18, gold: 9, ai: 'chase', armor: 8,
+  },
+  lightningbug: {
+    id: 'lightningbug', name: 'Lightning Bug', size: 15, hp: 60, dmg: 20, speed: 145, color: '#ffff55',
+    xp: 8, gold: 4, ai: 'chase',
+  },
+  techsoldier: {
+    id: 'techsoldier', name: 'Tech Soldier', size: 24, hp: 250, dmg: 25, speed: 55, color: '#44aaff',
+    xp: 16, gold: 8, ai: 'ranged', shootRange: 260, shootCD: 0.9, projSpeed: 360,
+  },
+  nanoswarm: {
+    id: 'nanoswarm', name: 'Nano Swarm', size: 18, hp: 40, dmg: 32, speed: 115, color: '#00ff88',
+    xp: 12, gold: 6, ai: 'chase',
+  },
   // Bosses
   bossOcular: {
     id: 'bossOcular', name: 'Eye of Horus', size: 90, hp: 1200, dmg: 18, speed: 165, color: '#ffd166',
@@ -296,26 +329,29 @@ export const STAT_CARDS = [
   { id: 'mag',       icon: '📦', name: 'Bigger Mag',      desc: '+{v} magazine size',    stat: 'magBonus',      mult: false, amount: 3 },
 ];
 
-// ---------- META UPGRADES (permanent — Project Clean Earth style) ----------
-// Cost scales each level; max levels keep things tight.
+// ---------- META UPGRADES (permanent — tiny increments, long grind) ----------
+// Philosophy: +1 HP/level max, +0.1-0.2% for %, max 80-100 levels each.
+// Total endpoint power ≈ same as before, but requires 10-20× more upgrades.
 export const META_UPGRADES = [
-  { id: 'm_hp',     name: 'Hardened Core',     icon: '❤️', desc: '+15 max HP per level',         stat: 'maxHp',     amount: 15,   max: 12, baseCost: 50,  curve: 1.6 },
-  { id: 'm_dmg',    name: 'Sharpened Will',    icon: '⚔️', desc: '+4% damage per level',         stat: 'dmg',       amount: 0.04, max: 12, baseCost: 75,  curve: 1.65 },
-  { id: 'm_atks',   name: 'Resonant Pulse',    icon: '⏱️', desc: '+3% attack speed per level',   stat: 'atks',      amount: 0.03, max: 10, baseCost: 80,  curve: 1.7 },
-  { id: 'm_spd',    name: 'Lightfoot',         icon: '🥾', desc: '+3% move speed per level',     stat: 'mspd',      amount: 0.03, max: 10, baseCost: 60,  curve: 1.6 },
-  { id: 'm_crit',   name: 'Eye of Fortune',    icon: '💢', desc: '+2% crit chance per level',    stat: 'crit',      amount: 0.02, max: 10, baseCost: 90,  curve: 1.7 },
-  { id: 'm_critd',  name: 'Vorpal Mind',       icon: '🩸', desc: '+10% crit damage per level',   stat: 'critd',     amount: 0.10, max: 10, baseCost: 110, curve: 1.7 },
-  { id: 'm_superCrit', name: 'Super Strike',  icon: '💥', desc: '+4% Super Crit chance / lvl',  stat: 'superCrit', amount: 0.04, max: 5,  baseCost: 150, curve: 1.9 },
-  { id: 'm_megaCrit',  name: 'Mega Strike',   icon: '💢', desc: '+2% Mega Crit chance / lvl',   stat: 'megaCrit',  amount: 0.02, max: 5,  baseCost: 250, curve: 2.1 },
-  { id: 'm_armor',  name: 'Annunaki Plating',  icon: '🛡️', desc: '+1 armor per level',          stat: 'armor',     amount: 1,    max: 10, baseCost: 100, curve: 1.7 },
-  { id: 'm_regen',  name: 'Flow of Nirvana',   icon: '🌿', desc: '+0.2 HP/s per level',          stat: 'regen',     amount: 0.2,  max: 10, baseCost: 120, curve: 1.7 },
-  { id: 'm_pickup', name: 'Tidal Pull',        icon: '🧲', desc: '+10% pickup range per level',  stat: 'pickup',    amount: 0.10, max: 8,  baseCost: 70,  curve: 1.6 },
-  { id: 'm_xp',     name: 'Memory of Lake',    icon: '📖', desc: '+5% XP per level',             stat: 'xp',        amount: 0.05, max: 8,  baseCost: 130, curve: 1.75 },
-  { id: 'm_gold',   name: 'Goldsense',         icon: '💰', desc: '+8% gold per level',           stat: 'gold',      amount: 0.08, max: 8,  baseCost: 100, curve: 1.7 },
-  { id: 'm_luck',   name: 'Eldritch Luck',     icon: '🍀', desc: '+0.5 luck per level',          stat: 'luck',      amount: 0.5,  max: 8,  baseCost: 150, curve: 1.8 },
-  { id: 'm_revive', name: 'Phoenix Echo',      icon: '🪽', desc: 'Revive once per run (50% HP)', stat: 'revive',    amount: 1,    max: 1,  baseCost: 800, curve: 1.0 },
-  { id: 'm_dodge',  name: 'Veil Walker',       icon: '👻', desc: '+2% dodge per level',          stat: 'dodge',     amount: 0.02, max: 5,  baseCost: 200, curve: 1.85 },
-  { id: 'm_start',  name: 'Survivor\'s Cache', icon: '🎁', desc: 'Start runs with +1 random card', stat: 'startBoon', amount: 1,  max: 3,  baseCost: 600, curve: 2.0 },
+  { id: 'm_hp',     name: 'Hardened Core',     icon: '❤️', desc: '+1 max HP per level',            stat: 'maxHp',     amount: 1,      max: 100, baseCost: 8,   curve: 1.030 },
+  { id: 'm_dmg',    name: 'Sharpened Will',    icon: '⚔️', desc: '+0.2% damage per level',          stat: 'dmg',       amount: 0.002,  max: 100, baseCost: 12,  curve: 1.035 },
+  { id: 'm_atks',   name: 'Resonant Pulse',    icon: '⏱️', desc: '+0.2% attack speed per level',    stat: 'atks',      amount: 0.002,  max: 80,  baseCost: 14,  curve: 1.035 },
+  { id: 'm_spd',    name: 'Lightfoot',         icon: '🥾', desc: '+0.2% move speed per level',      stat: 'mspd',      amount: 0.002,  max: 80,  baseCost: 10,  curve: 1.030 },
+  { id: 'm_crit',   name: 'Eye of Fortune',    icon: '💢', desc: '+0.1% crit chance per level',     stat: 'crit',      amount: 0.001,  max: 100, baseCost: 16,  curve: 1.038 },
+  { id: 'm_critd',  name: 'Vorpal Mind',       icon: '🩸', desc: '+0.5% crit damage per level',     stat: 'critd',     amount: 0.005,  max: 100, baseCost: 18,  curve: 1.040 },
+  { id: 'm_superCrit', name: 'Super Strike',   icon: '💥', desc: '+0.5% Super Crit per level',      stat: 'superCrit', amount: 0.005,  max: 30,  baseCost: 25,  curve: 1.050 },
+  { id: 'm_megaCrit',  name: 'Mega Strike',    icon: '💢', desc: '+0.2% Mega Crit per level',       stat: 'megaCrit',  amount: 0.002,  max: 25,  baseCost: 40,  curve: 1.055 },
+  { id: 'm_armor',  name: 'Annunaki Plating',  icon: '🛡️', desc: '+0.1 armor per level',            stat: 'armor',     amount: 0.1,    max: 80,  baseCost: 18,  curve: 1.038 },
+  { id: 'm_regen',  name: 'Flow of Nirvana',   icon: '🌿', desc: '+0.02 HP/s per level',            stat: 'regen',     amount: 0.02,   max: 80,  baseCost: 20,  curve: 1.040 },
+  { id: 'm_pickup', name: 'Tidal Pull',        icon: '🧲', desc: '+1% pickup range per level',      stat: 'pickup',    amount: 0.01,   max: 80,  baseCost: 12,  curve: 1.030 },
+  { id: 'm_xp',     name: 'Memory of Lake',    icon: '📖', desc: '+0.5% XP per level',              stat: 'xp',        amount: 0.005,  max: 80,  baseCost: 22,  curve: 1.040 },
+  { id: 'm_gold',   name: 'Goldsense',         icon: '💰', desc: '+0.5% gold per level',            stat: 'gold',      amount: 0.005,  max: 80,  baseCost: 18,  curve: 1.038 },
+  { id: 'm_luck',   name: 'Eldritch Luck',     icon: '🍀', desc: '+0.05 luck per level',            stat: 'luck',      amount: 0.05,   max: 60,  baseCost: 25,  curve: 1.045 },
+  { id: 'm_heal',   name: 'Vital Drops',       icon: '💊', desc: '+0.5 HP from heart drops / lvl',  stat: 'heartHeal', amount: 0.5,    max: 40,  baseCost: 20,  curve: 1.040 },
+  { id: 'm_zoom',   name: 'Eagle Eye',         icon: '🔭', desc: '+0.5% view range per level',      stat: 'zoom',      amount: 0.005,  max: 35,  baseCost: 30,  curve: 1.048 },
+  { id: 'm_revive', name: 'Phoenix Echo',      icon: '🪽', desc: 'Revive once per run (50% HP)',    stat: 'revive',    amount: 1,      max: 1,   baseCost: 800, curve: 1.0 },
+  { id: 'm_dodge',  name: 'Veil Walker',       icon: '👻', desc: '+0.1% dodge per level',           stat: 'dodge',     amount: 0.001,  max: 50,  baseCost: 35,  curve: 1.048 },
+  { id: 'm_start',  name: 'Survivor\'s Cache', icon: '🎁', desc: 'Start runs with +1 random card',  stat: 'startBoon', amount: 1,      max: 3,   baseCost: 600, curve: 2.0 },
 ];
 
 export function metaCost(upg, currentLvl) {
@@ -329,13 +365,16 @@ export const WAVE_TIMELINE = [
   { t: 45,  spawn: 2.2, types: ['slime', 'bat', 'ghoul'] },
   { t: 75,  spawn: 2.6, types: ['bat', 'ghoul', 'ranger'] },
   { t: 110, spawn: 3.0, types: ['ghoul', 'ranger', 'brute'], event: 'bossOcular' },
-  { t: 170, spawn: 3.4, types: ['brute', 'ranger', 'charger'] },
-  { t: 230, spawn: 3.8, types: ['brute', 'charger', 'bat', 'ghoul'] },
+  { t: 145, spawn: 3.2, types: ['crystalite', 'soulshard', 'bat', 'ghoul'] },
+  { t: 170, spawn: 3.4, types: ['brute', 'ranger', 'charger', 'crystalite'] },
+  { t: 230, spawn: 3.8, types: ['brute', 'charger', 'bat', 'ghoul', 'soulshard'] },
   { t: 280, spawn: 4.0, types: ['charger', 'ranger', 'necron'], event: 'bossNecromancer' },
-  { t: 370, spawn: 4.5, types: ['charger', 'ranger', 'necron'], event: 'bossOcular' },
+  { t: 310, spawn: 4.2, types: ['bonewalker', 'voidspawn', 'charger', 'ranger'] },
+  { t: 370, spawn: 4.5, types: ['charger', 'ranger', 'necron', 'bonewalker'], event: 'bossOcular' },
   { t: 430, spawn: 5.0, types: ['necron', 'charger', 'brute'], event: 'bossVoidTitan' },
-  { t: 480, spawn: 5.4, types: ['necron', 'charger', 'brute'] },
-  { t: 540, spawn: 6.0, types: ['necron', 'charger', 'brute'], event: 'bossAida' },
+  { t: 465, spawn: 5.2, types: ['steelbrute', 'lightningbug', 'necron', 'charger'] },
+  { t: 540, spawn: 6.0, types: ['necron', 'charger', 'brute', 'steelbrute'], event: 'bossAida' },
+  { t: 575, spawn: 6.2, types: ['techsoldier', 'nanoswarm', 'necron', 'lightningbug'] },
   // Endless waves (after A.I.D.A. besegras)
   { t: 620, spawn: 7.0, types: ['necron', 'charger', 'brute', 'ranger'] },
   { t: 720, spawn: 8.0, types: ['necron', 'charger', 'brute'], event: 'bossOcular' },

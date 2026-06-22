@@ -2,13 +2,26 @@ import React from 'react';
 
 const fmt = (t) => { const m = Math.floor(t / 60); const s = Math.floor(t % 60); return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; };
 
-export default function HUD({ snap, onActiveSkill }) {
+// Tutorial text that appears at specific time milestones
+const TUTORIAL_TIPS = [
+  { at: 3,  text: 'Welcome! Move with WASD, aim with the mouse, and click to fire!' },
+  { at: 18, text: 'Collect XP orbs to level up and choose new cards. Passive cards boost your stats!' },
+  { at: 40, text: 'Pick up gold coins to spend at the CAMP. Rare heart drops heal you!' },
+  { at: 70, text: 'Watch your combo meter — build it up for bonus damage!' },
+  { at: 110, text: 'After this run, visit CAMP to upgrade your Meta, Talents, and unlock new gear!' },
+  { at: 160, text: 'The boss is impossible this time — use this run to learn the mechanics. Good luck!' },
+];
+
+export default function HUD({ snap, onActiveSkill, isTutorial }) {
   if (!snap) return null;
   const xpPct = (snap.xp / snap.xpToNext) * 100;
   const hpPct = (snap.hp / snap.maxHp) * 100;
   const missionTimeLeft = snap.targetDuration && snap.targetDuration < 999 ? Math.max(0, snap.targetDuration - snap.time) : null;
 
   const skills = snap.activeSkills || [];
+
+  // Tutorial tip to show
+  const tutTip = isTutorial ? [...TUTORIAL_TIPS].reverse().find(t => snap.time >= t.at) : null;
 
   return (
     <>
@@ -99,6 +112,33 @@ export default function HUD({ snap, onActiveSkill }) {
         <b>WASD</b> move · <b>MOUSE</b> aim · <b>CLICK</b> fire<br />
         <b>R</b> reload · <b>SPACE</b> dash · <b>1-4</b> skills · <b>ESC</b> pause
       </div>
+
+      {/* Tutorial bubble */}
+      {tutTip && (
+        <div style={{
+          position:'fixed', bottom:120, left:'50%', transform:'translateX(-50%)',
+          background:'#060410ee', border:'2px solid #4dffd4', borderRadius:8,
+          padding:'10px 18px', maxWidth:420, textAlign:'center',
+          fontFamily:'VT323', fontSize:16, color:'#4dffd4', letterSpacing:'0.08em',
+          boxShadow:'0 0 20px #4dffd444', zIndex:2000, pointerEvents:'none',
+          animation:'tutBubble 0.3s ease',
+        }}>
+          <div style={{ fontSize:13, color:'#4dffd488', marginBottom:2 }}>TUTORIAL</div>
+          {tutTip.text}
+        </div>
+      )}
+
+      {/* Tutorial banner */}
+      {isTutorial && (
+        <div style={{
+          position:'fixed', top:8, left:'50%', transform:'translateX(-50%)',
+          background:'#4dffd411', border:'1px solid #4dffd444', borderRadius:4,
+          padding:'2px 14px', fontFamily:'VT323', fontSize:13, color:'#4dffd4',
+          letterSpacing:'0.15em', zIndex:1500, pointerEvents:'none',
+        }}>
+          ✦ TUTORIAL RUN ✦
+        </div>
+      )}
     </>
   );
 }

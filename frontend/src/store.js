@@ -15,6 +15,11 @@ export const DEFAULT_SAVE = {
   bestKills: 0,
   totalKills: 0,
   introSeen: false,
+  // NEW currencies
+  gems: 0,        // 💎 for chests, pet eggs
+  slotCoins: 0,   // 🎰 for card shop spins
+  talentPoints: 0, // 🌿 for talent tree
+  petFood: 0,     // 🍖 feed pets
   // profile
   profile: { name: '', avatar: 'drop', level: 1, xp: 0 },
   // skills
@@ -43,16 +48,21 @@ export const DEFAULT_SAVE = {
   dailyChallengesDone: {},
   levelUpStreak: { day: 0, count: 0 },
   runStarts: 0,
+  // tutorial
+  tutorialDone: false,
   // character system
   character: { rarity: 'common', level: 0, pieces: 0, shards: 0 },
   charBonuses: {},
-  // talent tree
+  // talent tree (now multi-level: { nodeId: levelCount })
   talent: {},
   talentBonuses: {},
   // unlocked weapons (from card shop)
   unlockedWeapons: [],
   // campaign quests
   campaign: {},
+  // pets
+  pets: [], // [{ id, type, rarity, level, xp, stage, active, name }]
+  petEggs: [], // [{ rarity, type }] unhatched eggs
 };
 
 export function loadSave() {
@@ -77,6 +87,13 @@ export function loadSave() {
     s.talentBonuses = s.talentBonuses || {};
     s.unlockedWeapons = s.unlockedWeapons || [];
     s.campaign = s.campaign || {};
+    s.gems = s.gems || 0;
+    s.slotCoins = s.slotCoins || 0;
+    s.talentPoints = s.talentPoints || 0;
+    s.petFood = s.petFood || 0;
+    s.pets = s.pets || [];
+    s.petEggs = s.petEggs || [];
+    if (s.tutorialDone === undefined) s.tutorialDone = false;
     return s;
   } catch { return { ...DEFAULT_SAVE }; }
 }
@@ -133,10 +150,17 @@ export function addAccountXp(save, amount) {
     if (ls.day === today) { ls.count += 1; } else { ls.day = today; ls.count = 1; }
     save.levelUpStreak = ls;
     const mult = ls.count >= 3 ? 2 : 1;
+    // Slot coins at milestones: every 5 levels = 1, every 10 = 2
+    const slotBonus = (lv % 10 === 0) ? 2 : (lv % 5 === 0) ? 1 : 0;
+    // Gems: 1 per level, bonus at 10
+    const gemsBonus = Math.floor(lv / 10) + 1;
     save.pendingLevelUp = {
       level: lv,
       gold: (100 + lv * 40) * mult,
       sp: Math.max(1, Math.floor(lv / 3)) * mult,
+      talentPoints: 2 * mult,
+      gems: gemsBonus * mult,
+      slotCoins: slotBonus,
       freeSpin: lv % 10 === 0,
       streakBonus: ls.count >= 3,
       streakCount: ls.count,

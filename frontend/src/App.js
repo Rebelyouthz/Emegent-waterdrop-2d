@@ -114,7 +114,24 @@ function AppInner() {
       ns.mapProgress = { ...(ns.mapProgress || {}), [mission.mapNodeId]: true };
       ns.gold = (ns.gold || 0) + (mission.rwd?.gold || 0);
       ns.sp   = (ns.sp   || 0) + (mission.rwd?.sp   || 0);
+      // Map completion gives gems + possibly a slot coin
+      ns.gems = (ns.gems || 0) + 5;
+      if (Math.random() < 0.25) ns.slotCoins = (ns.slotCoins || 0) + 1;
     }
+    // Tutorial completion: mark done (keep earnings)
+    if (mission && mission.isTutorial) {
+      ns.tutorialDone = true;
+    }
+    // Gems from kills (1 gem per 50 kills)
+    ns.gems = (ns.gems || 0) + Math.floor((result.kills || 0) / 50);
+    // Boss kills give extra gems
+    if (result.necroKilled) ns.gems = (ns.gems || 0) + 10;
+    if (result.voidKilled)  ns.gems = (ns.gems || 0) + 10;
+    if (result.horusKilled) ns.gems = (ns.gems || 0) + 8;
+    if (result.victory)     ns.gems = (ns.gems || 0) + 15;
+    // Talent Points: +5 per run, +2 bonus if 1000+ kills
+    ns.talentPoints = (ns.talentPoints || 0) + 5;
+    if ((result.kills || 0) >= 1000) ns.talentPoints += 2;
     addAccountXp(ns, result.kills * 2 + result.level * 5 + (result.victory ? 200 : 0) + Math.floor(result.time / 6));
     ns.sp = (ns.sp || 0) + 1 + Math.floor(result.level / 5);
     setSave(ns);
@@ -142,16 +159,41 @@ function AppInner() {
     setView('welcome');
   };
 
+  // Tutorial: first time fight → start tutorial mission
+  const TUTORIAL_MISSION = {
+    isTutorial: true,
+    id: 'tutorial',
+    name: 'Tutorial',
+    duration: 240, // 4 minutes
+    tutorialMode: true,
+    startMeta: { maxHp: 25, dmg: 0.3, mspd: 0.25, crit: 0.05 },
+    startWeapons: ['hydropistol', 'runebolts'],
+    startCards: ['power_i', 'vital_i', 'swift_i'],
+  };
+
   // Gate function: try to start gameplay. Show paywall if not entitled.
-  const tryStartGame = (proceed) => {
-    if (paid) { proceed(); return; }
+  const tryStartGame = (proceed, missionOverride) => {
+    if (paid) { proceed(missionOverride); return; }
     const starts = save.runStarts || 0;
     if (starts < 3) {
       setSave({ ...save, runStarts: starts + 1 });
-      proceed();
+      proceed(missionOverride);
       return;
     }
     setShowPaywall(true);
+  };
+
+  const startNormalGame = () => {
+    tryStartGame(() => { setActiveMission(null); setRunKey(k => k + 1); setView('game'); });
+  };
+
+  const startTutorialIfNeeded = () => {
+    if (!save.tutorialDone) {
+      // First ever run: launch tutorial
+      tryStartGame(() => { setActiveMission(TUTORIAL_MISSION); setRunKey(k => k + 1); setView('game'); });
+    } else {
+      startNormalGame();
+    }
   };
 
   if (!booted || !view || authLoading) {
@@ -161,22 +203,22 @@ function AppInner() {
   if (view === 'welcome') {
     return (<>
       <Welcome save={save} setSave={setSave}
-        onContinue={() => tryStartGame(() => { setActiveMission(null); setRunKey(k => k + 1); if (!save.introSeen) setView('intro'); else setView('game'); })}
+        onContinue={() => { if (!save.introSeen) { setView('intro'); } else { startTutorialIfNeeded(); } }}
         onCamp={() => setView('camp')} />
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
     </>);
   }
   if (view === 'intro') {
-    return (<IntroDialogue onDone={() => { setSave({ ...save, introSeen: true }); setRunKey(k => k + 1); setView('game'); }} />);
+    return (<IntroDialogue onDone={() => { setSave({ ...save, introSeen: true }); startTutorialIfNeeded(); }} />);
   }
   if (view === 'menu') {
-    return (<MainMenu save={save} onStart={() => tryStartGame(() => { setActiveMission(null); setRunKey(k => k + 1); setView('game'); })} onCamp={() => setView('camp')} onReset={reset} />);
+    return (<MainMenu save={save} onStart={() => startTutorialIfNeeded()} onCamp={() => setView('camp')} onReset={reset} />);
   }
   if (view === 'camp') {
     return (<>
       <Camp save={save} setSave={setSave}
         onBack={() => setView('welcome')}
-        onStart={() => tryStartGame(() => { setActiveMission(null); setRunKey(k => k + 1); setView('game'); })}
+        onStart={() => startTutorialIfNeeded()}
         onMission={(m) => tryStartGame(() => onMission(m))} />
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
     </>);

@@ -111,6 +111,8 @@ export class Game {
         shield: this.meta.shield ? 1 : 0,
         bossDmg: 1.0 + (this.meta.bossDmg || 0),
         voidBurst: (this.meta.voidBurst || 0),
+        heartHeal: (this.meta.heartHeal || 0),
+        zoom:      (this.meta.zoom || 0),
         // Advanced card flags
         flags: this.meta.flags || {},
       },
@@ -1329,7 +1331,7 @@ export class Game {
         if (g.xp > 0) { this.addXp(g.xp); Audio.xpPing(Math.min(1, this.run.xp / this.run.xpToNext)); }
         if (g.gold > 0) this.run.gold += g.gold;
         if (g.heart > 0) {
-          const heal = p.maxHp * 0.10;
+          const heal = Math.min(5 + (this.run.stats?.heartHeal || 0), p.maxHp - p.hp);
           p.hp = Math.min(p.maxHp, p.hp + heal);
           Audio.heartPickup();
         }
@@ -1431,8 +1433,8 @@ export class Game {
       g.gold = Math.max(1, Math.floor(t.gold * s.goldMult));
       g.xp = 0; g.heart = 0;
     }
-    // Rare heart drop — heals 10% max HP
-    if (Math.random() < 0.035 && !t.boss) {
+    // Rare heart drop — heals 5 HP base (upgradeable via m_heal meta)
+    if (Math.random() < 0.0165 && !t.boss) {
       const h = this.gems.acquire();
       h.x = e.x + rand(-10, 10); h.y = e.y + rand(-10, 10); h.t = 0;
       h.xp = 0; h.gold = 0; h.heart = 1;

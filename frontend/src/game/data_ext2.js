@@ -461,39 +461,48 @@ export function charLevelStat(level, rarity) {
 }
 
 // ══════════════════════════════════════════════
-// TALENT TREE (30 nodes — bottom to top)
+// TALENT TREE (30 nodes × 10 levels each = 300 total)
+// Philosophy: same total endpoint as before, 10× more steps to get there.
+// costPerLvl is in Talent Points (TP), earned ~5 per run.
+// val is per-level (old val / 10). Total = val × 10 = same as original.
 // ══════════════════════════════════════════════
 export const TALENT_NODES = [
-  { id:'tn01', cost:80,  icon:'❤️', name:'Vitality I',      stat:'maxHp', val:15,   milestone:false },
-  { id:'tn02', cost:90,  icon:'⚔️', name:'Power I',          stat:'dmg',   val:0.02, milestone:false },
-  { id:'tn03', cost:100, icon:'💨', name:'Agility I',        stat:'mspd',  val:0.02, milestone:false },
-  { id:'tn04', cost:110, icon:'💰', name:'Looter I',         stat:'gold',  val:0.03, milestone:false },
-  { id:'tn05', cost:250, icon:'⭐', name:'Foundation',       stat:'all',   val:0.01, milestone:true  },
-  { id:'tn06', cost:140, icon:'❤️', name:'Vitality II',      stat:'maxHp', val:20,   milestone:false },
-  { id:'tn07', cost:160, icon:'⚔️', name:'Power II',         stat:'dmg',   val:0.03, milestone:false },
-  { id:'tn08', cost:180, icon:'🛡️', name:'Endurance I',      stat:'armor', val:1,    milestone:false },
-  { id:'tn09', cost:200, icon:'📖', name:'Scholar I',        stat:'xp',    val:0.04, milestone:false },
-  { id:'tn10', cost:450, icon:'💎', name:'Momentum',         stat:'crit',  val:0.02, milestone:true  },
-  { id:'tn11', cost:240, icon:'❤️', name:'Vitality III',     stat:'maxHp', val:25,   milestone:false },
-  { id:'tn12', cost:260, icon:'⚔️', name:'Power III',        stat:'dmg',   val:0.04, milestone:false },
-  { id:'tn13', cost:280, icon:'💨', name:'Agility II',       stat:'mspd',  val:0.03, milestone:false },
-  { id:'tn14', cost:300, icon:'💰', name:'Looter II',        stat:'gold',  val:0.05, milestone:false },
-  { id:'tn15', cost:650, icon:'🔥', name:'Awakening',        stat:'dmg',   val:0.08, milestone:true  },
-  { id:'tn16', cost:380, icon:'❤️', name:'Vitality IV',      stat:'maxHp', val:35,   milestone:false },
-  { id:'tn17', cost:420, icon:'🛡️', name:'Endurance II',     stat:'armor', val:2,    milestone:false },
-  { id:'tn18', cost:460, icon:'⚔️', name:'Power IV',         stat:'dmg',   val:0.05, milestone:false },
-  { id:'tn19', cost:500, icon:'💨', name:'Agility III',      stat:'mspd',  val:0.04, milestone:false },
-  { id:'tn20', cost:950, icon:'👑', name:'Mastery',          stat:'all',   val:0.02, milestone:true  },
-  { id:'tn21', cost:600, icon:'❤️', name:'Vitality V',       stat:'maxHp', val:50,   milestone:false },
-  { id:'tn22', cost:650, icon:'⚔️', name:'Power V',          stat:'dmg',   val:0.06, milestone:false },
-  { id:'tn23', cost:700, icon:'💢', name:'Cruelty',          stat:'critd', val:0.10, milestone:false },
-  { id:'tn24', cost:750, icon:'💰', name:'Looter III',       stat:'gold',  val:0.08, milestone:false },
-  { id:'tn25', cost:1400,icon:'⚡', name:'Thunderstrike',    stat:'crit',  val:0.04, milestone:true  },
-  { id:'tn26', cost:900, icon:'❤️', name:'Vitality VI',      stat:'maxHp', val:70,   milestone:false },
-  { id:'tn27', cost:950, icon:'⚔️', name:'Power VI',         stat:'dmg',   val:0.08, milestone:false },
-  { id:'tn28', cost:1000,icon:'🛡️', name:'Endurance III',    stat:'armor', val:3,    milestone:false },
-  { id:'tn29', cost:1050,icon:'📖', name:'Scholar II',       stat:'xp',    val:0.06, milestone:false },
-  { id:'tn30', cost:2000,icon:'🌟', name:'Transcendence',    stat:'all',   val:0.03, milestone:true  },
+  // ── Tier 1 (costPerLvl 1-3 TP) ──────────────
+  { id:'tn01', maxLvl:10, costPerLvl:1, icon:'❤️', name:'Vitality I',      stat:'maxHp', val:1.5,   milestone:false },
+  { id:'tn02', maxLvl:10, costPerLvl:1, icon:'⚔️', name:'Power I',          stat:'dmg',   val:0.002, milestone:false },
+  { id:'tn03', maxLvl:10, costPerLvl:1, icon:'💨', name:'Agility I',        stat:'mspd',  val:0.002, milestone:false },
+  { id:'tn04', maxLvl:10, costPerLvl:1, icon:'💰', name:'Looter I',         stat:'gold',  val:0.003, milestone:false },
+  { id:'tn05', maxLvl:10, costPerLvl:3, icon:'⭐', name:'Foundation',       stat:'all',   val:0.001, milestone:true  },
+  // ── Tier 2 (costPerLvl 2-5 TP) ──────────────
+  { id:'tn06', maxLvl:10, costPerLvl:2, icon:'❤️', name:'Vitality II',      stat:'maxHp', val:2.0,   milestone:false },
+  { id:'tn07', maxLvl:10, costPerLvl:2, icon:'⚔️', name:'Power II',         stat:'dmg',   val:0.003, milestone:false },
+  { id:'tn08', maxLvl:10, costPerLvl:2, icon:'🛡️', name:'Endurance I',      stat:'armor', val:0.1,   milestone:false },
+  { id:'tn09', maxLvl:10, costPerLvl:2, icon:'📖', name:'Scholar I',        stat:'xp',    val:0.004, milestone:false },
+  { id:'tn10', maxLvl:10, costPerLvl:5, icon:'💎', name:'Momentum',         stat:'crit',  val:0.001, milestone:true  },
+  // ── Tier 3 (costPerLvl 3-7 TP) ──────────────
+  { id:'tn11', maxLvl:10, costPerLvl:3, icon:'❤️', name:'Vitality III',     stat:'maxHp', val:2.5,   milestone:false },
+  { id:'tn12', maxLvl:10, costPerLvl:3, icon:'⚔️', name:'Power III',        stat:'dmg',   val:0.004, milestone:false },
+  { id:'tn13', maxLvl:10, costPerLvl:3, icon:'💨', name:'Agility II',       stat:'mspd',  val:0.003, milestone:false },
+  { id:'tn14', maxLvl:10, costPerLvl:3, icon:'💰', name:'Looter II',        stat:'gold',  val:0.005, milestone:false },
+  { id:'tn15', maxLvl:10, costPerLvl:7, icon:'🔥', name:'Awakening',        stat:'dmg',   val:0.008, milestone:true  },
+  // ── Tier 4 (costPerLvl 4-10 TP) ─────────────
+  { id:'tn16', maxLvl:10, costPerLvl:4, icon:'❤️', name:'Vitality IV',      stat:'maxHp', val:3.5,   milestone:false },
+  { id:'tn17', maxLvl:10, costPerLvl:4, icon:'🛡️', name:'Endurance II',     stat:'armor', val:0.2,   milestone:false },
+  { id:'tn18', maxLvl:10, costPerLvl:4, icon:'⚔️', name:'Power IV',         stat:'dmg',   val:0.005, milestone:false },
+  { id:'tn19', maxLvl:10, costPerLvl:4, icon:'💨', name:'Agility III',      stat:'mspd',  val:0.004, milestone:false },
+  { id:'tn20', maxLvl:10, costPerLvl:10, icon:'👑', name:'Mastery',         stat:'all',   val:0.002, milestone:true  },
+  // ── Tier 5 (costPerLvl 6-15 TP) ─────────────
+  { id:'tn21', maxLvl:10, costPerLvl:6, icon:'❤️', name:'Vitality V',       stat:'maxHp', val:5.0,   milestone:false },
+  { id:'tn22', maxLvl:10, costPerLvl:6, icon:'⚔️', name:'Power V',          stat:'dmg',   val:0.006, milestone:false },
+  { id:'tn23', maxLvl:10, costPerLvl:6, icon:'💢', name:'Cruelty',          stat:'critd', val:0.010, milestone:false },
+  { id:'tn24', maxLvl:10, costPerLvl:6, icon:'💰', name:'Looter III',       stat:'gold',  val:0.008, milestone:false },
+  { id:'tn25', maxLvl:10, costPerLvl:15, icon:'⚡', name:'Thunderstrike',   stat:'crit',  val:0.004, milestone:true  },
+  // ── Tier 6 (costPerLvl 8-20 TP) ─────────────
+  { id:'tn26', maxLvl:10, costPerLvl:8, icon:'❤️', name:'Vitality VI',      stat:'maxHp', val:7.0,   milestone:false },
+  { id:'tn27', maxLvl:10, costPerLvl:8, icon:'⚔️', name:'Power VI',         stat:'dmg',   val:0.008, milestone:false },
+  { id:'tn28', maxLvl:10, costPerLvl:8, icon:'🛡️', name:'Endurance III',    stat:'armor', val:0.3,   milestone:false },
+  { id:'tn29', maxLvl:10, costPerLvl:8, icon:'📖', name:'Scholar II',       stat:'xp',    val:0.006, milestone:false },
+  { id:'tn30', maxLvl:10, costPerLvl:20, icon:'🌟', name:'Transcendence',   stat:'all',   val:0.003, milestone:true  },
 ];
 
 // ══════════════════════════════════════════════

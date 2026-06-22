@@ -22,21 +22,23 @@ function buildMetaEffects(save) {
   const slots = SLOTS[charRarity] || 2;
 
   const result = {
-    maxHp:    metaSum('m_hp', 15)   + (shopB.maxHp || 0) + (cb.maxHp || 0) + (tb.maxHp || 0),
-    dmg:      metaSum('m_dmg', 0.04) + (shopB.dmg || 0)  + (cb.dmg   || 0) + (tb.dmg   || 0),
-    atks:     metaSum('m_atks', 0.03) + (shopB.atks || 0),
-    mspd:     metaSum('m_spd', 0.03) + (shopB.mspd || 0) + (cb.mspd  || 0) + (tb.mspd  || 0),
-    crit:     metaSum('m_crit', 0.02) + (shopB.crit || 0) + (cb.crit  || 0) + (tb.crit  || 0),
-    critd:    metaSum('m_critd', 0.10) + (shopB.critd || 0) + (cb.critd || 0) + (tb.critd || 0),
-    superCrit: metaSum('m_superCrit', 0.04),
-    megaCrit:  metaSum('m_megaCrit',  0.02),
-    armor:    metaSum('m_armor', 1) + (shopB.armor || 0) + (cb.armor  || 0) + (tb.armor  || 0),
-    regen:    metaSum('m_regen', 0.2),
-    pickup:   metaSum('m_pickup', 0.10) + (shopB.pickup || 0),
-    xp:       metaSum('m_xp', 0.05) + (shopB.xp || 0)   + (cb.xp    || 0) + (tb.xp    || 0),
-    gold:     metaSum('m_gold', 0.08) + (shopB.gold || 0) + (cb.gold  || 0) + (tb.gold  || 0),
-    luck:     metaSum('m_luck', 0.5) + (shopB.luck || 0),
-    dodge:    metaSum('m_dodge', 0.02),
+    maxHp:    metaSum('m_hp', 1)     + (shopB.maxHp || 0) + (cb.maxHp || 0) + (tb.maxHp || 0),
+    dmg:      metaSum('m_dmg', 0.002) + (shopB.dmg || 0)  + (cb.dmg   || 0) + (tb.dmg   || 0),
+    atks:     metaSum('m_atks', 0.002) + (shopB.atks || 0),
+    mspd:     metaSum('m_spd', 0.002) + (shopB.mspd || 0) + (cb.mspd  || 0) + (tb.mspd  || 0),
+    crit:     metaSum('m_crit', 0.001) + (shopB.crit || 0) + (cb.crit  || 0) + (tb.crit  || 0),
+    critd:    metaSum('m_critd', 0.005) + (shopB.critd || 0) + (cb.critd || 0) + (tb.critd || 0),
+    superCrit: metaSum('m_superCrit', 0.005),
+    megaCrit:  metaSum('m_megaCrit',  0.002),
+    armor:    metaSum('m_armor', 0.1) + (shopB.armor || 0) + (cb.armor  || 0) + (tb.armor  || 0),
+    regen:    metaSum('m_regen', 0.02),
+    pickup:   metaSum('m_pickup', 0.01) + (shopB.pickup || 0),
+    xp:       metaSum('m_xp', 0.005) + (shopB.xp || 0)   + (cb.xp    || 0) + (tb.xp    || 0),
+    gold:     metaSum('m_gold', 0.005) + (shopB.gold || 0) + (cb.gold  || 0) + (tb.gold  || 0),
+    luck:     metaSum('m_luck', 0.05) + (shopB.luck || 0),
+    dodge:    metaSum('m_dodge', 0.001),
+    heartHeal: metaSum('m_heal', 0.5),
+    zoom:     metaSum('m_zoom', 0.005),
     revive:   !!m.m_revive,
     startBoon:(m.m_start || 0),
     area: 0, proj: 0, pierce: 0,
@@ -106,6 +108,23 @@ function buildMetaEffects(save) {
     }
   }
 
+  // Apply active pet bonuses
+  const activePet = (save.pets || []).find(p => p.active);
+  if (activePet) {
+    const PET_STAT_MAP = {
+      aquaSprite: { stat: 'dmg',       perLevel: 0.001 },
+      shadowWisp: { stat: 'dodge',     perLevel: 0.001 },
+      emberFairy: { stat: 'crit',      perLevel: 0.001 },
+      stormHawk:  { stat: 'superCrit', perLevel: 0.002 },
+      lifeSprite: { stat: 'regen',     perLevel: 0.01  },
+    };
+    const ps = PET_STAT_MAP[activePet.type];
+    if (ps) {
+      const lvlMult = 1 + (activePet.level - 1) / 100;
+      result[ps.stat] = (result[ps.stat] || 0) + ps.perLevel * activePet.level * lvlMult;
+    }
+  }
+
   return result;
 }
 
@@ -123,14 +142,22 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
     Audio.startMusic();
     Audio.swapToGameMusic();
     const canvas = canvasRef.current;
+    const isTutorial = mission && mission.isTutorial;
+    const meta = buildMetaEffects(save);
+    // Tutorial missions start with pre-boosted meta
+    if (isTutorial && mission.startMeta) {
+      Object.assign(meta, mission.startMeta);
+      meta.maxHp = (meta.maxHp || 0) + (mission.startMeta.maxHp || 0);
+    }
     const opts = {
-      meta: buildMetaEffects(save),
+      meta,
       activeSkills: (save.equippedActives || []).filter(Boolean),
-      startWeapons: ['hydropistol'],
+      startWeapons: (isTutorial && mission.startWeapons) ? mission.startWeapons : ['hydropistol'],
       missionDuration: mission ? mission.duration : null,
       spawnMult: mission ? (mission.spawnMult || 1.0) : 1.0,
       stage: mission ? null : null,
       challenge: mission && mission.isChallenge ? mission.mod : null,
+      tutorialMode: isTutorial,
       callbacks: {
         onTick: (s) => setSnap(s),
         onGameOver: (r) => {
@@ -187,7 +214,7 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
   return (
     <div className="game-stage">
       <canvas ref={canvasRef} id="game" data-testid="game-canvas" />
-      {!gameOverResult && <HUD snap={snap} onActiveSkill={onActiveSkill} />}
+      {!gameOverResult && <HUD snap={snap} onActiveSkill={onActiveSkill} isTutorial={!!(mission && mission.isTutorial)} />}
       <MobileControls onUpdate={onMobileUpdate} onReload={onMobileReload} onDashDir={onMobileDashDir} dashCD={snap ? snap.dashCD : 0} dashReady={snap ? snap.dashReady : false} visible={!gameOverResult} activeSkills={snap ? snap.activeSkills : []} onActiveSkill={onActiveSkill} />
       {levelUpChoices && <LevelUpModal choices={levelUpChoices} onPick={pickCard} playerLevel={snap ? snap.level : 1} />}
       {paused && !gameOverResult && (
