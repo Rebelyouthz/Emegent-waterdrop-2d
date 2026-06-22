@@ -88,7 +88,7 @@ function buildMetaEffects(save) {
     for (const slot of Object.keys(slotMap)) {
       const p = parts.find(x => x.id === slotMap[slot]); if (!p) continue;
       const apply = (stat, val) => {
-        if (stat === 'magBonus') result.maxHp = result.maxHp;
+        if (stat === 'magBonus') result.maxHp += 0; // mag bonus = no HP effect
         else if (['damage','dmg'].includes(stat)) result.dmg += val;
         else if (stat === 'fireRate') result.atks += val;
         else if (stat === 'pierce') result.pierce += Math.floor(val);

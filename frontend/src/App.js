@@ -219,7 +219,7 @@ function AppInner() {
       <Camp save={save} setSave={setSave}
         onBack={() => setView('welcome')}
         onStart={() => startTutorialIfNeeded()}
-        onMission={(m) => tryStartGame(() => onMission(m))} />
+        onMission={(m) => tryStartGame(() => onMission(m), m)} />
       {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
     </>);
   }
