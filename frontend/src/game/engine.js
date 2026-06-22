@@ -76,6 +76,7 @@ export class Game {
     // Stats / run state
     this.run = {
       time: 0, kills: 0, level: 1, xp: 0, xpToNext: 16, gold: 0,
+      comboCount: 0, comboTimer: 0, maxCombo: 0,
       ownedWeapons: opts.startWeapons || ['hydropistol'],
       weaponLvls: {},
       noHit: true,
@@ -141,7 +142,7 @@ export class Game {
     this._horusKilled = false;
 
     // Active skills slots and cooldowns
-    this.activeSkills = (opts.activeSkills || []).slice(0, 4);
+    this.activeSkills = (opts.activeSkills || []).slice(0, this.meta.skillSlots || 2);
     this.skillCD = {};
     for (const k of this.activeSkills) this.skillCD[k] = 0;
 
@@ -322,6 +323,9 @@ export class Game {
       voidKilled:  this._voidKilled,
       horusKilled: this._horusKilled,
       passiveIcons: (this.run.pickedPassives || []).slice(0, 14),
+      combo: this.run.comboCount,
+      comboTimer: this.run.comboTimer,
+      maxCombo: this.run.maxCombo,
     };
   }
 
@@ -334,6 +338,11 @@ export class Game {
   // ====== UPDATE ======
   update(dt) {
     this.run.time += dt;
+    // Combo decay
+    if (this.run.comboTimer > 0) {
+      this.run.comboTimer -= dt;
+      if (this.run.comboTimer <= 0) { this.run.comboTimer = 0; this.run.comboCount = 0; }
+    }
     this.time += dt;
     this.cam.shake = Math.max(0, this.cam.shake - dt * 30);
 
@@ -1381,6 +1390,9 @@ export class Game {
     if (e._decoy !== undefined) { this.enemies.release(e); return; }
     e.alive = false;
     this.run.kills += 1;
+    this.run.comboCount += 1;
+    this.run.comboTimer = 1.8;
+    if (this.run.comboCount > this.run.maxCombo) this.run.maxCombo = this.run.comboCount;
 
     // ---- Boss-specific kill tracking ----
     if (t.id === 'bossNecromancer') this._necroKilled = true;
@@ -1689,8 +1701,10 @@ export class Game {
     const usedIds = new Set();
 
     // Weapon upgrade options (allow infinite stacking past list)
-    const newWeaponIds = Object.keys(WEAPONS).filter(id => !owned.includes(id));
-    const canAddWeapon = owned.length < 10 && newWeaponIds.length > 0;
+    const newWeaponIds = Object.keys(WEAPONS)
+      .filter(id => !owned.includes(id))
+      .filter(id => !WEAPONS[id].requireUnlock || (this.meta.unlockedWeapons || []).includes(id));
+    const canAddWeapon = owned.length < (this.meta.weaponSlots || 2) && newWeaponIds.length > 0;
 
     // We want a mix; produce up to 4 choices, then random 3
     const pool = [];

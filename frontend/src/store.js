@@ -43,6 +43,16 @@ export const DEFAULT_SAVE = {
   dailyChallengesDone: {},
   levelUpStreak: { day: 0, count: 0 },
   runStarts: 0,
+  // character system
+  character: { rarity: 'common', level: 0, pieces: 0, shards: 0 },
+  charBonuses: {},
+  // talent tree
+  talent: {},
+  talentBonuses: {},
+  // unlocked weapons (from card shop)
+  unlockedWeapons: [],
+  // campaign quests
+  campaign: {},
 };
 
 export function loadSave() {
@@ -61,6 +71,12 @@ export function loadSave() {
     s.equipped = s.equipped || {};
     s.mapProgress = s.mapProgress || {};
     s.levelUpStreak = { ...DEFAULT_SAVE.levelUpStreak, ...(s.levelUpStreak || {}) };
+    s.character = { ...DEFAULT_SAVE.character, ...(s.character || {}) };
+    s.charBonuses = s.charBonuses || {};
+    s.talent = s.talent || {};
+    s.talentBonuses = s.talentBonuses || {};
+    s.unlockedWeapons = s.unlockedWeapons || [];
+    s.campaign = s.campaign || {};
     return s;
   } catch { return { ...DEFAULT_SAVE }; }
 }
@@ -124,6 +140,8 @@ export function addAccountXp(save, amount) {
       freeSpin: lv % 10 === 0,
       streakBonus: ls.count >= 3,
       streakCount: ls.count,
+      pieces: Math.floor((5 + lv * 2) * mult),
+      shards: lv % 5 === 0 ? Math.ceil(3 * mult) : 0,
     };
   }
 }

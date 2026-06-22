@@ -107,12 +107,12 @@ export default function Shop({ save, setSave, onClose }) {
                     <div key={slot} className="equip-slot">
                       <div style={{ fontSize: 12, color: 'var(--ink-dim)', textTransform: 'uppercase' }}>{slot}</div>
                       {it ? (
-                        <div className={`drop-item card ${EQUIP_RARITY[it.rarity].cls}`} style={{ width: 140, minHeight: 'auto', padding: 8 }}>
-                          <div className="card-icon" style={{ fontSize: 28 }}>{it.icon}</div>
-                          <div style={{ fontSize: 11, fontWeight: 800 }}>{it.name}</div>
+                        <div className={`equip-mini ${EQUIP_RARITY[it.rarity].cls}`}>
+                          <div style={{ fontSize: 22 }}>{it.icon}</div>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--ink)' }}>{it.name}</div>
                           {it.stats.map((s, j) => <div key={j} style={{ fontSize: 10, color: 'var(--ink-dim)' }}>+{s.stat === 'maxhp' || s.stat === 'armor' ? s.val.toFixed(0) : Math.round(s.val * 100) + '%'} {s.name}</div>)}
                         </div>
-                      ) : <div style={{ color: 'var(--ink-dim)', fontSize: 12, padding: 20 }}>— empty —</div>}
+                      ) : <div style={{ color: 'var(--ink-dim)', fontSize: 12, padding: 12 }}>— empty —</div>}
                     </div>
                   );
                 })}

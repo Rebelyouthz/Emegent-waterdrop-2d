@@ -13,22 +13,28 @@ function buildMetaEffects(save) {
   const sk = save.skills || {};
   const eqList = Object.values(save.equipped || {});
   const shopB = save.shopBonuses || {};
+  const cb = save.charBonuses || {};
+  const tb = save.talentBonuses || {};
   const metaSum = (id, mult) => (m[id] || 0) * mult;
 
+  const charRarity = save.character?.rarity || 'common';
+  const SLOTS = { common:2, uncommon:3, rare:4, epic:5, legendary:6, mythical:7 };
+  const slots = SLOTS[charRarity] || 2;
+
   const result = {
-    maxHp:    metaSum('m_hp', 15)   + (shopB.maxHp || 0),
-    dmg:      metaSum('m_dmg', 0.04) + (shopB.dmg || 0),
+    maxHp:    metaSum('m_hp', 15)   + (shopB.maxHp || 0) + (cb.maxHp || 0) + (tb.maxHp || 0),
+    dmg:      metaSum('m_dmg', 0.04) + (shopB.dmg || 0)  + (cb.dmg   || 0) + (tb.dmg   || 0),
     atks:     metaSum('m_atks', 0.03) + (shopB.atks || 0),
-    mspd:     metaSum('m_spd', 0.03) + (shopB.mspd || 0),
-    crit:     metaSum('m_crit', 0.02) + (shopB.crit || 0),
-    critd:    metaSum('m_critd', 0.10) + (shopB.critd || 0),
+    mspd:     metaSum('m_spd', 0.03) + (shopB.mspd || 0) + (cb.mspd  || 0) + (tb.mspd  || 0),
+    crit:     metaSum('m_crit', 0.02) + (shopB.crit || 0) + (cb.crit  || 0) + (tb.crit  || 0),
+    critd:    metaSum('m_critd', 0.10) + (shopB.critd || 0) + (cb.critd || 0) + (tb.critd || 0),
     superCrit: metaSum('m_superCrit', 0.04),
     megaCrit:  metaSum('m_megaCrit',  0.02),
-    armor:    metaSum('m_armor', 1) + (shopB.armor || 0),
+    armor:    metaSum('m_armor', 1) + (shopB.armor || 0) + (cb.armor  || 0) + (tb.armor  || 0),
     regen:    metaSum('m_regen', 0.2),
     pickup:   metaSum('m_pickup', 0.10) + (shopB.pickup || 0),
-    xp:       metaSum('m_xp', 0.05) + (shopB.xp || 0),
-    gold:     metaSum('m_gold', 0.08) + (shopB.gold || 0),
+    xp:       metaSum('m_xp', 0.05) + (shopB.xp || 0)   + (cb.xp    || 0) + (tb.xp    || 0),
+    gold:     metaSum('m_gold', 0.08) + (shopB.gold || 0) + (cb.gold  || 0) + (tb.gold  || 0),
     luck:     metaSum('m_luck', 0.5) + (shopB.luck || 0),
     dodge:    metaSum('m_dodge', 0.02),
     revive:   !!m.m_revive,
@@ -36,6 +42,10 @@ function buildMetaEffects(save) {
     area: 0, proj: 0, pierce: 0,
     headshot: 0, berserk: false, dash: false, dashcd: 0, blink: false, shield: false, bossDmg: 0, voidBurst: 0,
     flags: {},
+    // Character system
+    weaponSlots: slots,
+    skillSlots: slots,
+    unlockedWeapons: save.unlockedWeapons || [],
   };
 
   Object.entries(sk).forEach(([id, lvl]) => {
@@ -76,7 +86,7 @@ function buildMetaEffects(save) {
     for (const slot of Object.keys(slotMap)) {
       const p = parts.find(x => x.id === slotMap[slot]); if (!p) continue;
       const apply = (stat, val) => {
-        if (stat === 'magBonus') result.maxHp = result.maxHp; // mag handled per-weapon; skip global
+        if (stat === 'magBonus') result.maxHp = result.maxHp;
         else if (['damage','dmg'].includes(stat)) result.dmg += val;
         else if (stat === 'fireRate') result.atks += val;
         else if (stat === 'pierce') result.pierce += Math.floor(val);
@@ -96,12 +106,6 @@ function buildMetaEffects(save) {
     }
   }
 
-  // Apply card-shop flag unlocks
-  if (save.shopBonuses) {
-    // shopBonuses are stat numeric only — handled above
-  }
-
-  // Card flags from in-run cards aren't here; engine handles those via levelup
   return result;
 }
 

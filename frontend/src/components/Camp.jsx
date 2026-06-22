@@ -5,6 +5,9 @@ import { applyReward, DEFAULT_SAVE, saveLocal } from '../store';
 import SkillTree from './SkillTree';
 import Weaponsmith from './Weaponsmith';
 import Shop from './Shop';
+import CharacterPanel from './CharacterPanel';
+import TalentTree from './TalentTree';
+import CampaignPanel from './CampaignPanel';
 import { MissionsPanel, ChallengesPanel, AchievementsPanel, CardShopModal, ActiveLoadoutPanel, WeaponCrafting, SettingsPanel, PartsInventory, MapsPanel } from './CampPanels';
 import { Audio } from '../game/audio';
 
@@ -25,6 +28,9 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [partsOpen, setPartsOpen] = useState(false);
   const [popCard, setPopCard] = useState(null);
+
+  const [characterOpen, setCharacterOpen] = useState(false);
+  const [talentOpen, setTalentOpen] = useState(false);
 
   const popFeedback = (id) => { setPopCard(id); setTimeout(() => setPopCard(null), 550); };
 
@@ -90,6 +96,10 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
             <button className="camp-tab" onClick={() => setForgeOpen(true)} data-testid="open-forge">🔨 SMITH</button>
             <button className="camp-tab" onClick={() => setChestOpen(true)} data-testid="open-chest">📦 CHESTS</button>
             <button className="camp-tab" onClick={() => setSettingsOpen(true)} data-testid="open-settings">⚙ SETTINGS</button>
+            <div className="camp-tab-divider" />
+            <button className="camp-tab" onClick={() => setCharacterOpen(true)} data-testid="tab-character">👤 CHARACTER</button>
+            <button className="camp-tab" onClick={() => setTalentOpen(true)} data-testid="tab-talent">🌿 TALENTS</button>
+            <button className={`camp-tab ${tab==='campaign'?'active':''}`} onClick={() => setTab('campaign')} data-testid="tab-campaign">📜 CAMPAIGN</button>
           </div>
         </div>
 
@@ -158,6 +168,8 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
             </>
           )}
 
+          {tab === 'campaign' && <CampaignPanel save={save} setSave={setSave} />}
+
           {tab === 'stats' && (
             <>
               <div className="camp-header"><h1>Deep Statistics</h1></div>
@@ -203,16 +215,20 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
       {loadoutOpen && <ActiveLoadoutPanel save={save} setSave={setSave} onClose={() => setLoadoutOpen(false)} />}
       {craftOpen && <WeaponCrafting save={save} setSave={setSave} onClose={() => setCraftOpen(false)} />}
       {settingsOpen && <SettingsPanel save={save} setSave={setSave} onClose={() => setSettingsOpen(false)} onReset={handleReset} />}
+      {characterOpen && <CharacterPanel save={save} setSave={setSave} onClose={() => setCharacterOpen(false)} />}
+      {talentOpen && <TalentTree save={save} setSave={setSave} onClose={() => setTalentOpen(false)} />}
       {partsOpen && <PartsInventory save={save} setSave={setSave} onClose={() => setPartsOpen(false)} />}
       {save.pendingLevelUp && (
         <LevelUpOverlay save={save} onCollect={() => {
           const r = save.pendingLevelUp;
+          const char = save.character || DEFAULT_SAVE.character;
           setSave({
             ...save,
             pendingLevelUp: null,
             gold: (save.gold || 0) + r.gold,
             sp:   (save.sp   || 0) + r.sp,
             freeShopSpins: (save.freeShopSpins || 0) + (r.freeSpin ? 1 : 0),
+            character: { ...char, pieces: (char.pieces || 0) + (r.pieces || 0), shards: (char.shards || 0) + (r.shards || 0) },
           });
           Audio.claimPing();
         }} />
@@ -252,6 +268,8 @@ function LevelUpOverlay({ save, onCollect }) {
           <div className="lu-rwd">★ +{r.gold} Gold</div>
           <div className="lu-rwd">◆ +{r.sp} SP</div>
           {r.freeSpin && <div className="lu-rwd" style={{color:'#4dffd4',textShadow:'0 0 10px #4dffd4'}}>🎰 Free Shop Spin!</div>}
+          {r.pieces > 0 && <div className="lu-rwd" style={{color:'#b362ff',textShadow:'0 0 10px #b362ff88'}}>🔷 +{r.pieces} Char. Pieces</div>}
+          {r.shards > 0 && <div className="lu-rwd" style={{color:'#ff7a1a',textShadow:'0 0 10px #ff7a1a88'}}>💎 +{r.shards} Evo. Shards</div>}
           {r.streakBonus && (
             <div className="lu-rwd" style={{color:'#ffd700',textShadow:'0 0 16px #ffd700aa',fontSize:15,letterSpacing:'0.15em',marginTop:6,border:'1px solid #ffd70066',padding:'4px 10px',background:'#1a1200'}}>
               ★ 2× STREAK BONUS! ★

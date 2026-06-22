@@ -276,32 +276,49 @@ export const ADVANCED_CARDS = [
 // ---------- CAMP CARD SHOP POOL (slot-machine pulls) ----------
 // Each pull = random pick from this pool weighted by rarity. Permanent boosts and skill unlocks.
 export const SHOP_CARD_POOL = [
-  // Permanent stat cards
-  { id: 'sh_hp',    icon: '❤️', name: '+30 Max HP',      effect: { stat: 'maxHp', amount: 30 } },
-  { id: 'sh_dmg',   icon: '⚔️', name: '+8% Damage',       effect: { stat: 'dmg', amount: 0.08 } },
-  { id: 'sh_atks',  icon: '⏱', name: '+6% Atk Speed',    effect: { stat: 'atks', amount: 0.06 } },
-  { id: 'sh_crit',  icon: '💢', name: '+4% Crit',         effect: { stat: 'crit', amount: 0.04 } },
-  { id: 'sh_critd', icon: '🩸', name: '+20% Crit Dmg',    effect: { stat: 'critd', amount: 0.20 } },
-  { id: 'sh_spd',   icon: '🥾', name: '+5% Move Speed',  effect: { stat: 'mspd', amount: 0.05 } },
-  { id: 'sh_armor', icon: '🛡', name: '+2 Armor',         effect: { stat: 'armor', amount: 2 } },
-  { id: 'sh_gold',  icon: '💰', name: '+15% Gold',        effect: { stat: 'gold', amount: 0.15 } },
-  { id: 'sh_xp',    icon: '📖', name: '+10% XP',          effect: { stat: 'xp', amount: 0.10 } },
-  { id: 'sh_luck',  icon: '🍀', name: '+1 Luck',          effect: { stat: 'luck', amount: 1 } },
-  { id: 'sh_pick',  icon: '🧲', name: '+25% Pickup',      effect: { stat: 'pickup', amount: 0.25 } },
-  // Active skill unlocks (rarer)
-  { id: 'sh_skill_lightning', icon: '⚡', name: 'Unlock: Lightning',  effect: { unlockSkill: 'lightning' } },
-  { id: 'sh_skill_aegis',     icon: '🛡', name: 'Unlock: Aegis',      effect: { unlockSkill: 'aegis' } },
-  { id: 'sh_skill_timewarp',  icon: '⏱', name: 'Unlock: Time Warp',  effect: { unlockSkill: 'timewarp' } },
-  { id: 'sh_skill_decoy',     icon: '👤', name: 'Unlock: Decoy',      effect: { unlockSkill: 'decoy' } },
-  { id: 'sh_skill_meteor',    icon: '☄️', name: 'Unlock: Meteor',     effect: { unlockSkill: 'meteor' } },
-  { id: 'sh_skill_vortex',    icon: '🌀', name: 'Unlock: Void Vortex',effect: { unlockSkill: 'vortex' } },
+  // ── Passive stat cards ──
+  { id: 'sh_hp',    icon: '❤️', name: '+30 Max HP',      category:'passive', effect: { stat: 'maxHp', amount: 30 } },
+  { id: 'sh_dmg',   icon: '⚔️', name: '+8% Damage',      category:'passive', effect: { stat: 'dmg', amount: 0.08 } },
+  { id: 'sh_atks',  icon: '⏱', name: '+6% Atk Speed',   category:'passive', effect: { stat: 'atks', amount: 0.06 } },
+  { id: 'sh_crit',  icon: '💢', name: '+4% Crit',        category:'passive', effect: { stat: 'crit', amount: 0.04 } },
+  { id: 'sh_critd', icon: '🩸', name: '+20% Crit Dmg',   category:'passive', effect: { stat: 'critd', amount: 0.20 } },
+  { id: 'sh_spd',   icon: '🥾', name: '+5% Move Speed', category:'passive', effect: { stat: 'mspd', amount: 0.05 } },
+  { id: 'sh_armor', icon: '🛡', name: '+2 Armor',        category:'passive', effect: { stat: 'armor', amount: 2 } },
+  { id: 'sh_gold',  icon: '💰', name: '+15% Gold',       category:'passive', effect: { stat: 'gold', amount: 0.15 } },
+  { id: 'sh_xp',    icon: '📖', name: '+10% XP',         category:'passive', effect: { stat: 'xp', amount: 0.10 } },
+  { id: 'sh_luck',  icon: '🍀', name: '+1 Luck',         category:'passive', effect: { stat: 'luck', amount: 1 } },
+  { id: 'sh_pick',  icon: '🧲', name: '+25% Pickup',     category:'passive', effect: { stat: 'pickup', amount: 0.25 } },
+  // ── Active skill unlocks ──
+  { id: 'sh_skill_lightning', icon: '⚡', name: 'Unlock: Lightning',   category:'active', effect: { unlockSkill: 'lightning' } },
+  { id: 'sh_skill_aegis',     icon: '🛡', name: 'Unlock: Aegis',       category:'active', effect: { unlockSkill: 'aegis' } },
+  { id: 'sh_skill_timewarp',  icon: '⏱', name: 'Unlock: Time Warp',   category:'active', effect: { unlockSkill: 'timewarp' } },
+  { id: 'sh_skill_decoy',     icon: '👤', name: 'Unlock: Decoy',       category:'active', effect: { unlockSkill: 'decoy' } },
+  { id: 'sh_skill_meteor',    icon: '☄️', name: 'Unlock: Meteor',      category:'active', effect: { unlockSkill: 'meteor' } },
+  { id: 'sh_skill_vortex',    icon: '🌀', name: 'Unlock: Void Vortex', category:'active', effect: { unlockSkill: 'vortex' } },
+  // ── Auto weapon unlocks ──
+  { id: 'sh_wep_chainlightning', icon: '⚡', name: 'Unlock: Chain Lightning', category:'auto', effect: { unlockWeapon: 'chainlightning' } },
+  { id: 'sh_wep_whirlwind',      icon: '🌪️', name: 'Unlock: Whirlwind',       category:'auto', effect: { unlockWeapon: 'whirlwind' } },
+  { id: 'sh_wep_boneshards',     icon: '💀', name: 'Unlock: Bone Shards',     category:'auto', effect: { unlockWeapon: 'boneshards' } },
+  // ── Manual weapon unlocks ──
+  { id: 'sh_wep_daggers',    icon: '🗡️', name: 'Unlock: Dagger Fan',  category:'manual', effect: { unlockWeapon: 'daggers' } },
+  { id: 'sh_wep_flameburst', icon: '🔥', name: 'Unlock: Flame Burst', category:'manual', effect: { unlockWeapon: 'flameburst' } },
+  { id: 'sh_wep_icespike',   icon: '🧊', name: 'Unlock: Ice Spike',   category:'manual', effect: { unlockWeapon: 'icespike' } },
 ];
 export function shopCardCost(pullCount) {
   // Escalating: 150, 220, 320, 470, 690, ...
   return Math.floor(150 * Math.pow(1.45, pullCount));
 }
-export function rollShopPull(luck = 0) {
-  const card = SHOP_CARD_POOL[Math.floor(Math.random() * SHOP_CARD_POOL.length)];
+
+const RARITY_ORDER = ['common','uncommon','rare','epic','legendary','mythical'];
+export function bumpRarity(rar, steps = 1) {
+  const idx = RARITY_ORDER.indexOf(rar);
+  return RARITY_ORDER[Math.min(idx + steps, RARITY_ORDER.length - 1)];
+}
+
+export function rollShopPull(luck = 0, section = null) {
+  const pool = section ? SHOP_CARD_POOL.filter(c => c.category === section) : SHOP_CARD_POOL;
+  const safePool = pool.length ? pool : SHOP_CARD_POOL;
+  const card = safePool[Math.floor(Math.random() * safePool.length)];
   // Rarity affects amount scaling (for stat cards)
   const rarityRoll = Math.random() - (luck * 0.05);
   let rarity = 'common';
@@ -311,6 +328,24 @@ export function rollShopPull(luck = 0) {
   else if (rarityRoll < 0.45) rarity = 'uncommon';
   const mult = { common: 1.0, uncommon: 1.5, rare: 2.0, epic: 2.8, legendary: 4.0, mythical: 6.5 }[rarity];
   return { ...card, rarity, mult, finalEffect: card.effect.amount ? { ...card.effect, amount: card.effect.amount * mult } : card.effect };
+}
+
+// Roll 3 reels and detect jackpot (3 matching) or 2-match bonus
+export function rollShopPull3(luck = 0, section = null) {
+  const r1 = rollShopPull(luck, section);
+  const r2 = rollShopPull(luck, section);
+  const r3 = rollShopPull(luck, section);
+  const reels = [r1, r2, r3];
+  const allMatch = r1.id === r2.id && r2.id === r3.id;
+  const twoMatch = !allMatch && (r1.id === r2.id || r2.id === r3.id || r1.id === r3.id);
+  let winner = r1;
+  if (allMatch) winner = { ...r1, rarity: bumpRarity(r1.rarity, 2), jackpot: true, mult: { common:2.0, uncommon:3.0, rare:4.5, epic:6.0, legendary:8.0, mythical:10 }[bumpRarity(r1.rarity,2)] || r1.mult };
+  else if (twoMatch) {
+    const matchCard = r1.id === r2.id ? r1 : r1.id === r3.id ? r1 : r2;
+    winner = { ...matchCard, rarity: bumpRarity(matchCard.rarity, 1), twoMatch: true, mult: { common:1.5, uncommon:2.0, rare:3.0, epic:4.0, legendary:6.0, mythical:8.0 }[bumpRarity(matchCard.rarity,1)] || matchCard.mult };
+  }
+  winner = { ...winner, finalEffect: winner.effect?.amount ? { ...winner.effect, amount: winner.effect.amount * winner.mult } : winner.effect };
+  return { reels, winner, jackpot: allMatch, twoMatch };
 }
 
 // ---------- MILESTONE REWARD BAR (account level) ----------
@@ -397,4 +432,84 @@ export const MAP_STAGES = [
       { id: 'ship_3', name: 'Core Override',diff: 3, duration: 600, spawnMult: 2.5, enemyMix: ['necron','charger','brute'], rwd: { gold: 3500, sp: 10 },unlockGoal: 'ship_2' },
     ],
   },
+];
+
+
+// ══════════════════════════════════════════════
+// CHARACTER RARITY SYSTEM
+// ══════════════════════════════════════════════
+export const CHAR_RARITIES = ['common','uncommon','rare','epic','legendary','mythical'];
+export const CHAR_RARITY_COLORS = { common:'#9a8fa6', uncommon:'#4dff91', rare:'#4dc4ff', epic:'#b362ff', legendary:'#ff7a1a', mythical:'#ff3146' };
+export const CHAR_RARITY_NAMES  = { common:'Common', uncommon:'Uncommon', rare:'Rare', epic:'Epic', legendary:'Legendary', mythical:'Mythical' };
+export const CHAR_SLOTS_BY_RARITY = { common:2, uncommon:3, rare:4, epic:5, legendary:6, mythical:7 };
+export const CHAR_LEVEL_COST = (rarity, lvl) => ({
+  gold:   { common:80, uncommon:200, rare:500, epic:1200, legendary:3000, mythical:7500 }[rarity] + lvl * 35,
+  pieces: { common:2,  uncommon:5,   rare:10,  epic:20,   legendary:40,   mythical:80  }[rarity],
+});
+export const CHAR_EVOLVE_COST = { common:{shards:5}, uncommon:{shards:12}, rare:{shards:25}, epic:{shards:50}, legendary:{shards:100} };
+const _CHAR_STAT_POOL = [
+  { stat:'maxHp', label:'Max HP',      val:15,   icon:'❤️', isPct:false },
+  { stat:'dmg',   label:'ATK Power',   val:0.04, icon:'⚔️', isPct:true  },
+  { stat:'mspd',  label:'Move Speed',  val:0.02, icon:'💨', isPct:true  },
+  { stat:'gold',  label:'Gold Find',   val:0.03, icon:'💰', isPct:true  },
+  { stat:'armor', label:'Armor',       val:1,    icon:'🛡️', isPct:false },
+  { stat:'xp',    label:'XP Gain',     val:0.03, icon:'📖', isPct:true  },
+];
+export function charLevelStat(level, rarity) {
+  const rarIdx = CHAR_RARITIES.indexOf(rarity);
+  return _CHAR_STAT_POOL[(level + rarIdx * 2) % _CHAR_STAT_POOL.length];
+}
+
+// ══════════════════════════════════════════════
+// TALENT TREE (30 nodes — bottom to top)
+// ══════════════════════════════════════════════
+export const TALENT_NODES = [
+  { id:'tn01', cost:80,  icon:'❤️', name:'Vitality I',      stat:'maxHp', val:15,   milestone:false },
+  { id:'tn02', cost:90,  icon:'⚔️', name:'Power I',          stat:'dmg',   val:0.02, milestone:false },
+  { id:'tn03', cost:100, icon:'💨', name:'Agility I',        stat:'mspd',  val:0.02, milestone:false },
+  { id:'tn04', cost:110, icon:'💰', name:'Looter I',         stat:'gold',  val:0.03, milestone:false },
+  { id:'tn05', cost:250, icon:'⭐', name:'Foundation',       stat:'all',   val:0.01, milestone:true  },
+  { id:'tn06', cost:140, icon:'❤️', name:'Vitality II',      stat:'maxHp', val:20,   milestone:false },
+  { id:'tn07', cost:160, icon:'⚔️', name:'Power II',         stat:'dmg',   val:0.03, milestone:false },
+  { id:'tn08', cost:180, icon:'🛡️', name:'Endurance I',      stat:'armor', val:1,    milestone:false },
+  { id:'tn09', cost:200, icon:'📖', name:'Scholar I',        stat:'xp',    val:0.04, milestone:false },
+  { id:'tn10', cost:450, icon:'💎', name:'Momentum',         stat:'crit',  val:0.02, milestone:true  },
+  { id:'tn11', cost:240, icon:'❤️', name:'Vitality III',     stat:'maxHp', val:25,   milestone:false },
+  { id:'tn12', cost:260, icon:'⚔️', name:'Power III',        stat:'dmg',   val:0.04, milestone:false },
+  { id:'tn13', cost:280, icon:'💨', name:'Agility II',       stat:'mspd',  val:0.03, milestone:false },
+  { id:'tn14', cost:300, icon:'💰', name:'Looter II',        stat:'gold',  val:0.05, milestone:false },
+  { id:'tn15', cost:650, icon:'🔥', name:'Awakening',        stat:'dmg',   val:0.08, milestone:true  },
+  { id:'tn16', cost:380, icon:'❤️', name:'Vitality IV',      stat:'maxHp', val:35,   milestone:false },
+  { id:'tn17', cost:420, icon:'🛡️', name:'Endurance II',     stat:'armor', val:2,    milestone:false },
+  { id:'tn18', cost:460, icon:'⚔️', name:'Power IV',         stat:'dmg',   val:0.05, milestone:false },
+  { id:'tn19', cost:500, icon:'💨', name:'Agility III',      stat:'mspd',  val:0.04, milestone:false },
+  { id:'tn20', cost:950, icon:'👑', name:'Mastery',          stat:'all',   val:0.02, milestone:true  },
+  { id:'tn21', cost:600, icon:'❤️', name:'Vitality V',       stat:'maxHp', val:50,   milestone:false },
+  { id:'tn22', cost:650, icon:'⚔️', name:'Power V',          stat:'dmg',   val:0.06, milestone:false },
+  { id:'tn23', cost:700, icon:'💢', name:'Cruelty',          stat:'critd', val:0.10, milestone:false },
+  { id:'tn24', cost:750, icon:'💰', name:'Looter III',       stat:'gold',  val:0.08, milestone:false },
+  { id:'tn25', cost:1400,icon:'⚡', name:'Thunderstrike',    stat:'crit',  val:0.04, milestone:true  },
+  { id:'tn26', cost:900, icon:'❤️', name:'Vitality VI',      stat:'maxHp', val:70,   milestone:false },
+  { id:'tn27', cost:950, icon:'⚔️', name:'Power VI',         stat:'dmg',   val:0.08, milestone:false },
+  { id:'tn28', cost:1000,icon:'🛡️', name:'Endurance III',    stat:'armor', val:3,    milestone:false },
+  { id:'tn29', cost:1050,icon:'📖', name:'Scholar II',       stat:'xp',    val:0.06, milestone:false },
+  { id:'tn30', cost:2000,icon:'🌟', name:'Transcendence',    stat:'all',   val:0.03, milestone:true  },
+];
+
+// ══════════════════════════════════════════════
+// CAMPAIGN QUESTS
+// ══════════════════════════════════════════════
+export const CAMPAIGN_QUESTS = [
+  { id:'cq01', name:'First Blood',       icon:'⚔️', desc:'Complete your first run',          check:(s)=>(s.runsCompleted||0)>=1,                             rwd:{ gold:300 } },
+  { id:'cq02', name:'Skill Student',     icon:'📖', desc:'Buy 3 skill tree upgrades',         check:(s)=>Object.values(s.skills||{}).reduce((a,b)=>a+b,0)>=3, rwd:{ gold:400, sp:1 } },
+  { id:'cq03', name:'Meta Mind',         icon:'🧠', desc:'Buy 5 meta upgrades',               check:(s)=>Object.values(s.meta||{}).reduce((a,b)=>a+b,0)>=5,   rwd:{ gold:600 } },
+  { id:'cq04', name:'Survivor',          icon:'🏆', desc:'Complete 3 runs',                   check:(s)=>(s.runsCompleted||0)>=3,                             rwd:{ gold:800, sp:2 } },
+  { id:'cq05', name:'Card Collector',    icon:'🃏', desc:'Do 5 card shop pulls',              check:(s)=>(s.shopPulls||0)>=5,                                 rwd:{ gold:1000 } },
+  { id:'cq06', name:'Profile Prestige',  icon:'⭐', desc:'Reach Rank 5',                      check:(s)=>(s.profile?.level||1)>=5,                            rwd:{ gold:1200, sp:3 } },
+  { id:'cq07', name:'Map Explorer',      icon:'🗺️', desc:'Complete a map node',               check:(s)=>Object.keys(s.mapProgress||{}).length>0,             rwd:{ gold:1500 } },
+  { id:'cq08', name:'Monster Slayer',    icon:'☠️', desc:'Kill 500 enemies total',            check:(s)=>(s.totalKills||0)>=500,                              rwd:{ gold:2000, sp:3 } },
+  { id:'cq09', name:'One Thousand',      icon:'💀', desc:'Kill 1000 enemies total',           check:(s)=>(s.totalKills||0)>=1000,                             rwd:{ gold:3500, sp:5 } },
+  { id:'cq10', name:'Character Evolved', icon:'💎', desc:'Evolve character to Uncommon+',    check:(s)=>['uncommon','rare','epic','legendary','mythical'].includes(s.character?.rarity), rwd:{ gold:3000, sp:6 } },
+  { id:'cq11', name:'Talent Path Begun', icon:'🌿', desc:'Unlock 10 Talent nodes',           check:(s)=>Object.keys(s.talent||{}).length>=10,                rwd:{ gold:2000, sp:5 } },
+  { id:'cq12', name:'Legend',            icon:'🌟', desc:'Reach Rank 10',                     check:(s)=>(s.profile?.level||1)>=10,                           rwd:{ gold:5000, sp:10 } },
 ];

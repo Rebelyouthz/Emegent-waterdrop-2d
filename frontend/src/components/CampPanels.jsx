@@ -1,6 +1,6 @@
 // Combined extended Camp panels in one file to save bundle weight.
 import React, { useState, useEffect } from 'react';
-import { MISSION_DEFS, MISSION_DAILY_LIMIT, MISSION_REGEN_MS, rollMissionRewards, ACHIEVEMENTS, CHALLENGES, STAGES, MILESTONE_BAR, SHOP_CARD_POOL, shopCardCost, rollShopPull, ACTIVE_SKILLS, ACTIVE_SKILL_KEYS, ADVANCED_CARDS, STARTER_WEAPONS, PART_RARITY_COLORS, PART_SLOTS, PART_SLOT_INFO, STAT_DISPLAY, rollPart, MAP_STAGES, DAILY_CHALLENGE_POOL, getDailyChallenges } from '../game/data_ext2';
+import { MISSION_DEFS, MISSION_DAILY_LIMIT, MISSION_REGEN_MS, rollMissionRewards, ACHIEVEMENTS, CHALLENGES, STAGES, MILESTONE_BAR, SHOP_CARD_POOL, shopCardCost, rollShopPull3, ACTIVE_SKILLS, ACTIVE_SKILL_KEYS, ADVANCED_CARDS, STARTER_WEAPONS, PART_RARITY_COLORS, PART_SLOTS, PART_SLOT_INFO, STAT_DISPLAY, rollPart, MAP_STAGES, DAILY_CHALLENGE_POOL, getDailyChallenges } from '../game/data_ext2';
 import { Audio } from '../game/audio';
 import { accountXpToNext } from '../game/data_ext';
 
@@ -221,77 +221,68 @@ const REEL_ICONS = ['💧', '⚔️', '⭐', '💎', '🎰', '🌟', '🔮', '�
 const REEL_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical'];
 
 export function CardShopModal({ save, setSave, onClose }) {
+  const [section, setSection] = useState(null); // null = section select
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
-  // Three reels (slot machine row), each cycles independently then stops
+  const [jackpot, setJackpot] = useState(false);
+  const [twoMatch, setTwoMatch] = useState(false);
   const [reels, setReels] = useState(['💧', '⚔️', '⭐']);
+  const [reelResults, setReelResults] = useState([null, null, null]);
   const [stopped, setStopped] = useState([true, true, true]);
   const [reelRarity, setReelRarity] = useState('common');
+
   const pullCount = save.shopPulls || 0;
   const cost = shopCardCost(pullCount);
-  const luck = (save.meta.m_luck || 0) * 0.5 + (save.skills.sk_luck || 0) * 0.5;
+  const luck = (save.meta?.m_luck || 0) * 0.5 + (save.skills?.sk_luck || 0) * 0.5;
   const freeSpins = save.freeShopSpins || 0;
   const isFree = freeSpins > 0;
 
+  const SECTIONS = [
+    { id: 'passive', label: 'PASSIVE',  icon: '🛡️', desc: 'Permanent stat boosts' },
+    { id: 'active',  label: 'ACTIVE',   icon: '⚡', desc: 'Unlock active skills' },
+    { id: 'auto',    label: 'AUTO',     icon: '🌪️', desc: 'Unlock auto-weapons' },
+    { id: 'manual',  label: 'MANUAL',   icon: '🗡️', desc: 'Unlock manual weapons' },
+  ];
+
   const pull = () => {
-    if ((!isFree && save.gold < cost) || spinning) return;
-    setSpinning(true); setResult(null);
+    if ((!isFree && save.gold < cost) || spinning || !section) return;
+    setSpinning(true); setResult(null); setJackpot(false); setTwoMatch(false);
     setStopped([false, false, false]);
     setReelRarity('common');
     Audio.click();
-    // Pre-roll the actual card outcome so we can animate to it
-    const card = rollShopPull(luck);
-    // Animate three reels with staggered stop times for dopamine anticipation
-    const reelIntervals = [];
-    let i = 0;
-    reelIntervals.push(setInterval(() => {
-      setReels(prev => [REEL_ICONS[(i + 0) % REEL_ICONS.length], prev[1], prev[2]]);
-      i++;
-    }, 65));
-    reelIntervals.push(setInterval(() => {
-      setReels(prev => [prev[0], REEL_ICONS[(i + 3) % REEL_ICONS.length], prev[2]]);
-    }, 80));
-    reelIntervals.push(setInterval(() => {
-      setReels(prev => [prev[0], prev[1], REEL_ICONS[(i + 7) % REEL_ICONS.length]]);
-    }, 95));
-    // Rarity ticker (for the highlight color)
-    const rarityTicker = setInterval(() => {
-      const idx = Math.floor(Math.random() * REEL_RARITIES.length);
-      setReelRarity(REEL_RARITIES[idx]);
-      Audio.click();
-    }, 130);
 
-    // Stop first reel
+    const pullResult = rollShopPull3(luck, section);
+    const [c1, c2, c3] = pullResult.reels;
+    let i = 0;
+    const ri0 = setInterval(() => { setReels(p => [REEL_ICONS[(i++) % REEL_ICONS.length], p[1], p[2]]); }, 65);
+    const ri1 = setInterval(() => { setReels(p => [p[0], REEL_ICONS[(i + 3) % REEL_ICONS.length], p[2]]); }, 80);
+    const ri2 = setInterval(() => { setReels(p => [p[0], p[1], REEL_ICONS[(i + 7) % REEL_ICONS.length]]); }, 95);
+    const rt  = setInterval(() => { setReelRarity(REEL_RARITIES[Math.floor(Math.random() * REEL_RARITIES.length)]); Audio.click(); }, 130);
+
+    setTimeout(() => { clearInterval(ri0); setReels(p => [c1.icon, p[1], p[2]]); setStopped(s => [true, s[1], s[2]]); }, 900);
+    setTimeout(() => { clearInterval(ri1); setReels(p => [p[0], c2.icon, p[2]]); setStopped(s => [s[0], true, s[2]]); }, 1500);
     setTimeout(() => {
-      clearInterval(reelIntervals[0]);
-      setReels(prev => [card.icon, prev[1], prev[2]]);
-      setStopped(s => [true, s[1], s[2]]);
-      try { Audio.hit && Audio.hit(); } catch (e) {}
-    }, 900);
-    // Stop second reel
-    setTimeout(() => {
-      clearInterval(reelIntervals[1]);
-      setReels(prev => [prev[0], card.icon, prev[2]]);
-      setStopped(s => [s[0], true, s[2]]);
-      try { Audio.hit && Audio.hit(); } catch (e) {}
-    }, 1450);
-    // Stop third reel — moment of truth!
-    setTimeout(() => {
-      clearInterval(reelIntervals[2]);
-      clearInterval(rarityTicker);
-      setReels(prev => [prev[0], prev[1], card.icon]);
+      clearInterval(ri2); clearInterval(rt);
+      setReels([c1.icon, c2.icon, c3.icon]);
+      setReelResults([c1, c2, c3]);
       setStopped([true, true, true]);
-      setReelRarity(card.rarity);
-      setResult(card);
-      Audio.levelUp();
+      setReelRarity(pullResult.winner.rarity);
+      setResult(pullResult.winner);
+      setJackpot(pullResult.jackpot);
+      setTwoMatch(pullResult.twoMatch);
+      if (pullResult.jackpot) { Audio.levelUp(); setTimeout(() => Audio.claimPing(), 200); }
+      else Audio.levelUp();
+
       const ns = { ...save, gold: isFree ? save.gold : save.gold - cost, shopPulls: pullCount + 1 };
       if (isFree) ns.freeShopSpins = freeSpins - 1;
-      if (card.effect.unlockSkill) {
-        ns.unlockedActives = { ...(ns.unlockedActives || {}), [card.effect.unlockSkill]: true };
-      } else if (card.effect.stat) {
+      const w = pullResult.winner;
+      if (w.effect.unlockSkill) {
+        ns.unlockedActives = { ...(ns.unlockedActives || {}), [w.effect.unlockSkill]: true };
+      } else if (w.effect.unlockWeapon) {
+        ns.unlockedWeapons = [...new Set([...(ns.unlockedWeapons || []), w.effect.unlockWeapon])];
+      } else if (w.effect.stat) {
         ns.shopBonuses = { ...(ns.shopBonuses || {}) };
-        const k = card.effect.stat;
-        ns.shopBonuses[k] = (ns.shopBonuses[k] || 0) + (card.finalEffect.amount || 0);
+        ns.shopBonuses[w.effect.stat] = (ns.shopBonuses[w.effect.stat] || 0) + (w.finalEffect?.amount || 0);
       }
       setSave(ns);
       setSpinning(false);
@@ -299,84 +290,103 @@ export function CardShopModal({ save, setSave, onClose }) {
   };
 
   const rarityCls = PART_RAR_CLS[reelRarity] || '';
+  const RARITY_COLORS = { common:'#9a8fa6', uncommon:'#4dff91', rare:'#4dc4ff', epic:'#b362ff', legendary:'#ff7a1a', mythical:'#ff3146' };
+
+  const describeResult = (w) => {
+    if (!w) return '';
+    if (w.effect.unlockSkill) return `Unlock: ${ACTIVE_SKILLS[w.effect.unlockSkill]?.name || w.effect.unlockSkill}`;
+    if (w.effect.unlockWeapon) return `Unlock weapon: ${w.name.replace('Unlock: ','')}`;
+    if (w.effect.stat) return `+${w.finalEffect?.amount}${['maxHp','armor'].includes(w.effect.stat)?'':' %'} ${w.effect.stat}`;
+    return w.name;
+  };
 
   return (
     <div className="modal-overlay" data-testid="card-shop" onClick={(e) => { if (e.target.classList.contains('modal-overlay')) onClose(); }}>
-      <div className="forge-panel cs-modal" style={{ maxWidth: 680, textAlign: 'center' }}>
+      <div className={`forge-panel cs-modal ${jackpot ? 'cs-jackpot-flash' : ''}`} style={{ maxWidth: 680, textAlign: 'center' }}>
         <div className="forge-header">
           <div className="forge-title">🎰 CARD SHOP</div>
           <div className="forge-gold">★ {save.gold}</div>
           <button onClick={onClose} style={{ padding: '6px 12px', fontSize: 12 }}>✕</button>
         </div>
-        <div style={{ color: 'var(--ink-dim)', fontFamily: 'VT323', marginBottom: 14 }}>
-          Pull {pullCount + 1} · luck {luck.toFixed(1)}
-          {freeSpins > 0 && <span style={{ color: '#4dffd4', marginLeft: 12, textShadow: '0 0 8px #4dffd4' }}>🎰 {freeSpins} FREE SPIN{freeSpins > 1 ? 'S' : ''}</span>}
-        </div>
 
-        {/* 3-reel slot frame */}
-        <div className={`slot-frame ${rarityCls} ${spinning ? 'cs-shake' : ''} ${result && result.rarity === 'legendary' ? 'cs-jackpot' : ''}`}>
-          <div className="slot-window" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, minmax(80px, 1fr))',
-            gap: 8,
-            background: '#06040a',
-            border: '2px solid #000',
-            padding: 8,
-            margin: '0 auto 12px',
-            width: '100%',
-            maxWidth: 420,
-            boxShadow: 'inset 0 0 0 1px #ffffff10',
-          }}>
-            {[0, 1, 2].map(idx => (
-              <div key={idx} className={`slot-cell ${stopped[idx] ? 'stopped' : 'spinning'} ${result && stopped[idx] ? 'cs-glow ' + (PART_RAR_CLS[reelRarity] || '') : ''}`} style={{
-                background: 'linear-gradient(180deg, #141826 0%, #06080f 100%)',
-                border: '1px solid #ffffff15',
-                minHeight: 100,
-                height: 100,
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                overflow: 'hidden',
-              }}>
-                <div className="slot-icon" style={{ fontSize: 54, textShadow: '0 2px 8px #000a' }}>{reels[idx]}</div>
-              </div>
-            ))}
-          </div>
-          {result && (
-            <div className="cs-result" data-testid="cs-result">
-              <div className="card-tag" style={{ marginBottom: 4 }}>{(result.rarity || '').toUpperCase()}</div>
-              <div className="card-name" style={{ fontSize: 22, marginBottom: 4 }}>{result.name}</div>
-              <div className="card-desc">
-                {result.effect.unlockSkill ? `New active skill: ${ACTIVE_SKILLS[result.effect.unlockSkill].name}` :
-                  `Permanent +${result.finalEffect.amount}${result.effect.stat === 'maxHp' || result.effect.stat === 'armor' ? '' : '%'} ${result.effect.stat}`}
-              </div>
-            </div>
-          )}
-          {!result && spinning && (
-            <div className="cs-status" data-testid="cs-status">
-              <span className="cs-suspense">SPINNING…</span>
-            </div>
-          )}
-          {!result && !spinning && (
-            <div className="cs-status" data-testid="cs-idle">
-              <span>READY · PRESS PULL</span>
-            </div>
-          )}
-        </div>
-
-        <button onClick={pull} disabled={(!isFree && save.gold < cost) || spinning} style={{ marginTop: 18, width: '100%' }} data-testid="shop-pull">
-          {isFree ? `🎰 FREE PULL! (${freeSpins} left)` : spinning ? 'PULLING…' : `★ ${cost} — PULL #${pullCount + 1}`}
-        </button>
-        {save.shopBonuses && Object.keys(save.shopBonuses).length > 0 && (
-          <div style={{ marginTop: 14, padding: 10, background: '#0e0816', border: '1px solid #000' }}>
-            <div style={{ color: 'var(--accent-2)', fontSize: 12, letterSpacing: '0.2em' }}>YOUR PERMANENT BONUSES</div>
-            <div style={{ fontFamily: 'VT323', fontSize: 14, color: 'var(--ink)', marginTop: 6 }}>
-              {Object.entries(save.shopBonuses).map(([k, v]) => (
-                <span key={k} style={{ marginRight: 12 }}>{k}: +{Math.round(v * 100) / 100}{k === 'maxHp' || k === 'armor' ? '' : '%'}</span>
+        {/* Section selector */}
+        {!section ? (
+          <div style={{ padding: '20px 0' }}>
+            <div style={{ fontFamily: 'VT323', color: 'var(--ink-dim)', fontSize: 16, letterSpacing: '0.2em', marginBottom: 16 }}>CHOOSE YOUR PULL TYPE</div>
+            <div className="section-chooser">
+              {SECTIONS.map(s => (
+                <button key={s.id} className="section-btn" onClick={() => setSection(s.id)} data-testid={`section-${s.id}`}>
+                  <span style={{ fontSize: 28 }}>{s.icon}</span>
+                  <div style={{ fontFamily: 'VT323', fontSize: 18, letterSpacing: '0.1em', marginTop: 4 }}>{s.label}</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-dim)', marginTop: 2 }}>{s.desc}</div>
+                </button>
               ))}
             </div>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 10 }}>
+              <button onClick={() => { setSection(null); setResult(null); }} style={{ padding: '4px 10px', fontSize: 12, background: '#0a0612' }}>← Back</button>
+              <div style={{ fontFamily: 'VT323', color: 'var(--accent-2)', fontSize: 18, letterSpacing: '0.2em' }}>
+                {SECTIONS.find(s => s.id === section)?.icon} {SECTIONS.find(s => s.id === section)?.label} PULL
+              </div>
+              <div style={{ color: 'var(--ink-dim)', fontFamily: 'VT323', fontSize: 14 }}>
+                Pull #{pullCount + 1} · luck {luck.toFixed(1)}
+                {freeSpins > 0 && <span style={{ color: '#4dffd4', marginLeft: 10 }}>🎰 {freeSpins} FREE</span>}
+              </div>
+            </div>
+
+            {/* Jackpot / 2-match banners */}
+            {jackpot && <div className="cs-jackpot-banner">🎰 JACKPOT! RARITY UP × 2! 🎰</div>}
+            {twoMatch && !jackpot && <div className="cs-match-banner">★ 2 OF A KIND — RARITY BONUS!</div>}
+
+            {/* 3-reel slot */}
+            <div className={`slot-frame ${rarityCls} ${spinning ? 'cs-shake' : ''}`}>
+              <div className="slot-window">
+                {[0, 1, 2].map(idx => {
+                  const rr = reelResults[idx];
+                  const cellRarColor = rr ? (RARITY_COLORS[rr.rarity] || '#fff') : '#fff';
+                  const isMatch = result && jackpot;
+                  return (
+                    <div key={idx} className={`slot-cell ${stopped[idx] ? 'stopped' : 'spinning'}`}
+                      style={{ boxShadow: (stopped[idx] && rr) ? `0 0 20px ${cellRarColor}66, inset 0 0 10px ${cellRarColor}22` : 'none' }}>
+                      <div className="slot-icon" style={{ fontSize: 52 }}>{reels[idx]}</div>
+                      {stopped[idx] && rr && <div style={{ fontSize: 10, fontFamily: 'VT323', color: cellRarColor, letterSpacing: '0.1em', marginTop: 2 }}>{rr.rarity.toUpperCase()}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {result && (
+                <div className={`cs-result ${jackpot ? 'jackpot' : twoMatch ? 'two-match' : ''}`} data-testid="cs-result">
+                  <div className="card-tag" style={{ color: RARITY_COLORS[result.rarity] }}>{result.rarity.toUpperCase()}</div>
+                  <div className="card-name" style={{ fontSize: 20, marginBottom: 4 }}>{result.name}</div>
+                  <div className="card-desc">{describeResult(result)}</div>
+                </div>
+              )}
+              {!result && spinning && <div className="cs-status"><span className="cs-suspense">SPINNING…</span></div>}
+              {!result && !spinning && <div className="cs-status"><span>READY · PRESS PULL</span></div>}
+            </div>
+
+            <button onClick={pull} disabled={(!isFree && save.gold < cost) || spinning} style={{ marginTop: 18, width: '100%' }} data-testid="shop-pull">
+              {isFree ? `🎰 FREE PULL! (${freeSpins} left)` : spinning ? 'PULLING…' : `★ ${cost} — PULL #${pullCount + 1}`}
+            </button>
+          </>
+        )}
+
+        {save.shopBonuses && Object.keys(save.shopBonuses).length > 0 && (
+          <div style={{ marginTop: 14, padding: 10, background: '#0e0816', border: '1px solid #000' }}>
+            <div style={{ color: 'var(--accent-2)', fontSize: 11, letterSpacing: '0.2em' }}>PERMANENT BONUSES</div>
+            <div style={{ fontFamily: 'VT323', fontSize: 13, color: 'var(--ink)', marginTop: 4, flexWrap: 'wrap', display: 'flex', gap: 8 }}>
+              {Object.entries(save.shopBonuses).map(([k, v]) => (
+                <span key={k} style={{ marginRight: 8 }}>+{Math.round(v * 100) / 100}{['maxHp','armor'].includes(k) ? '' : '%'} {k}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        {(save.unlockedWeapons || []).length > 0 && (
+          <div style={{ marginTop: 8, padding: 8, background: '#0a0612', border: '1px solid #b362ff44', fontSize: 12, color: '#b362ff' }}>
+            🗡️ Unlocked weapons: {(save.unlockedWeapons || []).join(', ')}
           </div>
         )}
       </div>

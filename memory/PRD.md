@@ -434,6 +434,47 @@ Wrapped `update/render/onTick` in try/catch with `requestAnimationFrame(this.fra
 
 ### Free Spin Counter i Card Shop
 - `CardShopModal` visar "🎰 X FREE SPIN(S)" bredvid pull-info när `save.freeShopSpins > 0`
+
+## Batch 2 komplett (2026-06-22) — Alla Medium + Stora Features
+
+### Bugg-fix: Utrustade föremål i Chest-listan
+- `.card` klassen på mobil kollapsar till 46% bredd → skapar visuell rotation
+- Nytt: `.equip-mini` klass utan flex-problem, ersätter `.drop-item.card` i equip-slots
+
+### K — Character-tabb
+- `CharacterPanel.jsx` skapad: Rarity-bar, Level 0-15 per rarity, Evolve
+- Nya save-fält: `character`, `charBonuses`
+- Profile Level-Up ger nu 🔷 Pieces och 💎 Shards
+- Character-stats appliceras i `buildMetaEffects` (GameScreen.jsx)
+- Weapon-slots + skill-slots begränsas av character rarity (2→7)
+
+### J — Talent Tree
+- `TalentTree.jsx` skapad: 30 noder, visuella linjer, milstenar var 5:e
+- Noder köps i ordning nerifrån, milestone-noder framhävda
+- `talentBonuses` appliceras i buildMetaEffects
+
+### L — Campaign Questline
+- `CampaignPanel.jsx` skapad: 12 uppdrag, check-funktioner, claim-knappar
+- Ny "📜 CAMPAIGN"-tab i Camp
+
+### I — Card Shop Overhaul
+- 4 sektioner: PASSIVE / ACTIVE / AUTO / MANUAL
+- `rollShopPull3()`: 3 oberoende reels, jackpot (3 lika) = +2 rarity
+- 2-match = +1 rarity bonus
+- Jackpot-animationer: guld-flash, banner
+- `unlockWeapon` effect hanteras: sparar till `save.unlockedWeapons`
+
+### H — Combo Meter
+- `comboCount`, `comboTimer`, `maxCombo` i engine run-state
+- Decay efter 1.8s utan kill
+- HUD visar ×N COMBO med decay-bar
+
+### 6 Nya Vapen (data.js)
+- Auto: chainlightning, whirlwind, boneshards (`requireUnlock: true`)
+- Manual: daggers, flameburst, icespike (`requireUnlock: true`)
+- Weapon-filter i engine: visas bara i level-up om unlockad
+
+
 - Pull-knappen ändras till "🎰 FREE PULL! (X left)" och hoppar över guldkostnad
 - `freeShopSpins` dekrementeras korrekt vid användning
 

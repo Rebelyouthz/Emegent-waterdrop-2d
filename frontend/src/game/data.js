@@ -165,6 +165,61 @@ export const WEAPONS = {
       { stat: 'damage', mult: 1.55, evolve: true },
     ],
   },
+  // ===== NEW WEAPONS (unlock via Card Shop) =====
+  chainlightning: {
+    id: 'chainlightning', name: 'Chain Lightning', icon: '⚡', type: 'auto', behaviour: 'beam', requireUnlock: true,
+    desc: 'Arcing bolt that chains between up to 3 foes.',
+    base: { damage: 22, fireRate: 1.8, range: 220, area: 90, chain: 2, crit: 0.07, color: '#ffe44d' },
+    levelUps: [
+      { stat: 'damage', mult: 1.20 }, { stat: 'chain', add: 1 }, { stat: 'fireRate', mult: 1.12 },
+      { stat: 'damage', mult: 1.28 }, { stat: 'chain', add: 1 }, { stat: 'damage', mult: 1.5, evolve: true },
+    ],
+  },
+  whirlwind: {
+    id: 'whirlwind', name: 'Whirlwind', icon: '🌪️', type: 'auto', behaviour: 'orbit', requireUnlock: true,
+    desc: 'Spinning blade orbits you — shreds everything nearby.',
+    base: { damage: 18, fireRate: 0.0, range: 90, area: 90, orbitSpeed: 3.2, orbitCount: 1, crit: 0.06, color: '#c8e0ff' },
+    levelUps: [
+      { stat: 'damage', mult: 1.2 }, { stat: 'orbitCount', add: 1 }, { stat: 'area', mult: 1.15 },
+      { stat: 'damage', mult: 1.3 }, { stat: 'orbitSpeed', mult: 1.2 }, { stat: 'damage', mult: 1.5, evolve: true },
+    ],
+  },
+  boneshards: {
+    id: 'boneshards', name: 'Bone Shards', icon: '💀', type: 'auto', behaviour: 'shotgun', requireUnlock: true,
+    desc: 'Erupts in a burst of bone fragments every few seconds.',
+    base: { damage: 12, fireRate: 0.9, projSpeed: 360, projSize: 7, projectiles: 8, pierce: 0, spread: 1.45, crit: 0.04, color: '#f0dbb4' },
+    levelUps: [
+      { stat: 'damage', mult: 1.2 }, { stat: 'projectiles', add: 2 }, { stat: 'fireRate', mult: 1.15 },
+      { stat: 'pierce', add: 1 }, { stat: 'damage', mult: 1.3 }, { stat: 'damage', mult: 1.5, evolve: true },
+    ],
+  },
+  daggers: {
+    id: 'daggers', name: 'Dagger Fan', icon: '🗡️', type: 'manual', behaviour: 'projectile', requireUnlock: true,
+    desc: 'Throws a fan of 3 quick daggers.',
+    base: { damage: 24, fireRate: 2.8, projSpeed: 740, projSize: 5, projectiles: 3, pierce: 0, spread: 0.20, crit: 0.14, color: '#d0d0ff', magazine: 9, reloadTime: 0.7 },
+    levelUps: [
+      { stat: 'damage', mult: 1.2 }, { stat: 'projectiles', add: 1 }, { stat: 'pierce', add: 1 },
+      { stat: 'fireRate', mult: 1.15 }, { stat: 'damage', mult: 1.3 }, { stat: 'damage', mult: 1.5, evolve: true },
+    ],
+  },
+  flameburst: {
+    id: 'flameburst', name: 'Flame Burst', icon: '🔥', type: 'manual', behaviour: 'shotgun', requireUnlock: true,
+    desc: 'Close-range cone of fire — devastating up close.',
+    base: { damage: 34, fireRate: 1.1, projSpeed: 350, projSize: 10, projectiles: 6, pierce: 0, spread: 0.58, crit: 0.05, color: '#ff6a00', magazine: 4, reloadTime: 1.5 },
+    levelUps: [
+      { stat: 'damage', mult: 1.25 }, { stat: 'projectiles', add: 1 }, { stat: 'fireRate', mult: 1.1 },
+      { stat: 'damage', mult: 1.3 }, { stat: 'spread', add: -0.07 }, { stat: 'damage', mult: 1.5, evolve: true },
+    ],
+  },
+  icespike: {
+    id: 'icespike', name: 'Ice Spike', icon: '🧊', type: 'manual', behaviour: 'projectile', requireUnlock: true,
+    desc: 'Slow, powerful shot that chills enemies on hit.',
+    base: { damage: 70, fireRate: 0.9, projSpeed: 270, projSize: 13, projectiles: 1, pierce: 1, spread: 0.01, crit: 0.08, color: '#a0e8ff', magazine: 3, reloadTime: 2.0, slowOnHit: 0.45 },
+    levelUps: [
+      { stat: 'damage', mult: 1.3 }, { stat: 'pierce', add: 1 }, { stat: 'slowOnHit', add: 0.10 },
+      { stat: 'damage', mult: 1.3 }, { stat: 'fireRate', mult: 1.2 }, { stat: 'damage', mult: 1.6, evolve: true },
+    ],
+  },
 };
 
 export const WEAPON_KEYS = Object.keys(WEAPONS);

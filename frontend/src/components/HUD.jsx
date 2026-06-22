@@ -34,12 +34,23 @@ export default function HUD({ snap, onActiveSkill }) {
         </div>
       </div>
 
-      {/* COMBO METER - removed */}
+      {/* Combo meter */}
+      {snap.combo > 1 && (
+        <div className="combo-display" style={{ opacity: Math.min(1, snap.comboTimer) }}>
+          <div className="combo-count" style={{ fontSize: snap.combo >= 20 ? 32 : snap.combo >= 10 ? 26 : 22 }}>×{snap.combo}</div>
+          <div className="combo-label">COMBO</div>
+          <div className="combo-bar">
+            <div className="combo-fill" style={{ width: (snap.comboTimer / 1.8 * 100).toFixed(1) + '%' }} />
+          </div>
+        </div>
+      )}
 
       <div className="weapon-strip">
-        {snap.weapons.map(w => (
-          <div className="weapon-chip" key={w.id} title={w.name}>{w.icon}<span className="lv">Lv{w.lvl}</span></div>
-        ))}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {snap.weapons.map(w => (
+            <div className="weapon-chip" key={w.id} title={w.name}>{w.icon}<span className="lv">Lv{w.lvl}</span></div>
+          ))}
+        </div>
         {snap.passiveIcons && snap.passiveIcons.length > 0 && (
           <div className="passive-strip">
             {snap.passiveIcons.map((p, i) => (
