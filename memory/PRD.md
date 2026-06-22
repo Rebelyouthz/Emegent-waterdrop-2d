@@ -392,6 +392,41 @@ Wrapped `update/render/onTick` in try/catch with `requestAnimationFrame(this.fra
 - GameOver enriched via `gameOverExtras` state computed in `/app/frontend/src/components/GameScreen.jsx`.
 
 
+## Batch 1 komplett (2026-06-22) — Snabba A–G
+
+### A. Ljud-mix
+- SFX default: 0.54 → 1.0 (max)
+- Musik default: 0.15 → 0.28 (~28%)
+- Settings-slider visar nya defaults korrekt
+
+### B. Fiende/spelare HP
+- Spelare start-HP: 100 → 50 (-50%)
+- Fiende HP: ×1 → ×3 (200% mer)
+- Boss HP: ×1 → ×3
+
+### C. Betalvägg efter 3:e run
+- `runStarts` spåras i save
+- Gratis run om `runStarts < 3`, annars paywall
+
+### D. Röda hjärtan
+- 3.5% chans per fiende att droppa ♥️
+- Helar 10% max-HP vid pickup
+- `heartPickup()` ljud tillagt
+
+### E. Guld 4 storlekar + XP-kurva
+- Guld: 4 storlekar (1-2, 3-5, 6-12, 13+)
+- XP start: 4 → 16; tillväxt: ×1.38+3 → ×1.25+6 (långsammare tidigt)
+
+### F. In-game passiva ikoner
+- Passiva kort spåras i `run.pickedPassives`
+- Visas som `passive-chip`-rad under vapnen i HUD
+
+### G. Dopamin-animation
+- CSS `@keyframes cardPop` + `.card-pop` klass
+- Meta-uppgradering i Camp triggar zoom+shake-animation
+
+
+
 ## Iter 14 (2026-06-22) — Free Spin Counter, Level Up Streak Bonus
 
 ### claimPing Audio

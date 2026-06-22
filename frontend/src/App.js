@@ -145,6 +145,12 @@ function AppInner() {
   // Gate function: try to start gameplay. Show paywall if not entitled.
   const tryStartGame = (proceed) => {
     if (paid) { proceed(); return; }
+    const starts = save.runStarts || 0;
+    if (starts < 3) {
+      setSave({ ...save, runStarts: starts + 1 });
+      proceed();
+      return;
+    }
     setShowPaywall(true);
   };
 

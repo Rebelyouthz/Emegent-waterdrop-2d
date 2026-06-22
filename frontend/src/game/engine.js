@@ -65,7 +65,7 @@ export class Game {
     this.projs = new Pool(() => ({ alive: false, x: 0, y: 0, vx: 0, vy: 0, dmg: 0, pierce: 0, life: 0, hit: new Set(), color: '', size: 4, homing: 0, friendly: true, crit: false }), 400);
     this.eprojs = new Pool(() => ({ alive: false, x: 0, y: 0, vx: 0, vy: 0, dmg: 0, life: 0, color: '#ff3146', size: 5 }), 200);
     this.parts = new Pool(() => ({ alive: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 0, color: '', size: 1, type: 'blood' }), 1200);
-    this.gems = new Pool(() => ({ alive: false, x: 0, y: 0, xp: 0, gold: 0, t: 0 }), 400);
+    this.gems = new Pool(() => ({ alive: false, x: 0, y: 0, xp: 0, gold: 0, t: 0, heart: 0 }), 400);
     this.dmgNums = new Pool(() => ({ alive: false, x: 0, y: 0, life: 0, text: '', color: '#fff', vy: 0, size: 14 }), 300);
     this.corpses = []; // simple corpse list (rendered floor decals)
     this.bloodDecals = []; // floor blood (capped)
@@ -75,7 +75,7 @@ export class Game {
 
     // Stats / run state
     this.run = {
-      time: 0, kills: 0, level: 1, xp: 0, xpToNext: 4, gold: 0,
+      time: 0, kills: 0, level: 1, xp: 0, xpToNext: 16, gold: 0,
       ownedWeapons: opts.startWeapons || ['hydropistol'],
       weaponLvls: {},
       noHit: true,
@@ -84,7 +84,7 @@ export class Game {
         damageMult: 1.0 + (this.meta.dmg || 0),
         fireRateMult: 1.0 + (this.meta.atks || 0),
         moveMult: 1.0 + (this.meta.mspd || 0),
-        maxHp: 100 + (this.meta.maxHp || 0),
+        maxHp: 50 + (this.meta.maxHp || 0),
         regen: (this.meta.regen || 0),
         armor: (this.meta.armor || 0),
         crit: 0.05 + (this.meta.crit || 0),
@@ -321,6 +321,7 @@ export class Game {
       necroKilled: this._necroKilled,
       voidKilled:  this._voidKilled,
       horusKilled: this._horusKilled,
+      passiveIcons: (this.run.pickedPassives || []).slice(0, 14),
     };
   }
 
@@ -1014,7 +1015,7 @@ export class Game {
     e.x = x; e.y = y; e.vx = 0; e.vy = 0;
     e.t = t;
     const scale = 1 + this.run.time / 240; // gradual scale
-    e.maxHp = Math.floor(t.hp * scale);
+    e.maxHp = Math.floor(t.hp * scale * 3);
     e.hp = e.maxHp;
     e.hit = 0; e.cd = 0; e.dz = 0;
     e.kbX = 0; e.kbY = 0;
@@ -1029,7 +1030,7 @@ export class Game {
     e.x = p.x + Math.cos(ang) * dist;
     e.y = p.y + Math.sin(ang) * dist;
     e.t = t;
-    e.maxHp = Math.floor(t.hp * (1 + this.run.time / 600));
+    e.maxHp = Math.floor(t.hp * 3 * (1 + this.run.time / 600));
     e.hp = e.maxHp;
     e.hit = 0; e.cd = 0; e.dz = 0; e.kbX = 0; e.kbY = 0;
     // Reset boss-specific state flags so recycled pool objects start clean
@@ -1318,6 +1319,11 @@ export class Game {
       if (d < p.r + 6) {
         if (g.xp > 0) { this.addXp(g.xp); Audio.xpPing(Math.min(1, this.run.xp / this.run.xpToNext)); }
         if (g.gold > 0) this.run.gold += g.gold;
+        if (g.heart > 0) {
+          const heal = p.maxHp * 0.10;
+          p.hp = Math.min(p.maxHp, p.hp + heal);
+          Audio.heartPickup();
+        }
         this.gems.release(g);
       }
     });
@@ -1411,7 +1417,13 @@ export class Game {
       const g = this.gems.acquire();
       g.x = e.x + rand(-8, 8); g.y = e.y + rand(-8, 8); g.t = 0;
       g.gold = Math.max(1, Math.floor(t.gold * s.goldMult));
-      g.xp = 0;
+      g.xp = 0; g.heart = 0;
+    }
+    // Rare heart drop — heals 10% max HP
+    if (Math.random() < 0.035 && !t.boss) {
+      const h = this.gems.acquire();
+      h.x = e.x + rand(-10, 10); h.y = e.y + rand(-10, 10); h.t = 0;
+      h.xp = 0; h.gold = 0; h.heart = 1;
     }
     if (t.boss) {
       this.cam.shake = 18; this.cam.slowmo = 0.5;
@@ -1500,7 +1512,7 @@ export class Game {
     if (r.xp < r.xpToNext) return;
     r.xp -= r.xpToNext;
     r.level += 1;
-    r.xpToNext = Math.floor(r.xpToNext * 1.38 + 3);
+    r.xpToNext = Math.floor(r.xpToNext * 1.25 + 6);
     this.levelUpQueue += 1;
     this.cam.slowmo = 0.3;
     this.cam.shake = 10;
@@ -1777,6 +1789,8 @@ export class Game {
         this.player.maxHp = r.stats.maxHp;
         this.player.hp = Math.min(this.player.maxHp, this.player.hp + amount);
       }
+      if (!r.pickedPassives) r.pickedPassives = [];
+      if (!r.pickedPassives.some(p => p.icon === choice.icon)) r.pickedPassives.push({ icon: choice.icon || '⚡', name: choice.name || '' });
     } else if (choice.kind === 'flag') {
       r.stats.flags[choice.flagId] = true;
       if (choice.flagId === 'glassCannon') { r.stats.damageMult *= 2.5; r.stats.maxHp = Math.floor(r.stats.maxHp * 0.5); this.player.maxHp = r.stats.maxHp; this.player.hp = Math.min(this.player.hp, this.player.maxHp); }
@@ -1784,6 +1798,8 @@ export class Game {
       if (choice.flagId === 'bloodrush') { r.stats.moveMult *= 1.15; r.stats.reloadMult *= 0.85; }
       if (choice.flagId === 'ironPull') r.stats.pickupMult *= 1.80;
       if (choice.flagId === 'vision') this._visionZoom = (this._visionZoom || 1) * 1.25;
+      if (!r.pickedPassives) r.pickedPassives = [];
+      if (!r.pickedPassives.some(p => p.icon === choice.icon)) r.pickedPassives.push({ icon: choice.icon || '★', name: choice.name || '' });
     }
     this.levelUpQueue -= 1;
     this.cam.slowmo = 0;
@@ -1839,7 +1855,6 @@ export class Game {
         ctx.lineTo(g.x, g.y + gSize + wobble);
         ctx.lineTo(g.x - gSize * 0.68, g.y + wobble);
         ctx.closePath(); ctx.fill();
-        // white core sparkle for medium/large gems
         if (g.xp > 6) {
           ctx.fillStyle = 'rgba(220,240,255,0.85)';
           ctx.beginPath();
@@ -1847,11 +1862,34 @@ export class Game {
           ctx.fill();
         }
         ctx.shadowBlur = 0;
-      } else {
-        ctx.fillStyle = '#ffd166';
-        ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 10;
+      } else if (g.heart > 0) {
+        // Red heart drop — pulsing
+        const hs = 6 + Math.sin(g.t * 8) * 1.2;
+        ctx.save();
+        ctx.translate(g.x, g.y + wobble);
+        ctx.shadowColor = '#ff3146'; ctx.shadowBlur = 12;
+        ctx.fillStyle = '#ff3146';
         ctx.beginPath();
-        ctx.arc(g.x, g.y + wobble, 3.5, 0, TAU); ctx.fill();
+        ctx.moveTo(0, hs * 0.3);
+        ctx.bezierCurveTo(-hs * 1.1, -hs * 0.5, -hs * 1.4, hs * 0.8, 0, hs * 1.2);
+        ctx.bezierCurveTo(hs * 1.4, hs * 0.8, hs * 1.1, -hs * 0.5, 0, hs * 0.3);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.restore();
+      } else {
+        // Gold coin — 4 sizes based on amount
+        const gs = g.gold <= 2 ? 3 : g.gold <= 5 ? 4.5 : g.gold <= 12 ? 6.5 : 9;
+        const gc = g.gold >= 13 ? '#fff7a0' : '#ffd166';
+        ctx.fillStyle = gc;
+        ctx.shadowColor = gc; ctx.shadowBlur = 8 + gs;
+        ctx.beginPath();
+        ctx.arc(g.x, g.y + wobble, gs, 0, TAU); ctx.fill();
+        if (g.gold >= 6) {
+          ctx.fillStyle = 'rgba(255,255,220,0.7)';
+          ctx.beginPath();
+          ctx.arc(g.x - gs * 0.25, g.y - gs * 0.25 + wobble, gs * 0.3, 0, TAU);
+          ctx.fill();
+        }
         ctx.shadowBlur = 0;
       }
     });

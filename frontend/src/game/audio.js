@@ -2,8 +2,8 @@
 let _ctx = null;
 let _master = null;
 let _muted = false;
-let _sfxVol = 0.54;
-let _musicVol = 0.15;
+let _sfxVol = 1.0;
+let _musicVol = 0.28;
 let _musicNode = null;
 let _xpPingLastT = 0;
 
@@ -113,6 +113,7 @@ export const Audio = {
   },
   click() { tone(880, 0.05, 'square', 0.08); },
   dash()  { tone(1200, 0.10, 'square', 0.08, 200); },
+  heartPickup() { tone(600, 0.06, 'sine', 0.14, 900); setTimeout(() => tone(900, 0.10, 'sine', 0.10, 1200), 60); },
   boss()  { tone(80, 0.6, 'sawtooth', 0.15, 40); noise(0.4, 0.10, 400); },
   crit()  { tone(1100, 0.12, 'square', 0.12, 1800); },
   pickup(){ tone(1320, 0.06, 'sine', 0.08, 1760); },

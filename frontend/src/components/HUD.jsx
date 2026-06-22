@@ -40,6 +40,13 @@ export default function HUD({ snap, onActiveSkill }) {
         {snap.weapons.map(w => (
           <div className="weapon-chip" key={w.id} title={w.name}>{w.icon}<span className="lv">Lv{w.lvl}</span></div>
         ))}
+        {snap.passiveIcons && snap.passiveIcons.length > 0 && (
+          <div className="passive-strip">
+            {snap.passiveIcons.map((p, i) => (
+              <div key={i} className="passive-chip" title={p.name}>{p.icon}</div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Active skills — right column */}

@@ -24,6 +24,9 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
   const [craftOpen, setCraftOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [partsOpen, setPartsOpen] = useState(false);
+  const [popCard, setPopCard] = useState(null);
+
+  const popFeedback = (id) => { setPopCard(id); setTimeout(() => setPopCard(null), 550); };
 
   const buy = (upg) => {
     const cur = save.meta[upg.id] || 0;
@@ -32,6 +35,7 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
     if (save.gold < cost) { setToast('NOT ENOUGH GOLD'); setTimeout(() => setToast(''), 1200); return; }
     setSave({ ...save, gold: save.gold - cost, meta: { ...save.meta, [upg.id]: cur + 1 } });
     Audio.click();
+    popFeedback(upg.id);
     setToast(`Acquired: ${upg.name} Lv.${cur + 1}`);
     setTimeout(() => setToast(''), 1400);
   };
@@ -106,7 +110,7 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
                   const cost = maxed ? null : metaCost(upg, lvl);
                   const canAfford = !maxed && save.gold >= cost;
                   return (
-                    <div className={`upgrade-card ${maxed ? 'maxed' : ''}`} key={upg.id} data-testid={`meta-${upg.id}`}>
+                    <div className={`upgrade-card ${maxed ? 'maxed' : ''} ${popCard === upg.id ? 'card-pop' : ''}`} key={upg.id} data-testid={`meta-${upg.id}`}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div className="name">{upg.icon} {upg.name}</div>
                         <div className="lvl">{lvl}/{upg.max}</div>

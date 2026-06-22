@@ -494,7 +494,7 @@ export function SettingsPanel({ save, setSave, onClose, onReset }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const set = (k, v) => setSave({ ...save, settings: { ...(save.settings || {}), [k]: v } });
   const s = save.settings || {};
-  useEffect(() => { Audio.setSfxVol(s.sfx ?? 0.4); Audio.setMusicVol(s.music ?? 0.15); Audio.setMuted(s.muted ?? false); }, [s.sfx, s.music, s.muted]);
+  useEffect(() => { Audio.setSfxVol(s.sfx ?? 1.0); Audio.setMusicVol(s.music ?? 0.28); Audio.setMuted(s.muted ?? false); }, [s.sfx, s.music, s.muted]);
   return (
     <div className="modal-overlay" data-testid="settings" onClick={(e) => { if (e.target.classList.contains('modal-overlay')) onClose(); }}>
       <div className="forge-panel" style={{ maxWidth: 480 }}>
@@ -502,8 +502,8 @@ export function SettingsPanel({ save, setSave, onClose, onReset }) {
           <div className="forge-title">⚙ SETTINGS</div>
           <button onClick={onClose} style={{ padding: '6px 12px', fontSize: 12 }}>✕</button>
         </div>
-        <div className="setting-row"><span>SFX Volume</span><input type="range" min="0" max="1" step="0.05" value={s.sfx ?? 0.4} onChange={(e) => set('sfx', +e.target.value)} /></div>
-        <div className="setting-row"><span>Music Volume</span><input type="range" min="0" max="1" step="0.05" value={s.music ?? 0.15} onChange={(e) => set('music', +e.target.value)} /></div>
+        <div className="setting-row"><span>SFX Volume</span><input type="range" min="0" max="1" step="0.05" value={s.sfx ?? 1.0} onChange={(e) => set('sfx', +e.target.value)} /></div>
+        <div className="setting-row"><span>Music Volume</span><input type="range" min="0" max="1" step="0.05" value={s.music ?? 0.28} onChange={(e) => set('music', +e.target.value)} /></div>
         <div className="setting-row"><span>Mute All</span><input type="checkbox" checked={s.muted ?? false} onChange={(e) => set('muted', e.target.checked)} /></div>
         <div className="setting-row"><span>Screen Shake</span><input type="checkbox" checked={s.shake ?? true} onChange={(e) => set('shake', e.target.checked)} /></div>
         <div className="setting-row"><span>Particle Density</span>

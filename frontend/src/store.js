@@ -42,6 +42,7 @@ export const DEFAULT_SAVE = {
   freeShopSpins: 0,
   dailyChallengesDone: {},
   levelUpStreak: { day: 0, count: 0 },
+  runStarts: 0,
 };
 
 export function loadSave() {
