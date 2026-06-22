@@ -390,3 +390,22 @@ Wrapped `update/render/onTick` in try/catch with `requestAnimationFrame(this.fra
 - Engine: `/app/frontend/src/game/engine.js` (~1990 lines).
 - Stable `runKey` in `/app/frontend/src/App.js` controls game remount lifecycle.
 - GameOver enriched via `gameOverExtras` state computed in `/app/frontend/src/components/GameScreen.jsx`.
+
+
+## Iter 14 (2026-06-22) — Free Spin Counter, Level Up Streak Bonus
+
+### claimPing Audio
+- Bekräftad korrekt: 480Hz → 240Hz dip → 860Hz (positiv uppåtgående vattendroppe)
+
+### Free Spin Counter i Card Shop
+- `CardShopModal` visar "🎰 X FREE SPIN(S)" bredvid pull-info när `save.freeShopSpins > 0`
+- Pull-knappen ändras till "🎰 FREE PULL! (X left)" och hoppar över guldkostnad
+- `freeShopSpins` dekrementeras korrekt vid användning
+
+### Level Up Streak Bonus
+- Nytt save-fält: `levelUpStreak: { day: number, count: number }`
+- `addAccountXp()` i `store.js` spårar rank-ups per dag
+- Vid 3:e rank-up samma dag: `mult = 2` → guld & SP fördubblas
+- `pendingLevelUp` får `streakBonus: true, streakCount: N`
+- `LevelUpOverlay` i `Camp.jsx` visar "★ 2× STREAK BONUS! ★" med gyllene glow
+

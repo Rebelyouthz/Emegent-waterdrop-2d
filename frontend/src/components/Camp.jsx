@@ -248,6 +248,12 @@ function LevelUpOverlay({ save, onCollect }) {
           <div className="lu-rwd">★ +{r.gold} Gold</div>
           <div className="lu-rwd">◆ +{r.sp} SP</div>
           {r.freeSpin && <div className="lu-rwd" style={{color:'#4dffd4',textShadow:'0 0 10px #4dffd4'}}>🎰 Free Shop Spin!</div>}
+          {r.streakBonus && (
+            <div className="lu-rwd" style={{color:'#ffd700',textShadow:'0 0 16px #ffd700aa',fontSize:15,letterSpacing:'0.15em',marginTop:6,border:'1px solid #ffd70066',padding:'4px 10px',background:'#1a1200'}}>
+              ★ 2× STREAK BONUS! ★
+              <div style={{fontSize:11,opacity:0.7,letterSpacing:'0.1em'}}>3 rank-ups today</div>
+            </div>
+          )}
         </div>
         <button className="lu-collect" onClick={onCollect} data-testid="levelup-collect">COLLECT ▸</button>
       </div>

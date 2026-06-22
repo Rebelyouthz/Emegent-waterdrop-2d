@@ -41,6 +41,7 @@ export const DEFAULT_SAVE = {
   pendingLevelUp: null,
   freeShopSpins: 0,
   dailyChallengesDone: {},
+  levelUpStreak: { day: 0, count: 0 },
 };
 
 export function loadSave() {
@@ -58,6 +59,7 @@ export function loadSave() {
     s.inventory = s.inventory || [];
     s.equipped = s.equipped || {};
     s.mapProgress = s.mapProgress || {};
+    s.levelUpStreak = { ...DEFAULT_SAVE.levelUpStreak, ...(s.levelUpStreak || {}) };
     return s;
   } catch { return { ...DEFAULT_SAVE }; }
 }
@@ -109,11 +111,18 @@ export function addAccountXp(save, amount) {
   }
   if (save.profile.level > prevLevel) {
     const lv = save.profile.level;
+    const today = Math.floor(Date.now() / 86400000);
+    const ls = { ...(save.levelUpStreak || { day: 0, count: 0 }) };
+    if (ls.day === today) { ls.count += 1; } else { ls.day = today; ls.count = 1; }
+    save.levelUpStreak = ls;
+    const mult = ls.count >= 3 ? 2 : 1;
     save.pendingLevelUp = {
       level: lv,
-      gold: 100 + lv * 40,
-      sp: Math.max(1, Math.floor(lv / 3)),
+      gold: (100 + lv * 40) * mult,
+      sp: Math.max(1, Math.floor(lv / 3)) * mult,
       freeSpin: lv % 10 === 0,
+      streakBonus: ls.count >= 3,
+      streakCount: ls.count,
     };
   }
 }

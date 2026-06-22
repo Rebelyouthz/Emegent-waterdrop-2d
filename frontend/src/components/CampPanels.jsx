@@ -230,9 +230,11 @@ export function CardShopModal({ save, setSave, onClose }) {
   const pullCount = save.shopPulls || 0;
   const cost = shopCardCost(pullCount);
   const luck = (save.meta.m_luck || 0) * 0.5 + (save.skills.sk_luck || 0) * 0.5;
+  const freeSpins = save.freeShopSpins || 0;
+  const isFree = freeSpins > 0;
 
   const pull = () => {
-    if (save.gold < cost || spinning) return;
+    if ((!isFree && save.gold < cost) || spinning) return;
     setSpinning(true); setResult(null);
     setStopped([false, false, false]);
     setReelRarity('common');
@@ -282,7 +284,8 @@ export function CardShopModal({ save, setSave, onClose }) {
       setReelRarity(card.rarity);
       setResult(card);
       Audio.levelUp();
-      const ns = { ...save, gold: save.gold - cost, shopPulls: pullCount + 1 };
+      const ns = { ...save, gold: isFree ? save.gold : save.gold - cost, shopPulls: pullCount + 1 };
+      if (isFree) ns.freeShopSpins = freeSpins - 1;
       if (card.effect.unlockSkill) {
         ns.unlockedActives = { ...(ns.unlockedActives || {}), [card.effect.unlockSkill]: true };
       } else if (card.effect.stat) {
@@ -305,7 +308,10 @@ export function CardShopModal({ save, setSave, onClose }) {
           <div className="forge-gold">★ {save.gold}</div>
           <button onClick={onClose} style={{ padding: '6px 12px', fontSize: 12 }}>✕</button>
         </div>
-        <div style={{ color: 'var(--ink-dim)', fontFamily: 'VT323', marginBottom: 14 }}>Pull {pullCount + 1} · luck {luck.toFixed(1)}</div>
+        <div style={{ color: 'var(--ink-dim)', fontFamily: 'VT323', marginBottom: 14 }}>
+          Pull {pullCount + 1} · luck {luck.toFixed(1)}
+          {freeSpins > 0 && <span style={{ color: '#4dffd4', marginLeft: 12, textShadow: '0 0 8px #4dffd4' }}>🎰 {freeSpins} FREE SPIN{freeSpins > 1 ? 'S' : ''}</span>}
+        </div>
 
         {/* 3-reel slot frame */}
         <div className={`slot-frame ${rarityCls} ${spinning ? 'cs-shake' : ''} ${result && result.rarity === 'legendary' ? 'cs-jackpot' : ''}`}>
@@ -360,8 +366,8 @@ export function CardShopModal({ save, setSave, onClose }) {
           )}
         </div>
 
-        <button onClick={pull} disabled={save.gold < cost || spinning} style={{ marginTop: 18, width: '100%' }} data-testid="shop-pull">
-          ★ {cost} — {spinning ? 'PULLING…' : `PULL #${pullCount + 1}`}
+        <button onClick={pull} disabled={(!isFree && save.gold < cost) || spinning} style={{ marginTop: 18, width: '100%' }} data-testid="shop-pull">
+          {isFree ? `🎰 FREE PULL! (${freeSpins} left)` : spinning ? 'PULLING…' : `★ ${cost} — PULL #${pullCount + 1}`}
         </button>
         {save.shopBonuses && Object.keys(save.shopBonuses).length > 0 && (
           <div style={{ marginTop: 14, padding: 10, background: '#0e0816', border: '1px solid #000' }}>
