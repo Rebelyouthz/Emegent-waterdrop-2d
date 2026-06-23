@@ -85,7 +85,31 @@ Key user goals:
 - Full talent tree max (300 levels): ~90 hours
 - Estimated total to fully max: 100-200 hours
 
-## P0 Priorities (DONE)
+## Session 3 (2026-06-23) — Critical Fixes + Input + Performance
+**Bug Fixes:**
+- Slot machine pull button: fixed disabled condition (now works with Slot Coins + Free Spins)
+- Chests: all costs changed from Gold → Gems (7 chest types with proper rarities)
+- Mouse aim: moved mousemove to window-level (no longer gets stuck when leaving canvas)
+- Character rarity levels: Common=3, Uncommon=6, Rare=8, Epic=10, Legendary=12, Mythical=15
+- Auto-grant shard at max level for rarity evolution
+
+**Input improvements:**
+- Gamepad support: left stick=move, right stick=aim, RT=shoot, A=dash, B=reload, Y/X=skills
+- Mouse events at window level (reliable aim always)
+- Touch events preserved for mobile
+
+**Performance:**
+- FPS tracking with EWMA (smoother, targets 120fps)
+- Adaptive quality: reduces effects when FPS < 55
+- bloodDecals capped at 150 (was 250) — reduces memory usage
+- Error boundaries in frame loop (errors don't kill game)
+- Proper destroy() removes ALL event listeners (no leak on remount)
+
+**Visual improvements:**
+- Enhanced kill effects: 32+ blood particles, body chunks, spark burst per kill
+- Hit sparks on every bullet impact (new spawnHitSparks method)
+- Crit hits show white ring effect
+- Combo kills (10+) trigger gold ring, every 25th combo adds shake+slowmo
 - [x] Game rebalance (meta/talent amounts)
 - [x] New currencies
 - [x] Tutorial first run
