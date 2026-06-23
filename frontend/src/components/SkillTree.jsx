@@ -52,18 +52,19 @@ export default function SkillTree({ save, setSave, onClose }) {
   const attrs  = save.attrs  || {};
   const freeAttr = availableAttrPoints(save);
 
-  // ── Center tree on first mount ──────────────────
+  // ── Center tree on first mount — show start nodes at bottom ──
   useEffect(() => {
     if (initialized.current) return;
     const container = containerRef.current;
     if (!container) return;
     const rect = container.getBoundingClientRect();
+    if (rect.width === 0) return; // not laid out yet, retry
     const initScale = 0.38;
     const treeW = TREE_W * initScale;
-    const treeH = TREE_H * initScale;
-    // Center horizontally, show bottom 60% of tree vertically
+    // Center horizontally
     const initX = (rect.width - treeW) / 2;
-    const initY = -(treeH - rect.height) * 0.65;
+    // Show bottom of tree: start nodes at y=2380, want them ~80px from bottom of canvas
+    const initY = rect.height - 80 - (TREE_H - 150) * initScale;
     setPan({ x: initX, y: initY });
     setScale(initScale);
     initialized.current = true;

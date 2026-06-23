@@ -115,6 +115,11 @@ Key user goals:
 - [x] Tutorial first run
 - [x] Pet system
 
+## P0 Tasks (DONE THIS SESSION)
+- [x] POE2 Skill Tree: SVG canvas with pan/zoom, 8 branches, 65 nodes, click-to-preview, buy
+- [x] Meta Unlock Gates: 7 meta upgrades locked until skill tree nodes purchased
+- [x] Attribute System: 7 attributes (ATK/DEX/VIT/MOB/INT/ELE/MAG), 1 per profile level
+
 ## P1 Tasks (NEXT)
 - [ ] Skill Tree POE2 redesign (branching nodes with SVG lines, categories)
 - [ ] Equipment paperdoll (character in center, slots around)
