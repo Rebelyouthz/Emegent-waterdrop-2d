@@ -63,6 +63,8 @@ export const DEFAULT_SAVE = {
   // pets
   pets: [], // [{ id, type, rarity, level, xp, stage, active, name }]
   petEggs: [], // [{ rarity, type }] unhatched eggs
+  // POE skill tree attributes
+  attrs: {}, // { atk, dex, vit, mob, int, ele, mag } — points allocated
 };
 
 export function loadSave() {

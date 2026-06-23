@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { META_UPGRADES, metaCost } from '../game/data';
 import { MILESTONES, AVATARS, CHESTS, rollChest } from '../game/data_ext';
+import { META_UNLOCK_REQS, POE_INDEX } from '../game/poe_tree';
 import { applyReward, DEFAULT_SAVE, saveLocal } from '../store';
 import SkillTree from './SkillTree';
 import Weaponsmith from './Weaponsmith';
@@ -39,6 +40,14 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
   const buy = (upg) => {
     const cur = save.meta[upg.id] || 0;
     if (cur >= upg.max) return;
+    // Meta lock gate: check if required POE node is unlocked
+    const reqNodeId = META_UNLOCK_REQS[upg.id];
+    if (reqNodeId && !(save.skills[reqNodeId] >= 1)) {
+      const reqNode = POE_INDEX[reqNodeId];
+      setToast(`🔒 Kräver Skill Tree: ${reqNode?.name || reqNodeId}`);
+      setTimeout(() => setToast(''), 2000);
+      return;
+    }
     const cost = metaCost(upg, cur);
     if (save.gold < cost) { setToast('NOT ENOUGH GOLD'); setTimeout(() => setToast(''), 1200); return; }
     setSave({ ...save, gold: save.gold - cost, meta: { ...save.meta, [upg.id]: cur + 1 } });
@@ -126,15 +135,18 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
                   const maxed = lvl >= upg.max;
                   const cost = maxed ? null : metaCost(upg, lvl);
                   const canAfford = !maxed && save.gold >= cost;
+                  const reqNodeId = META_UNLOCK_REQS[upg.id];
+                  const isLocked = reqNodeId && !(save.skills?.[reqNodeId] >= 1);
+                  const reqNodeName = isLocked ? (POE_INDEX[reqNodeId]?.name || reqNodeId) : null;
                   return (
-                    <div className={`upgrade-card ${maxed ? 'maxed' : ''} ${popCard === upg.id ? 'card-pop' : ''}`} key={upg.id} data-testid={`meta-${upg.id}`}>
+                    <div className={`upgrade-card ${maxed ? 'maxed' : ''} ${isLocked ? 'meta-locked' : ''} ${popCard === upg.id ? 'card-pop' : ''}`} key={upg.id} data-testid={`meta-${upg.id}`}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div className="name">{upg.icon} {upg.name}</div>
                         <div className="lvl">{lvl}/{upg.max}</div>
                       </div>
                       {upg.max > 20 ? (
                         <div style={{ height:5, background:'#1a0a2e', borderRadius:3, overflow:'hidden', margin:'4px 0' }}>
-                          <div style={{ width:`${(lvl/upg.max)*100}%`, height:'100%', background: maxed ? '#ffd700' : 'var(--rune)', transition:'width 0.3s' }} />
+                          <div style={{ width:`${(lvl/upg.max)*100}%`, height:'100%', background: maxed ? '#ffd700' : isLocked ? '#3a2a5e' : 'var(--rune)', transition:'width 0.3s' }} />
                         </div>
                       ) : (
                         <div className="pips">
@@ -142,8 +154,15 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
                         </div>
                       )}
                       <div className="desc">{upg.desc}</div>
-                      {maxed ? <div style={{ color: 'var(--accent-2)', fontFamily: 'VT323', letterSpacing: '0.2em' }}>MAX</div> :
-                        <button onClick={() => buy(upg)} disabled={!canAfford} data-testid={`buy-${upg.id}`}>★ {cost}</button>}
+                      {isLocked ? (
+                        <div className="meta-lock-msg" data-testid={`meta-lock-${upg.id}`}>
+                          🔒 Unlock in Skill Tree: <em>{reqNodeName}</em>
+                        </div>
+                      ) : maxed ? (
+                        <div style={{ color: 'var(--accent-2)', fontFamily: 'VT323', letterSpacing: '0.2em' }}>MAX</div>
+                      ) : (
+                        <button onClick={() => buy(upg)} disabled={!canAfford} data-testid={`buy-${upg.id}`}>★ {cost}</button>
+                      )}
                     </div>
                   );
                 })}

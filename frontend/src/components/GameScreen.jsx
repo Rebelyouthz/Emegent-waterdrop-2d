@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Game } from '../game/engine';
 import { SKILL_INDEX, WEAPON_PARTS } from '../game/data_ext';
 import { STARTER_WEAPONS, PART_SLOT_INFO } from '../game/data_ext2';
+import { POE_INDEX, POE_ATTRS } from '../game/poe_tree';
 import { Audio } from '../game/audio';
 import HUD from './HUD';
 import LevelUpModal from './LevelUpModal';
@@ -50,6 +51,7 @@ function buildMetaEffects(save) {
     unlockedWeapons: save.unlockedWeapons || [],
   };
 
+  // Old SKILL_TREE nodes (sk_ prefix)
   Object.entries(sk).forEach(([id, lvl]) => {
     const s = SKILL_INDEX[id]; if (!s || lvl < 1) return;
     const amt = s.amount * lvl;
@@ -62,6 +64,29 @@ function buildMetaEffects(save) {
     else if (s.stat === 'shield') result.shield = true;
     else if (s.stat === 'revive') result.revive = true;
   });
+
+  // New POE tree nodes (poe_ prefix)
+  const BOOLEAN_STATS = new Set(['berserk','dash','blink','shield','revive','chestSense']);
+  Object.entries(sk).forEach(([id, lvl]) => {
+    const pn = POE_INDEX[id]; if (!pn || lvl < 1) return;
+    const amt = pn.val * lvl;
+    const st  = pn.stat;
+    if (st === 'maxHp')    result.maxHp += amt;
+    else if (BOOLEAN_STATS.has(st)) result[st] = true;
+    else if (st === 'chestSense') result.flags.chestSense = true;
+    else if (result[st] !== undefined) result[st] += amt;
+    else result[st] = amt;
+  });
+
+  // Attribute point bonuses (save.attrs)
+  const attrs = save.attrs || {};
+  for (const a of POE_ATTRS) {
+    const pts = attrs[a.id] || 0;
+    if (pts <= 0) continue;
+    const bonus = a.perPoint * pts;
+    if (a.stat === 'maxHp') result.maxHp += bonus;
+    else if (result[a.stat] !== undefined) result[a.stat] += bonus;
+  }
 
   for (const eq of eqList) {
     if (!eq) continue;
