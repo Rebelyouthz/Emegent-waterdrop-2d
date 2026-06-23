@@ -259,9 +259,13 @@ export function rollEquip(rarity, level = 1) {
 
 // ---------- CHESTS ----------
 export const CHESTS = [
-  { id: 'wood',     name: 'Wooden Chest',    icon: '📦',  cost: 100,  rolls: 1, rarityWeights: { common: 80, uncommon: 18, rare: 2 } },
-  { id: 'iron',     name: 'Iron Chest',      icon: '🗄',  cost: 350,  rolls: 1, rarityWeights: { uncommon: 65, rare: 28, epic: 7 } },
-  { id: 'gold',     name: 'Gold Chest',      icon: '🏆',  cost: 1200, rolls: 2, rarityWeights: { rare: 60, epic: 32, legendary: 8 } },
+  { id: 'wood',     name: 'Standard Chest',  icon: '📦',  cost: 50,   currency: 'gems', rolls: 1, rarityWeights: { common: 80, uncommon: 18, rare: 2 } },
+  { id: 'iron',     name: 'Premium Chest',   icon: '🗄',  cost: 200,  currency: 'gems', rolls: 1, rarityWeights: { uncommon: 55, rare: 32, epic: 12, legendary: 1 } },
+  { id: 'gold',     name: 'Epic Chest',      icon: '🏆',  cost: 500,  currency: 'gems', rolls: 2, rarityWeights: { rare: 52, epic: 36, legendary: 12 } },
+  { id: 'resource', name: 'Resource Cache',  icon: '💼',  cost: 10,   currency: 'gems', rolls: 1, rarityWeights: { common: 90, uncommon: 10 }, resourceOnly: true },
+  { id: 'petEgg',   name: 'Pet Egg Chest',   icon: '🥚',  cost: 50,   currency: 'gems', rolls: 1, rarityWeights: { common: 70, uncommon: 22, rare: 7, epic: 1 }, petOnly: true },
+  { id: 'petPrem',  name: 'Premium Pet Chest',icon: '🥚', cost: 250,  currency: 'gems', rolls: 1, rarityWeights: { uncommon: 40, rare: 38, epic: 18, legendary: 4 }, petOnly: true },
+  { id: 'parts',    name: 'Parts Chest',     icon: '🔩',  cost: 100,  currency: 'gems', rolls: 2, rarityWeights: { common: 60, uncommon: 30, rare: 10 }, partsOnly: true },
   { id: 'annunaki', name: 'Annunaki Cache',  icon: '🛸',  cost: 4500, rolls: 3, rarityWeights: { epic: 70, legendary: 30 } },
 ];
 export function rollChest(chest, luck = 0) {

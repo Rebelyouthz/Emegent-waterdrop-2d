@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { CHAR_RARITIES, CHAR_RARITY_COLORS, CHAR_RARITY_NAMES, CHAR_SLOTS_BY_RARITY, CHAR_LEVEL_COST, CHAR_EVOLVE_COST, charLevelStat } from '../game/data_ext2';
+import { CHAR_RARITIES, CHAR_RARITY_COLORS, CHAR_RARITY_NAMES, CHAR_SLOTS_BY_RARITY, CHAR_LEVEL_COST, CHAR_EVOLVE_COST, CHAR_MAX_LEVELS, charLevelStat } from '../game/data_ext2';
 import { Audio } from '../game/audio';
-
-const MAX_LVL = 15;
 
 export default function CharacterPanel({ save, setSave, onClose }) {
   const [popAnim, setPopAnim] = useState(false);
@@ -10,6 +8,7 @@ export default function CharacterPanel({ save, setSave, onClose }) {
   const rarIdx = CHAR_RARITIES.indexOf(char.rarity);
   const rarColor = CHAR_RARITY_COLORS[char.rarity];
   const slots = CHAR_SLOTS_BY_RARITY[char.rarity];
+  const MAX_LVL = CHAR_MAX_LEVELS[char.rarity] || 5;
 
   const levelCost = char.level < MAX_LVL ? CHAR_LEVEL_COST(char.rarity, char.level) : null;
   const evolveReq = rarIdx < CHAR_RARITIES.length - 1 ? CHAR_EVOLVE_COST[char.rarity] : null;
@@ -23,12 +22,17 @@ export default function CharacterPanel({ save, setSave, onClose }) {
   const levelUp = () => {
     if (!canLvl) return;
     const st = charLevelStat(char.level, char.rarity);
+    const newLevel = char.level + 1;
     const ns = {
       ...save,
       gold: save.gold - levelCost.gold,
-      character: { ...char, level: char.level + 1, pieces: char.pieces - levelCost.pieces },
+      character: { ...char, level: newLevel, pieces: char.pieces - levelCost.pieces },
       charBonuses: { ...(save.charBonuses || {}), [st.stat]: ((save.charBonuses || {})[st.stat] || 0) + st.val },
     };
+    // At max level, auto-grant the shard needed for rarity upgrade
+    if (newLevel >= MAX_LVL && evolveReq) {
+      ns.character.shards = (char.shards || 0) + evolveReq.shards;
+    }
     setSave(ns); Audio.levelUp(); pop();
   };
 

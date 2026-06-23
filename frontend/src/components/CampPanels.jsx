@@ -383,7 +383,7 @@ export function CardShopModal({ save, setSave, onClose }) {
               {!result && !spinning && <div className="cs-status"><span>READY · PRESS PULL</span></div>}
             </div>
 
-            <button onClick={pull} disabled={(!isFree && save.gold < cost) || spinning} style={{ marginTop: 18, width: '100%' }} data-testid="shop-pull">
+            <button onClick={pull} disabled={(!isFree && !hasCoin && save.gold < goldFallbackCost) || spinning} style={{ marginTop: 18, width: '100%' }} data-testid="shop-pull">
               {isFree ? `🎰 FREE PULL! (${freeSpins} left)` : hasCoin ? `🎰 COIN SPIN (${slotCoins} left)` : spinning ? 'PULLING…' : `★ ${goldFallbackCost} gold — PULL #${pullCount + 1}`}
             </button>
           </>

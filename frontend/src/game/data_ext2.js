@@ -438,15 +438,18 @@ export const MAP_STAGES = [
 // ══════════════════════════════════════════════
 // CHARACTER RARITY SYSTEM
 // ══════════════════════════════════════════════
+// Character max levels per rarity: Common=3, Uncommon=6, Rare=8, Epic=10, Legendary=12, Mythical=15
+export const CHAR_MAX_LEVELS = { common: 3, uncommon: 6, rare: 8, epic: 10, legendary: 12, mythical: 15 };
 export const CHAR_RARITIES = ['common','uncommon','rare','epic','legendary','mythical'];
 export const CHAR_RARITY_COLORS = { common:'#9a8fa6', uncommon:'#4dff91', rare:'#4dc4ff', epic:'#b362ff', legendary:'#ff7a1a', mythical:'#ff3146' };
 export const CHAR_RARITY_NAMES  = { common:'Common', uncommon:'Uncommon', rare:'Rare', epic:'Epic', legendary:'Legendary', mythical:'Mythical' };
 export const CHAR_SLOTS_BY_RARITY = { common:2, uncommon:3, rare:4, epic:5, legendary:6, mythical:7 };
 export const CHAR_LEVEL_COST = (rarity, lvl) => ({
-  gold:   { common:80, uncommon:200, rare:500, epic:1200, legendary:3000, mythical:7500 }[rarity] + lvl * 35,
-  pieces: { common:2,  uncommon:5,   rare:10,  epic:20,   legendary:40,   mythical:80  }[rarity],
+  gold:   { common:50, uncommon:120, rare:300, epic:700, legendary:1800, mythical:4500 }[rarity] + lvl * 20,
+  pieces: { common:1,  uncommon:2,   rare:4,   epic:8,   legendary:15,   mythical:30  }[rarity],
 });
-export const CHAR_EVOLVE_COST = { common:{shards:5}, uncommon:{shards:12}, rare:{shards:25}, epic:{shards:50}, legendary:{shards:100} };
+// Evolve cost: final shard given automatically at max level
+export const CHAR_EVOLVE_COST = { common:{shards:1}, uncommon:{shards:2}, rare:{shards:3}, epic:{shards:5}, legendary:{shards:8} };
 const _CHAR_STAT_POOL = [
   { stat:'maxHp', label:'Max HP',      val:15,   icon:'❤️', isPct:false },
   { stat:'dmg',   label:'ATK Power',   val:0.04, icon:'⚔️', isPct:true  },

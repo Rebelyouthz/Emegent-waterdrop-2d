@@ -205,14 +205,15 @@ export class Game {
     this.running = false;
     window.removeEventListener('keydown', this._kd);
     window.removeEventListener('keyup', this._ku);
+    window.removeEventListener('mousemove', this._mm); // window-level
+    window.removeEventListener('mousedown', this._md);
+    window.removeEventListener('mouseup', this._mu);
     document.removeEventListener('visibilitychange', this._vis);
-    this.canvas.removeEventListener('mousemove', this._mm);
-    this.canvas.removeEventListener('mousedown', this._md);
-    this.canvas.removeEventListener('mouseup', this._mu);
     this.canvas.removeEventListener('touchstart', this._ts);
     this.canvas.removeEventListener('touchmove', this._tm);
     this.canvas.removeEventListener('touchend', this._te);
     window.removeEventListener('resize', this._rs);
+    if (this._gpLoop) cancelAnimationFrame(this._gpLoop);
   }
 
   bindInput() {
@@ -232,14 +233,17 @@ export class Game {
     this._vis = () => { if (document.hidden && this.callbacks.onPauseToggle && !this.paused) this.callbacks.onPauseToggle(); };
     document.addEventListener('visibilitychange', this._vis);
     this._ku = (e) => { this.input.keys[e.key.toLowerCase()] = false; };
+
+    // === Mouse: window-level so aim never gets stuck when leaving canvas ===
     this._mm = (e) => {
       const rect = this.canvas.getBoundingClientRect();
       this.input.mx = e.clientX - rect.left;
       this.input.my = e.clientY - rect.top;
     };
-    this._md = () => { this.input.shooting = true; };
-    this._mu = () => { this.input.shooting = false; };
-    // touch (mobile fallback): treat tap as shoot in direction of touch from center
+    this._md = (e) => { if (e.button === 0) this.input.shooting = true; };
+    this._mu = (e) => { if (e.button === 0) this.input.shooting = false; };
+
+    // touch (mobile fallback)
     this._ts = (e) => { this.input.shooting = true; this._tm(e); };
     this._tm = (e) => {
       if (e.touches.length) {
@@ -250,15 +254,59 @@ export class Game {
     };
     this._te = () => { this.input.shooting = false; };
     this._rs = () => this.resize();
+
     window.addEventListener('keydown', this._kd);
     window.addEventListener('keyup', this._ku);
-    this.canvas.addEventListener('mousemove', this._mm);
-    this.canvas.addEventListener('mousedown', this._md);
-    this.canvas.addEventListener('mouseup', this._mu);
+    window.addEventListener('mousemove', this._mm);   // FIXED: window-level
+    window.addEventListener('mousedown', this._md);   // FIXED: window-level
+    window.addEventListener('mouseup', this._mu);     // FIXED: window-level
     this.canvas.addEventListener('touchstart', this._ts, { passive: true });
     this.canvas.addEventListener('touchmove', this._tm, { passive: true });
     this.canvas.addEventListener('touchend', this._te);
     window.addEventListener('resize', this._rs);
+
+    // === Gamepad support ===
+    this._pollGamepad();
+  }
+
+  _pollGamepad() {
+    const poll = () => {
+      if (!this.running) return;
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (const gp of gamepads) {
+        if (!gp) continue;
+        // Left stick: movement
+        const lx = Math.abs(gp.axes[0]) > 0.12 ? gp.axes[0] : 0;
+        const ly = Math.abs(gp.axes[1]) > 0.12 ? gp.axes[1] : 0;
+        if (lx || ly) this.input.joyMove = { x: lx, y: ly };
+        else if (this.input.joyMove) this.input.joyMove = { x: 0, y: 0 };
+
+        // Right stick: aim
+        const rx = Math.abs(gp.axes[2]) > 0.12 ? gp.axes[2] : 0;
+        const ry = Math.abs(gp.axes[3]) > 0.12 ? gp.axes[3] : 0;
+        if (rx || ry) this.input.joyAim = { x: rx, y: ry };
+        else if (rx === 0 && ry === 0) this.input.joyAim = this.input.joyAim || { x: 0, y: 0 };
+
+        // Right trigger (RT / R2): shoot
+        const rt = gp.buttons[7]?.value || 0;
+        const rb = gp.buttons[5]?.pressed;
+        this.input.shooting = rt > 0.4 || rb;
+
+        // A button: dash
+        if (gp.buttons[0]?.pressed) this.tryDash();
+        // B: reload
+        if (gp.buttons[1]?.pressed) this.tryReload();
+        // Y: skill 1
+        if (gp.buttons[3]?.pressed) this.tryActiveSkill(0);
+        // X: skill 2
+        if (gp.buttons[2]?.pressed) this.tryActiveSkill(1);
+        // Start: pause
+        if (gp.buttons[9]?.pressed && this.callbacks.onPauseToggle) this.callbacks.onPauseToggle();
+        break; // use first connected gamepad
+      }
+      this._gpLoop = requestAnimationFrame(poll);
+    };
+    this._gpLoop = requestAnimationFrame(poll);
   }
 
   setPaused(p) { this.paused = p; this.last = performance.now(); }
@@ -268,8 +316,14 @@ export class Game {
     try {
       let dt = (now - this.last) / 1000;
       this.last = now;
+      // Cap dt to avoid spiral-of-death, min to avoid NaN
       if (dt > 0.1) dt = 0.1;
-      this.fps = this.fps * 0.9 + (1 / Math.max(dt, 0.001)) * 0.1;
+      if (dt < 0.0001) dt = 0.0001;
+      // FPS tracking (EWMA)
+      this.fps = this.fps * 0.92 + (1 / dt) * 0.08;
+      // Adaptive quality: reduce shadows/blur when FPS < 55
+      this._qualityHigh = this.fps > 55;
+
       if (!this.paused && !this.over && this.levelUpQueue === 0) {
         const speed = this.cam.slowmo > 0 ? 0.35 : 1.0;
         try { this.update(dt * speed); } catch (e) { console.error('[engine.update]', e); }
@@ -282,7 +336,7 @@ export class Game {
     } catch (e) {
       console.error('[engine.frame fatal]', e);
     }
-    // ALWAYS re-queue next frame — never let an error kill the game loop
+    // ALWAYS re-queue — never let an error kill the loop
     requestAnimationFrame(this.frame);
   }
 
@@ -1305,8 +1359,8 @@ export class Game {
       if (p.type === 'blood') p.vy += 200 * dt;
       p.life -= dt;
       if (p.life <= 0) {
-        if (p.type === 'blood' && this.bloodDecals.length < 250) {
-          this.bloodDecals.push({ x: p.x, y: p.y, r: 2 + Math.random() * 3, a: 0.55 });
+        if (p.type === 'blood' && this.bloodDecals.length < 150) {
+          this.bloodDecals.push({ x: p.x, y: p.y, r: 2 + Math.random() * 3, a: 0.45 });
         }
         this.parts.release(p);
       }
@@ -1383,6 +1437,8 @@ export class Game {
       }
     }
     if (Math.random() < 0.55) this.spawnBlood(e.x, e.y, e.t.color);
+    // Enhanced hit sparks for every hit
+    if (!silent) this.spawnHitSparks(e.x, e.y, e.t.color, dmg, crit);
     if (e.hp <= 0) this.killEnemy(e);
   }
 
@@ -1461,54 +1517,99 @@ export class Game {
   }
 
   spawnBrutalKill(x, y, color, size, fx) {
+    const qualHi = this._qualityHigh !== false;
+    const cnt = qualHi ? 1 : 0.5;
     if (fx === 'voidImplode') {
-      for (let i = 0; i < 14; i++) {
+      for (let i = 0; i < Math.round(18 * cnt); i++) {
         const pp = this.parts.acquire();
-        const a = Math.random() * TAU; const r = size * 1.2;
+        const a = Math.random() * TAU; const r = size * 1.4;
         pp.x = x + Math.cos(a) * r; pp.y = y + Math.sin(a) * r;
-        pp.vx = -Math.cos(a) * 200; pp.vy = -Math.sin(a) * 200;
-        pp.life = 0.35; pp.max = 0.35; pp.color = '#b362ff'; pp.size = 3; pp.type = 'spark';
+        pp.vx = -Math.cos(a) * 240; pp.vy = -Math.sin(a) * 240;
+        pp.life = rand(0.3,0.5); pp.max = pp.life; pp.color = '#b362ff'; pp.size = 3; pp.type = 'spark';
       }
-      this.spawnRing(x, y, size * 1.5, '#b362ff', 0.3);
+      this.spawnRing(x, y, size * 1.8, '#b362ff', 0.4);
+      this.spawnRing(x, y, size * 0.8, '#ffffff', 0.25);
     } else if (fx === 'ash') {
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < Math.round(14 * cnt); i++) {
         const pp = this.parts.acquire();
-        pp.x = x + rand(-size * 0.4, size * 0.4); pp.y = y + rand(-size * 0.4, size * 0.4);
-        pp.vx = rand(-30, 30); pp.vy = -rand(60, 140);
-        pp.life = rand(0.6, 1.2); pp.max = pp.life; pp.color = '#888'; pp.size = rand(2, 4); pp.type = 'spark';
+        pp.x = x + rand(-size*0.5,size*0.5); pp.y = y + rand(-size*0.5,size*0.5);
+        pp.vx = rand(-50, 50); pp.vy = -rand(80, 180);
+        pp.life = rand(0.7, 1.4); pp.max = pp.life; pp.color = i%3===0?'#ff7a1a':'#888'; pp.size = rand(2, 5); pp.type = 'spark';
       }
+      this.spawnRing(x, y, size * 1.2, '#ff7a1a', 0.25);
     } else if (fx === 'bisect') {
-      for (let i = 0; i < 22; i++) {
+      for (let i = 0; i < Math.round(30 * cnt); i++) {
         const pp = this.parts.acquire();
-        pp.x = x; pp.y = y;
-        const a = Math.random() * TAU; const sp = rand(140, 380);
-        pp.vx = Math.cos(a) * sp; pp.vy = Math.sin(a) * sp - rand(20, 100);
-        pp.life = rand(0.5, 0.9); pp.max = pp.life; pp.color = '#b51d28'; pp.size = rand(3, 5); pp.type = 'blood';
+        pp.x = x + rand(-4,4); pp.y = y + rand(-4,4);
+        const a = Math.random() * TAU; const sp = rand(160, 440);
+        pp.vx = Math.cos(a)*sp; pp.vy = Math.sin(a)*sp - rand(30, 120);
+        pp.life = rand(0.5,1.0); pp.max = pp.life; pp.color = i%4===0?color:'#b51d28'; pp.size = rand(3,6); pp.type = 'blood';
       }
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < 3; i++) {
         const pp = this.parts.acquire();
         pp.x = x; pp.y = y;
-        const a = i === 0 ? -0.6 : 0.6;
-        pp.vx = Math.cos(a) * 280; pp.vy = Math.sin(a) * 280 - 200;
-        pp.life = 0.8; pp.max = 0.8; pp.color = color; pp.size = size * 0.35; pp.type = 'chunk';
+        const a = (i / 3) * TAU - 0.4;
+        pp.vx = Math.cos(a) * 300; pp.vy = Math.sin(a) * 300 - 180;
+        pp.life = 0.9; pp.max = 0.9; pp.color = color; pp.size = size * 0.3; pp.type = 'chunk';
       }
     } else {
-      for (let i = 0; i < 28; i++) {
+      // Enhanced standard death: blood spray + body chunks + spark ring
+      const bloodCnt = Math.round(32 * cnt);
+      for (let i = 0; i < bloodCnt; i++) {
         const pp = this.parts.acquire();
-        pp.x = x; pp.y = y;
-        const a = Math.random() * TAU; const sp = rand(120, 420);
-        pp.vx = Math.cos(a) * sp; pp.vy = Math.sin(a) * sp - rand(30, 140);
-        pp.life = rand(0.4, 0.9); pp.max = pp.life; pp.color = '#b51d28'; pp.size = rand(2, 5); pp.type = 'blood';
+        pp.x = x + rand(-4,4); pp.y = y + rand(-4,4);
+        const a = Math.random() * TAU; const sp = rand(100, 480);
+        pp.vx = Math.cos(a)*sp; pp.vy = Math.sin(a)*sp - rand(40,160);
+        pp.life = rand(0.4, 1.0); pp.max = pp.life;
+        pp.color = i % 5 === 0 ? color : '#b51d28';
+        pp.size = rand(2, 5); pp.type = 'blood';
       }
-      const chunks = 3 + Math.floor(Math.random() * 3);
+      // Body chunks
+      const chunks = 3 + Math.floor(Math.random() * 4);
       for (let i = 0; i < chunks; i++) {
         const pp = this.parts.acquire();
         pp.x = x; pp.y = y;
-        const a = Math.random() * TAU; const sp = rand(160, 360);
-        pp.vx = Math.cos(a) * sp; pp.vy = Math.sin(a) * sp - rand(80, 200);
-        pp.life = rand(0.6, 1.0); pp.max = pp.life; pp.color = color; pp.size = size * (0.18 + Math.random() * 0.15); pp.type = 'chunk';
+        const a = Math.random() * TAU; const sp = rand(200, 420);
+        pp.vx = Math.cos(a)*sp; pp.vy = Math.sin(a)*sp - rand(100, 280);
+        pp.life = rand(0.6, 1.1); pp.max = pp.life;
+        pp.color = color; pp.size = size * (0.2 + Math.random() * 0.18); pp.type = 'chunk';
+      }
+      // Spark burst (small combo of colored sparks)
+      if (qualHi) {
+        for (let i = 0; i < 8; i++) {
+          const pp = this.parts.acquire();
+          pp.x = x; pp.y = y;
+          const a = (i / 8) * TAU;
+          pp.vx = Math.cos(a)*180; pp.vy = Math.sin(a)*180;
+          pp.life = 0.22; pp.max = pp.life; pp.color = '#ffcc44'; pp.size = 2; pp.type = 'spark';
+        }
       }
     }
+
+    // Combo kill effect: extra ring + screen pulse
+    if (this.run.comboCount >= 10) {
+      this.spawnRing(x, y, size * 2.5, '#ffd700', 0.35);
+      if (this.run.comboCount % 25 === 0) {
+        this.cam.shake = Math.max(this.cam.shake, 5);
+        this.cam.slowmo = Math.max(this.cam.slowmo, 0.12);
+      }
+    }
+  }
+
+  // Enhanced hit sparks (called when projectile hits enemy)
+  spawnHitSparks(x, y, color, dmg, isCrit) {
+    const qualHi = this._qualityHigh !== false;
+    const cnt = qualHi ? 1 : 0.4;
+    const sparkColor = isCrit ? '#ffffff' : color;
+    const num = Math.round((isCrit ? 8 : 4) * cnt);
+    for (let i = 0; i < num; i++) {
+      const pp = this.parts.acquire();
+      pp.x = x; pp.y = y;
+      const a = Math.random() * TAU; const sp = rand(80, 200);
+      pp.vx = Math.cos(a)*sp; pp.vy = Math.sin(a)*sp;
+      pp.life = rand(0.08, 0.18); pp.max = pp.life; pp.color = sparkColor; pp.size = rand(1, isCrit?4:2); pp.type = 'spark';
+    }
+    if (isCrit && qualHi) this.spawnRing(x, y, 22, '#ffffff', 0.15);
   }
 
   addXp(amount) {
