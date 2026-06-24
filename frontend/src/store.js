@@ -65,6 +65,13 @@ export const DEFAULT_SAVE = {
   petEggs: [], // [{ rarity, type }] unhatched eggs
   // POE skill tree attributes
   attrs: {}, // { atk, dex, vit, mob, int, ele, mag } — points allocated
+  // Gear system
+  gearInventory: [], // [{ id, slot, rarity, stat, val, name }]
+  gearEquipped:  {}, // { helmet: itemId, chest: itemId, ... }
+  // Codex
+  codex: { enemies: {}, weapons: {} }, // { enemies: { slime: { count:12 } }, weapons: { hydropistol: { count:3 } } }
+  // Battle Pass
+  battlePass: { claimed: [] }, // { claimed: [0, 1, 3, ...] }
 };
 
 export function loadSave() {

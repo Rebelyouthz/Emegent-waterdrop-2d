@@ -346,6 +346,19 @@ export default function SkillTree({ save, setSave, onClose }) {
                           LOCKED
                         </text>
                       )}
+                      {/* "START" pulse on unlocked start-nodes (no req) */}
+                      {!node.req?.length && !purd && (
+                        <>
+                          <circle cx={node.x} cy={node.y} r={r + 6}
+                            fill="none" stroke={b.color} strokeWidth={1.5} opacity={0.4}
+                            className="poe-start-pulse" />
+                          <text x={node.x} y={node.y + r + 18} textAnchor="middle"
+                            fontSize={11} fill={b.color} fontFamily="VT323" opacity={0.8}
+                            style={{ pointerEvents: 'none' }}>
+                            ▼ START
+                          </text>
+                        </>
+                      )}
                     </g>
                   );
                 })}

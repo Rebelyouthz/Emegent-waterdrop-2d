@@ -1133,7 +1133,7 @@ export class Game {
           ep.x = e.x; ep.y = e.y;
           ep.vx = nx * (t.projSpeed || 300);
           ep.vy = ny * (t.projSpeed || 300);
-          ep.dmg = t.dmg * 0.7;
+          ep.dmg = t.dmg * 0.95;
           ep.life = 2.5;
           ep.color = t.color;
           ep.size = 5;
@@ -1416,7 +1416,8 @@ export class Game {
     if (crit) { Audio.crit(); this._critPunch = Math.min(0.22, this._critPunch + 0.18); }
     if ((s.flags || {}).burnDoT) e._burn = Math.max(e._burn || 0, 3);
     if ((s.flags || {}).vampire && !silent) {
-      this.player.hp = Math.min(this.player.maxHp, this.player.hp + dmg * 0.05);
+      const vAmt = s.vampireAmt || 0.001;
+      this.player.hp = Math.min(this.player.maxHp, this.player.hp + dmg * vAmt);
     }
     e.hp -= dmg;
     e.hit = 0.08;
@@ -1495,10 +1496,16 @@ export class Game {
       h.x = e.x + rand(-10, 10); h.y = e.y + rand(-10, 10); h.t = 0;
       h.xp = 0; h.gold = 0; h.heart = 1;
     }
+    // Gear drop — 8% chance per non-boss kill; boss = guaranteed
+    if (!t.boss && Math.random() < 0.08) {
+      this._pendingGearDrop = { timeInRun: this.run.time };
+    }
+    // Codex: track enemy kills
+    if (this.onCodexKill) this.onCodexKill(t.id);
     if (t.boss) {
+      this._pendingGearDrop = { timeInRun: this.run.time, boss: true };
       this.cam.shake = 18; this.cam.slowmo = 0.5;
       this.bossesKilled += 1; this.bossActive = null;
-      this._bossDeathFlash = 1.4;
       // Massive boss death rings
       this.spawnRing(e.x, e.y, 240, '#ff7a1a', 0.8);
       this.spawnRing(e.x, e.y, 160, '#ffd166', 0.6);

@@ -10,6 +10,8 @@ import CharacterPanel from './CharacterPanel';
 import TalentTree from './TalentTree';
 import CampaignPanel from './CampaignPanel';
 import PetPanel from './PetPanel';
+import GearPanel from './GearPanel';
+import { BattlePassPanel, CodexPanel } from './MetaFeatures';
 import { MissionsPanel, ChallengesPanel, AchievementsPanel, CardShopModal, ActiveLoadoutPanel, WeaponCrafting, SettingsPanel, PartsInventory, MapsPanel } from './CampPanels';
 import { Audio } from '../game/audio';
 
@@ -107,7 +109,10 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
             <button className="camp-tab" onClick={() => setPetOpen(true)} data-testid="tab-pets">🐾 PETS</button>
             <button className="camp-tab" onClick={() => setTalentOpen(true)} data-testid="tab-talent">🌿 TALENTS</button>
             <button className="camp-tab" onClick={() => setSkillOpen(true)} data-testid="open-skills">🧠 SKILLS</button>
-            <button className={`camp-tab ${tab === 'cards' ? 'active' : ''}`} onClick={() => setTab('cards')} data-testid="tab-cards">💠 META</button>
+            <button className={`camp-tab ${tab==='cards'?'active':''}`} onClick={() => setTab('cards')} data-testid="tab-cards">💠 META</button>
+            <button className={`camp-tab ${tab==='gear'?'active':''}`} onClick={() => setTab('gear')} data-testid="tab-gear">🪖 GEAR</button>
+            <button className={`camp-tab ${tab==='pass'?'active':''}`} onClick={() => setTab('pass')} data-testid="tab-pass">🎖 SEASON PASS</button>
+            <button className={`camp-tab ${tab==='codex'?'active':''}`} onClick={() => setTab('codex')} data-testid="tab-codex">📚 CODEX</button>
             <div className="camp-tab-divider" />
             <button className="camp-tab" onClick={() => setShopOpen(true)} data-testid="open-card-shop">🎰 CARD SHOP</button>
             <button className="camp-tab" onClick={() => setForgeOpen(true)} data-testid="open-forge">🔨 SMITH</button>
@@ -201,6 +206,27 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
           )}
 
           {tab === 'campaign' && <CampaignPanel save={save} setSave={setSave} />}
+
+          {tab === 'gear' && (
+            <>
+              <div className="camp-header"><h1>Equipment</h1><div className="camp-header-sub">Find gear in runs · Forge 3 of same into higher rarity</div></div>
+              <GearPanel save={save} setSave={setSave} />
+            </>
+          )}
+
+          {tab === 'pass' && (
+            <>
+              <div className="camp-header"><h1>Season Pass</h1><div className="camp-header-sub">Earn XP from runs · Claim rewards as you level</div></div>
+              <BattlePassPanel save={save} setSave={setSave} />
+            </>
+          )}
+
+          {tab === 'codex' && (
+            <>
+              <div className="camp-header"><h1>Codex</h1><div className="camp-header-sub">Discover enemies, weapons, and lore</div></div>
+              <CodexPanel save={save} setSave={setSave} />
+            </>
+          )}
 
           {tab === 'stats' && (
             <>

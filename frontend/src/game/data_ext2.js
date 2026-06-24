@@ -244,7 +244,7 @@ export const ACTIVE_SKILL_KEYS = Object.keys(ACTIVE_SKILLS);
 export const ADVANCED_CARDS = [
   { id: 'c_lightning',   icon: '⚡', name: 'Lightning Crit',  desc: 'Crits arc lightning to 2 nearby foes',           flag: 'lightningOnCrit' },
   { id: 'c_aura',        icon: '🔥', name: 'Damage Aura',     desc: 'Burning aura damages foes around you',           flag: 'damageAura' },
-  { id: 'c_vamp',        icon: '🩸', name: 'Vampirism',       desc: '5% lifesteal on hit',                            flag: 'vampire', amount: 0.05 },
+  { id: 'c_vamp',        icon: '🩸', name: 'Vampirism',       desc: '0.1% lifesteal on hit (upgrade in Meta)',        flag: 'vampire', amount: 0.001 },
   { id: 'c_chain',       icon: '🔗', name: 'Chain Strike',    desc: 'Kills chain to nearby for 50% dmg',              flag: 'chainOnKill' },
   { id: 'c_slow',        icon: '❄', name: 'Slow Field',      desc: 'Aura slows enemies 30%',                         flag: 'slowField' },
   { id: 'c_burn',        icon: '🔥', name: 'Burn',            desc: 'Hits apply burn DoT',                            flag: 'burnDoT' },
@@ -438,8 +438,8 @@ export const MAP_STAGES = [
 // ══════════════════════════════════════════════
 // CHARACTER RARITY SYSTEM
 // ══════════════════════════════════════════════
-// Character max levels per rarity: Common=3, Uncommon=6, Rare=8, Epic=10, Legendary=12, Mythical=15
-export const CHAR_MAX_LEVELS = { common: 3, uncommon: 6, rare: 8, epic: 10, legendary: 12, mythical: 15 };
+// Character max levels per rarity (higher rarity = more levels before next evolution)
+export const CHAR_MAX_LEVELS = { common: 3, uncommon: 6, rare: 10, epic: 15, legendary: 20, mythical: 25 };
 export const CHAR_RARITIES = ['common','uncommon','rare','epic','legendary','mythical'];
 export const CHAR_RARITY_COLORS = { common:'#9a8fa6', uncommon:'#4dff91', rare:'#4dc4ff', epic:'#b362ff', legendary:'#ff7a1a', mythical:'#ff3146' };
 export const CHAR_RARITY_NAMES  = { common:'Common', uncommon:'Uncommon', rare:'Rare', epic:'Epic', legendary:'Legendary', mythical:'Mythical' };
@@ -448,7 +448,7 @@ export const CHAR_LEVEL_COST = (rarity, lvl) => ({
   gold:   { common:50, uncommon:120, rare:300, epic:700, legendary:1800, mythical:4500 }[rarity] + lvl * 20,
   pieces: { common:1,  uncommon:2,   rare:4,   epic:8,   legendary:15,   mythical:30  }[rarity],
 });
-// Evolve cost: final shard given automatically at max level
+// Evolve cost: shards needed for each rarity evolution (higher rarities need more shards)
 export const CHAR_EVOLVE_COST = { common:{shards:1}, uncommon:{shards:2}, rare:{shards:3}, epic:{shards:5}, legendary:{shards:8} };
 const _CHAR_STAT_POOL = [
   { stat:'maxHp', label:'Max HP',      val:15,   icon:'❤️', isPct:false },

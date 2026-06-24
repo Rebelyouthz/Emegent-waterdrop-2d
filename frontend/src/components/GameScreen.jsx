@@ -3,6 +3,7 @@ import { Game } from '../game/engine';
 import { SKILL_INDEX, WEAPON_PARTS } from '../game/data_ext';
 import { STARTER_WEAPONS, PART_SLOT_INFO } from '../game/data_ext2';
 import { POE_INDEX, POE_ATTRS } from '../game/poe_tree';
+import { rollGearDrop } from '../game/gear';
 import { Audio } from '../game/audio';
 import HUD from './HUD';
 import LevelUpModal from './LevelUpModal';
@@ -133,7 +134,19 @@ function buildMetaEffects(save) {
     }
   }
 
-  // Apply active pet bonuses
+  // Apply new gear system items
+  const gearInv = save.gearInventory || [];
+  const gearEq  = save.gearEquipped  || {};
+  for (const slot of ['helmet','chest','arms','legs','boots','ring','amulet']) {
+    const itemId = gearEq[slot];
+    if (!itemId) continue;
+    const item = gearInv.find(x => x.id === itemId);
+    if (!item) continue;
+    const { stat, val } = item;
+    if (stat === 'maxHp') result.maxHp += val;
+    else if (result[stat] !== undefined) result[stat] += val;
+    else result[stat] = val;
+  }
   const activePet = (save.pets || []).find(p => p.active);
   if (activePet) {
     const PET_STAT_MAP = {
@@ -184,7 +197,17 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
       challenge: mission && mission.isChallenge ? mission.mod : null,
       tutorialMode: isTutorial,
       callbacks: {
-        onTick: (s) => setSnap(s),
+        onTick: (s) => {
+          setSnap(s);
+          // Process pending gear drops from engine
+          if (gameRef.current && gameRef.current._pendingGearDrop) {
+            const drop = gameRef.current._pendingGearDrop;
+            gameRef.current._pendingGearDrop = null;
+            const item = rollGearDrop(drop.timeInRun);
+            const cur = initialSaveRef.current;
+            initialSaveRef.current = { ...cur, gearInventory: [...(cur.gearInventory || []), item] };
+          }
+        },
         onGameOver: (r) => {
           setGameOverResult(r);
           // Calculate run rewards summary for death screen
@@ -209,6 +232,13 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
       },
     };
     const g = new Game(canvas, opts);
+    // Gear drop + codex callbacks
+    g.onCodexKill = (enemyId) => {
+      const cur = initialSaveRef.current;
+      const enemies = cur.codex?.enemies || {};
+      const cnt = (enemies[enemyId]?.count || 0) + 1;
+      initialSaveRef.current = { ...cur, codex: { ...cur.codex, enemies: { ...enemies, [enemyId]: { count: cnt } } } };
+    };
     gameRef.current = g;
     if (typeof window !== 'undefined') window.__game = g;
     return () => { g.destroy(); Audio.swapToMenuMusic(); };

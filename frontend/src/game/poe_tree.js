@@ -135,6 +135,7 @@ export const META_UNLOCK_REQS = {
   m_dodge:     'poe_mob2',   // Evasion      (MOBILITY)
   m_regen:     'poe_def2',   // Regrowth     (DEFENSE)
   m_start:     'poe_grd5',   // Gold Sense   (GREED) — Starter Cache meta
+  c_vamp:      'poe_bld0',   // Vampirism card — requires Bloodline start
 };
 
 // ── Attribute system ────────────────────────────

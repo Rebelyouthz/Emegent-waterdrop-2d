@@ -227,81 +227,81 @@ export const WEAPON_KEYS = Object.keys(WEAPONS);
 // ---------- ENEMIES ----------
 export const ENEMIES = {
   slime: {
-    id: 'slime', name: 'Slime', size: 18, hp: 29, dmg: 8, speed: 60, color: '#7ad96b',
+    id: 'slime', name: 'Slime', size: 18, hp: 44, dmg: 14, speed: 60, color: '#7ad96b',
     xp: 2, gold: 1, ai: 'chase',
   },
   bat: {
-    id: 'bat', name: 'Voidbat', size: 14, hp: 18, dmg: 6, speed: 120, color: '#b362ff',
+    id: 'bat', name: 'Voidbat', size: 14, hp: 23, dmg: 10, speed: 120, color: '#b362ff',
     xp: 2, gold: 1, ai: 'chase',
   },
   brute: {
-    id: 'brute', name: 'Brute', size: 26, hp: 91, dmg: 16, speed: 48, color: '#c97050',
+    id: 'brute', name: 'Brute', size: 26, hp: 137, dmg: 26, speed: 48, color: '#c97050',
     xp: 6, gold: 3, ai: 'chase',
   },
   ranger: {
-    id: 'ranger', name: 'Ranger', size: 20, hp: 39, dmg: 10, speed: 70, color: '#ffd166',
+    id: 'ranger', name: 'Ranger', size: 20, hp: 59, dmg: 16, speed: 70, color: '#ffd166',
     xp: 4, gold: 2, ai: 'ranged', shootRange: 320, shootCD: 1.8, projSpeed: 320,
   },
   charger: {
-    id: 'charger', name: 'Charger', size: 22, hp: 45, dmg: 18, speed: 80, color: '#ff3146',
+    id: 'charger', name: 'Charger', size: 22, hp: 68, dmg: 28, speed: 80, color: '#ff3146',
     xp: 5, gold: 3, ai: 'charge',
   },
   ghoul: {
-    id: 'ghoul', name: 'Ghoul', size: 19, hp: 45, dmg: 9, speed: 95, color: '#9aa6b2',
+    id: 'ghoul', name: 'Ghoul', size: 19, hp: 68, dmg: 15, speed: 95, color: '#9aa6b2',
     xp: 3, gold: 2, ai: 'chase',
   },
   necron: {
-    id: 'necron', name: 'Necron', size: 28, hp: 220, dmg: 24, speed: 55, color: '#4dffd4',
+    id: 'necron', name: 'Necron', size: 28, hp: 330, dmg: 36, speed: 55, color: '#4dffd4',
     xp: 22, gold: 14, ai: 'chase', boss: false,
   },
   // --- New enemy types (appear after each boss) ---
   crystalite: {
-    id: 'crystalite', name: 'Crystalite', size: 20, hp: 110, dmg: 11, speed: 35, color: '#88eeff',
+    id: 'crystalite', name: 'Crystalite', size: 20, hp: 165, dmg: 17, speed: 35, color: '#88eeff',
     xp: 6, gold: 3, ai: 'chase', armor: 4,
   },
   soulshard: {
-    id: 'soulshard', name: 'Soul Shard', size: 16, hp: 50, dmg: 16, speed: 95, color: '#ccaaff',
+    id: 'soulshard', name: 'Soul Shard', size: 16, hp: 63, dmg: 24, speed: 95, color: '#ccaaff',
     xp: 5, gold: 2, ai: 'chase', noKnockback: true,
   },
   bonewalker: {
-    id: 'bonewalker', name: 'Bone Walker', size: 23, hp: 180, dmg: 18, speed: 48, color: '#ddd8c4',
+    id: 'bonewalker', name: 'Bone Walker', size: 23, hp: 270, dmg: 28, speed: 48, color: '#ddd8c4',
     xp: 10, gold: 5, ai: 'chase', regen: 4,
   },
   voidspawn: {
-    id: 'voidspawn', name: 'Void Spawn', size: 18, hp: 75, dmg: 24, speed: 65, color: '#9933ff',
+    id: 'voidspawn', name: 'Void Spawn', size: 18, hp: 113, dmg: 36, speed: 65, color: '#9933ff',
     xp: 8, gold: 4, ai: 'charge',
   },
   steelbrute: {
-    id: 'steelbrute', name: 'Steel Brute', size: 30, hp: 300, dmg: 28, speed: 28, color: '#778899',
+    id: 'steelbrute', name: 'Steel Brute', size: 30, hp: 450, dmg: 42, speed: 28, color: '#778899',
     xp: 18, gold: 9, ai: 'chase', armor: 8,
   },
   lightningbug: {
-    id: 'lightningbug', name: 'Lightning Bug', size: 15, hp: 60, dmg: 20, speed: 145, color: '#ffff55',
+    id: 'lightningbug', name: 'Lightning Bug', size: 15, hp: 75, dmg: 30, speed: 145, color: '#ffff55',
     xp: 8, gold: 4, ai: 'chase',
   },
   techsoldier: {
-    id: 'techsoldier', name: 'Tech Soldier', size: 24, hp: 250, dmg: 25, speed: 55, color: '#44aaff',
+    id: 'techsoldier', name: 'Tech Soldier', size: 24, hp: 375, dmg: 38, speed: 55, color: '#44aaff',
     xp: 16, gold: 8, ai: 'ranged', shootRange: 260, shootCD: 0.9, projSpeed: 360,
   },
   nanoswarm: {
-    id: 'nanoswarm', name: 'Nano Swarm', size: 18, hp: 40, dmg: 32, speed: 115, color: '#00ff88',
+    id: 'nanoswarm', name: 'Nano Swarm', size: 18, hp: 50, dmg: 46, speed: 115, color: '#00ff88',
     xp: 12, gold: 6, ai: 'chase',
   },
-  // Bosses
+  // Bosses (HP doubled)
   bossOcular: {
-    id: 'bossOcular', name: 'Eye of Horus', size: 90, hp: 1200, dmg: 18, speed: 165, color: '#ffd166',
+    id: 'bossOcular', name: 'Eye of Horus', size: 90, hp: 2400, dmg: 26, speed: 165, color: '#ffd166',
     xp: 200, gold: 220, ai: 'boss', boss: true, shootCD: 1.8,
   },
   bossNecromancer: {
-    id: 'bossNecromancer', name: 'Nekromansen', size: 75, hp: 2800, dmg: 22, speed: 95, color: '#7ad96b',
+    id: 'bossNecromancer', name: 'Nekromansen', size: 75, hp: 5600, dmg: 32, speed: 95, color: '#7ad96b',
     xp: 400, gold: 450, ai: 'boss', boss: true, shootCD: 1.4,
   },
   bossVoidTitan: {
-    id: 'bossVoidTitan', name: 'Void Titan', size: 100, hp: 5000, dmg: 35, speed: 62, color: '#b362ff',
+    id: 'bossVoidTitan', name: 'Void Titan', size: 100, hp: 10000, dmg: 50, speed: 62, color: '#b362ff',
     xp: 600, gold: 600, ai: 'boss', boss: true, shootCD: 0.8,
   },
   bossAida: {
-    id: 'bossAida', name: 'A.I.D.A.', size: 80, hp: 6000, dmg: 40, speed: 145, color: '#b362ff',
+    id: 'bossAida', name: 'A.I.D.A.', size: 80, hp: 12000, dmg: 58, speed: 145, color: '#b362ff',
     xp: 800, gold: 800, ai: 'boss', boss: true, shootCD: 0.6,
   },
 };
@@ -309,24 +309,24 @@ export const ENEMIES = {
 // ---------- LEVEL UP CARD POOL (in-run) ----------
 // Cards mutate run-state stats or grant/upgrade weapons.
 export const STAT_CARDS = [
-  { id: 'dmg',       icon: '⚔️', name: 'Sharpened Edge',  desc: '+{v}% damage',          stat: 'damageMult',    mult: true,  amount: 0.10 },
-  { id: 'atks',      icon: '⏱️', name: 'Quickened Hand',  desc: '+{v}% attack speed',    stat: 'fireRateMult',  mult: true,  amount: 0.10 },
-  { id: 'spd',       icon: '🥾', name: 'Light Step',      desc: '+{v}% move speed',      stat: 'moveMult',      mult: true,  amount: 0.08 },
-  { id: 'maxhp',     icon: '❤️', name: 'Vital Surge',     desc: '+{v} max HP',           stat: 'maxHp',         mult: false, amount: 20 },
-  { id: 'heal',      icon: '✨', name: 'Cleansing Wave',  desc: 'Heal {v} HP now',       stat: 'heal',          mult: false, amount: 30 },
-  { id: 'regen',     icon: '🌿', name: 'Regrowth',        desc: '+{v} HP / sec',         stat: 'regen',         mult: false, amount: 0.4 },
-  { id: 'armor',     icon: '🛡️', name: 'Iron Skin',       desc: '+{v} armor',           stat: 'armor',         mult: false, amount: 2 },
-  { id: 'crit',      icon: '💢', name: 'Lucky Strikes',   desc: '+{v}% crit chance',     stat: 'crit',          mult: false, amount: 0.05 },
-  { id: 'critdmg',   icon: '🩸', name: 'Critical Mass',   desc: '+{v}% crit damage',     stat: 'critDmgMult',   mult: true,  amount: 0.25 },
-  { id: 'area',      icon: '🌀', name: 'Wider Wake',      desc: '+{v}% area',            stat: 'areaMult',      mult: true,  amount: 0.10 },
+  { id: 'dmg',       icon: '⚔️', name: 'Sharpened Edge',  desc: '+{v}% damage',          stat: 'damageMult',    mult: true,  amount: 0.05 },
+  { id: 'atks',      icon: '⏱️', name: 'Quickened Hand',  desc: '+{v}% attack speed',    stat: 'fireRateMult',  mult: true,  amount: 0.05 },
+  { id: 'spd',       icon: '🥾', name: 'Light Step',      desc: '+{v}% move speed',      stat: 'moveMult',      mult: true,  amount: 0.04 },
+  { id: 'maxhp',     icon: '❤️', name: 'Vital Surge',     desc: '+{v} max HP',           stat: 'maxHp',         mult: false, amount: 10 },
+  { id: 'heal',      icon: '✨', name: 'Cleansing Wave',  desc: 'Heal {v} HP now',       stat: 'heal',          mult: false, amount: 15 },
+  { id: 'regen',     icon: '🌿', name: 'Regrowth',        desc: '+{v} HP / sec',         stat: 'regen',         mult: false, amount: 0.2 },
+  { id: 'armor',     icon: '🛡️', name: 'Iron Skin',       desc: '+{v} armor',            stat: 'armor',         mult: false, amount: 1 },
+  { id: 'crit',      icon: '💢', name: 'Lucky Strikes',   desc: '+{v}% crit chance',     stat: 'crit',          mult: false, amount: 0.03 },
+  { id: 'critdmg',   icon: '🩸', name: 'Critical Mass',   desc: '+{v}% crit damage',     stat: 'critDmgMult',   mult: true,  amount: 0.12 },
+  { id: 'area',      icon: '🌀', name: 'Wider Wake',      desc: '+{v}% area',            stat: 'areaMult',      mult: true,  amount: 0.05 },
   { id: 'proj',      icon: '🎯', name: 'Projectile Up',   desc: '+{v} extra projectile', stat: 'projBonus',     mult: false, amount: 1 },
-  { id: 'pickup',    icon: '🧲', name: 'Magnet',          desc: '+{v}% pickup range',    stat: 'pickupMult',    mult: true,  amount: 0.25 },
-  { id: 'xpgain',    icon: '📖', name: 'Wisdom',          desc: '+{v}% XP gain',         stat: 'xpMult',        mult: true,  amount: 0.10 },
-  { id: 'gold',      icon: '💰', name: 'Greed',           desc: '+{v}% gold drops',      stat: 'goldMult',      mult: true,  amount: 0.15 },
+  { id: 'pickup',    icon: '🧲', name: 'Magnet',          desc: '+{v}% pickup range',    stat: 'pickupMult',    mult: true,  amount: 0.10 },
+  { id: 'xpgain',    icon: '📖', name: 'Wisdom',          desc: '+{v}% XP gain',         stat: 'xpMult',        mult: true,  amount: 0.08 },
+  { id: 'gold',      icon: '💰', name: 'Greed',           desc: '+{v}% gold drops',      stat: 'goldMult',      mult: true,  amount: 0.10 },
   { id: 'pierce',    icon: '➰', name: 'Piercing Shot',   desc: '+{v} pierce',           stat: 'pierceBonus',   mult: false, amount: 1 },
-  { id: 'dodge',     icon: '👻', name: 'Phasing',         desc: '+{v}% dodge',           stat: 'dodge',         mult: false, amount: 0.04 },
-  { id: 'reload',    icon: '🔄', name: 'Fast Reload',     desc: '-{v}% reload time',     stat: 'reloadMult',    mult: true,  amount: -0.10 },
-  { id: 'mag',       icon: '📦', name: 'Bigger Mag',      desc: '+{v} magazine size',    stat: 'magBonus',      mult: false, amount: 3 },
+  { id: 'dodge',     icon: '👻', name: 'Phasing',         desc: '+{v}% dodge',           stat: 'dodge',         mult: false, amount: 0.03 },
+  { id: 'reload',    icon: '🔄', name: 'Fast Reload',     desc: '-{v}% reload time',     stat: 'reloadMult',    mult: true,  amount: -0.08 },
+  { id: 'mag',       icon: '📦', name: 'Bigger Mag',      desc: '+{v} magazine size',    stat: 'magBonus',      mult: false, amount: 2 },
 ];
 
 // ---------- META UPGRADES (permanent — tiny increments, long grind) ----------
