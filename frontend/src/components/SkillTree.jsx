@@ -82,7 +82,7 @@ export default function SkillTree({ save, setSave, onClose }) {
     setScale(prev => {
       const ns = Math.max(0.22, Math.min(3.0, prev * delta));
       const ratio = ns / prev;
-      setPan(p => ({ x: mx - ratio * (mx - p.x), y: my - ratio * (my - p.y) }));
+      setPan(p => ({ x: mx - ratio * (mx - p.x), y: my - ratio * (my - p.y }));
       return ns;
     });
   }, []);
@@ -108,13 +108,14 @@ export default function SkillTree({ save, setSave, onClose }) {
   };
   const onMouseUp = () => { dragState.current.active = false; };
 
-  // ── Buy node ─────────────────────────────────────
+  // ── Buy node (slowed: 2x SP cost) ─────────────────────────────────────
   const buyNode = (node) => {
     if (!isUnlocked(node.id, skills)) return;
     const lvl = skills[node.id] || 0;
     if (lvl >= node.max) return;
-    if (save.sp < node.c) { showToast('NOT ENOUGH SP'); return; }
-    setSave({ ...save, sp: save.sp - node.c, skills: { ...save.skills, [node.id]: lvl + 1 } });
+    const cost = node.c * 2; // slowed
+    if (save.sp < cost) { showToast('NOT ENOUGH SP'); return; }
+    setSave({ ...save, sp: save.sp - cost, skills: { ...save.skills, [node.id]: lvl + 1 } });
     Audio?.click?.();
     showToast(`${node.name} Lv.${lvl + 1}`);
   };
@@ -141,7 +142,7 @@ export default function SkillTree({ save, setSave, onClose }) {
   const selNode = selected ? POE_INDEX[selected.id] : null;
   const selLvl  = selNode ? (skills[selNode.id] || 0) : 0;
   const selBranch = selNode ? POE_BRANCHES[selNode.branch] : null;
-  const selCanBuy = selNode && isUnlocked(selNode.id, skills) && selLvl < selNode.max && save.sp >= selNode.c;
+  const selCanBuy = selNode && isUnlocked(selNode.id, skills) && selLvl < selNode.max && save.sp >= selNode.c * 2;
   const selLocked = selNode && !isUnlocked(selNode.id, skills);
 
   return (
@@ -395,7 +396,7 @@ export default function SkillTree({ save, setSave, onClose }) {
                   ))}
                   <span className="poe-lvl-text">{selLvl} / {selNode.max}</span>
                 </div>
-                <div className="poe-prev-cost">◆ {selNode.c} SP per level</div>
+                <div className="poe-prev-cost">◆ {selNode.c * 2} SP per level (slowed)</div>
 
                 {selLocked && (() => {
                   const reqNode = selNode.req?.[0] ? POE_INDEX[selNode.req[0]] : null;
@@ -417,82 +418,40 @@ export default function SkillTree({ save, setSave, onClose }) {
                     disabled={!selCanBuy}
                     data-testid={`buy-poe-${selNode.id}`}
                   >
-                    {selCanBuy ? `BUY — ◆ ${selNode.c} SP` : save.sp < selNode.c ? `NEED ◆ ${selNode.c} SP` : 'UNLOCK TREE FIRST'}
+                    {selCanBuy ? `BUY — ◆ ${selNode.c * 2}` : 'LOCKED'}
                   </button>
                 )}
-
-                <button className="poe-desel-btn" onClick={() => setSelected(null)}>← Back</button>
               </>
             ) : (
-              <div className="poe-prev-empty">
-                <div style={{ fontSize: 40, marginBottom: 12 }}>🌌</div>
-                <div style={{ fontFamily: 'VT323', fontSize: 18, color: '#4a3a6e', letterSpacing: 2 }}>
-                  SELECT A NODE
-                </div>
-                <div style={{ fontSize: 12, color: '#3a2a5e', marginTop: 8, lineHeight: 1.6 }}>
-                  Click any node<br/>to inspect & buy
-                </div>
-                <div style={{ marginTop: 24, fontSize: 11, color: '#3a2a4e', lineHeight: 1.8 }}>
-                  ◆ {save.sp} SP available
-                </div>
-                <div style={{ marginTop: 6, fontSize: 11, color: '#3a2a4e' }}>
-                  ⚡ {freeAttr} attr pts free
-                </div>
-                {Object.entries(POE_BRANCHES).map(([key, b]) => {
-                  const bNodes = POE_TREE_NODES.filter(n => n.branch === key);
-                  const owned = bNodes.filter(n => (skills[n.id] || 0) >= 1).length;
-                  return (
-                    <div key={key} className="poe-branch-summary" style={{ '--bc': b.color }}>
-                      <span>{b.icon} {b.name}</span>
-                      <span>{owned}/{bNodes.length}</span>
-                    </div>
-                  );
-                })}
+              <div className="poe-preview-empty">
+                <div>Click a node to inspect</div>
+                <div style={{ marginTop: 12, opacity: 0.6, fontSize: 13 }}>SP costs doubled for slower, more meaningful progression</div>
               </div>
             )}
           </div>
         </div>
 
-        {/* ── Attribute Overlay ── */}
-        {attrOpen && (
-          <div className="poe-attr-overlay" data-testid="poe-attr-overlay">
-            <div className="poe-attr-header">
-              <span>⚡ ATTRIBUTES</span>
-              <span className="poe-attr-free">{freeAttr} points free</span>
-              <button onClick={() => setAttrOpen(false)} className="poe-attr-close">✕</button>
-            </div>
-            <div className="poe-attr-desc">Earned 1 per profile level. Permanent bonuses.</div>
+        {/* ── Attribute Panel ── */}
+        {attrOpen && freeAttr > 0 && (
+          <div className="poe-attr-panel" data-testid="attr-panel">
+            <div className="poe-attr-title">ATTRIBUTE POINTS ({freeAttr})</div>
             <div className="poe-attr-grid">
               {POE_ATTRS.map(a => {
                 const cur = attrs[a.id] || 0;
-                const canAdd = freeAttr > 0;
                 return (
-                  <div key={a.id} className="poe-attr-row" data-testid={`attr-${a.id}`}>
-                    <span className="poe-attr-icon" style={{ color: a.color }}>{a.icon}</span>
-                    <div className="poe-attr-info">
-                      <span className="poe-attr-name">{a.name}</span>
-                      <span className="poe-attr-desc2">{a.desc}</span>
-                    </div>
-                    <div className="poe-attr-ctl">
-                      <span className="poe-attr-val">{cur}</span>
-                      <button
-                        className={`poe-attr-add ${canAdd ? '' : 'disabled'}`}
-                        onClick={() => buyAttr(a.id)}
-                        disabled={!canAdd}
-                        data-testid={`attr-add-${a.id}`}
-                      >+</button>
-                    </div>
+                  <div key={a.id} className="poe-attr" data-testid={`attr-${a.id}`}>
+                    <div className="poe-attr-name">{a.name}</div>
+                    <div className="poe-attr-val">{cur}</div>
+                    <button onClick={() => buyAttr(a.id)} disabled={freeAttr <= 0} data-testid={`buy-attr-${a.id}`}>+</button>
                   </div>
                 );
               })}
             </div>
+            <div className="poe-attr-note">+1 point per account level. Small, permanent power.</div>
           </div>
         )}
-
-        {/* ── Toast ── */}
-        {toast && <div className="poe-toast">{toast}</div>}
-
       </div>
+      {toast && <div className="toast" style={{ top: 80 }}>{toast}</div>}
     </div>
   );
 }
