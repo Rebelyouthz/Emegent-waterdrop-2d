@@ -12,17 +12,6 @@ import { rollMissionRewards, MISSION_DEFS, CHALLENGES, ACHIEVEMENTS } from './ga
 import { AuthProvider, StripeReturnHandler, AuthCallback, useAuth } from './auth';
 import { Audio } from './game/audio';
 
-function DemoBadge() {
-  return (
-    <div style={{
-      position: 'fixed', top: 6, right: 8, zIndex: 99999,
-      fontSize: 9, fontFamily: 'monospace', letterSpacing: '0.5px',
-      background: '#111', color: '#4dffd4', border: '1px solid #334',
-      padding: '1px 6px', opacity: 0.85, pointerEvents: 'none'
-    }}>GITHUB PAGES DEMO</div>
-  );
-}
-
 function AppInner() {
   const [view, setView] = useState(null);
   const [save, setSaveState] = useState(loadSave());
@@ -140,11 +129,11 @@ function AppInner() {
     if (result.voidKilled)  ns.gems = (ns.gems || 0) + 10;
     if (result.horusKilled) ns.gems = (ns.gems || 0) + 8;
     if (result.victory)     ns.gems = (ns.gems || 0) + 15;
-    // Talent Points: +5 per run, +2 bonus if 1000+ kills
-    ns.talentPoints = (ns.talentPoints || 0) + 5;
-    if ((result.kills || 0) >= 1000) ns.talentPoints += 2;
+    // Talent Points: +2 per run (slowed from 5)
+    ns.talentPoints = (ns.talentPoints || 0) + 2;
     addAccountXp(ns, result.kills * 2 + result.level * 5 + (result.victory ? 200 : 0) + Math.floor(result.time / 6));
-    ns.sp = (ns.sp || 0) + 1 + Math.floor(result.level / 5);
+    // sp gain slowed
+    ns.sp = (ns.sp || 0) + 1 + Math.floor(result.level / 10);
     setSave(ns);
     postRunResult({ duration: result.time, level: result.level, kills: result.kills, gold: result.gold, wave: Math.ceil(result.time / 30) });
     // Submit to leaderboard (fire-and-forget; backend ignores if not authenticated)
@@ -208,14 +197,11 @@ function AppInner() {
   };
 
   if (!booted || !view || authLoading) {
-    return (<div className="boot"><div className="boot-spin" /><div>WATERDROP SURVIVOR<br/><span style={{fontSize:12,opacity:0.6}}>GITHUB PAGES DEMO</span></div></div>);
+    return (<div className="boot"><div className="boot-spin" /><div>WATERDROP SURVIVOR</div></div>);
   }
-
-  const showDemoBadge = view !== 'game';
 
   if (view === 'welcome') {
     return (<>
-      {showDemoBadge && <DemoBadge />}
       <Welcome save={save} setSave={setSave}
         onContinue={() => { if (!save.introSeen) { setView('intro'); } else { startTutorialIfNeeded(); } }}
         onCamp={() => setView('camp')} />
@@ -223,20 +209,13 @@ function AppInner() {
     </>);
   }
   if (view === 'intro') {
-    return (<>
-      {showDemoBadge && <DemoBadge />}
-      <IntroDialogue onDone={() => { setSave({ ...save, introSeen: true }); startTutorialIfNeeded(); }} />
-    </>);
+    return (<IntroDialogue onDone={() => { setSave({ ...save, introSeen: true }); startTutorialIfNeeded(); }} />);
   }
   if (view === 'menu') {
-    return (<>
-      {showDemoBadge && <DemoBadge />}
-      <MainMenu save={save} onStart={() => startTutorialIfNeeded()} onCamp={() => setView('camp')} onReset={reset} />
-    </>);
+    return (<MainMenu save={save} onStart={() => startTutorialIfNeeded()} onCamp={() => setView('camp')} onReset={reset} />);
   }
   if (view === 'camp') {
     return (<>
-      {showDemoBadge && <DemoBadge />}
       <Camp save={save} setSave={setSave}
         onBack={() => setView('welcome')}
         onStart={() => startTutorialIfNeeded()}
@@ -258,6 +237,7 @@ function AppInner() {
   }
   return null;
 }
+
 export default function App() {
   // OAuth callback: detect session_id in URL fragment SYNCHRONOUSLY during render
   // (NOT inside useEffect — that runs after first render, too late to prevent
