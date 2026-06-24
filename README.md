@@ -1,28 +1,74 @@
-# Waterdrop Survivor
+**Waterdrop Survivor**
 
 2D survivor game built with React Canvas + FastAPI backend.
 
-## Play on GitHub Pages (static demo)
+---
 
-https://Rebelyouthz.github.io/Emegent-waterdrop-2d/
+## Play on GitHub Pages (static demo – easiest)
 
-- Fully playable in browser
-- Local saves (no backend)
-- Demo mode (unlimited runs, no paywall)
+**Live:** https://Rebelyouthz.github.io/Emegent-waterdrop-2d/
 
-## Full version (with backend/auth/payments)
+Fully playable right now. No install needed.
 
-See the Emergent server deployment for the complete experience with:
-- Persistent saves & cloud sync
-- Google login via Emergent
-- Stripe paywall
-- Leaderboard
+---
 
-## Local dev
-See frontend/README.md and backend/ for setup.
+## Clone & Run Everything (Local + Pages)
 
-## Notes for this repo
-- `frontend/` is the game (CRA + craco)
-- `backend/` is FastAPI + Mongo (used on Emergent hosting)
+### 1. Clone
 
-The static Pages version is the easy way to share the core gameplay.
+```powershell
+git clone https://github.com/Rebelyouthz/Emegent-waterdrop-2d.git
+cd Emegent-waterdrop-2d/frontend
+```
+
+### 2. Run Locally (Windows – easiest)
+
+Double-click **`frontend/Start-Waterdrop.bat`**
+
+Or manually:
+
+```powershell
+cd frontend
+npm install
+npm start
+```
+
+Game runs instantly in demo mode (unlimited, offline, all features).
+
+### 3. Deploy to GitHub Pages
+
+Already configured.
+
+- Push to `main` (or manually trigger the "Deploy to GitHub Pages" workflow)
+- Make sure **Settings → Pages → Source** = GitHub Actions
+
+See the **detailed guide** in [frontend/README.md](./frontend/README.md) for:
+- Full step-by-step (clone → local → preview build → deploy)
+- Windows/PowerShell commands
+- Troubleshooting (Node, git, npm, audio, etc.)
+- How to add a real backend later
+- One-time setup for reproducible installs (package-lock.json)
+
+---
+
+## Full Version (with backend)
+
+The complete experience (cloud saves, Google login via Emergent, Stripe payments, real leaderboard) is what runs on the Emergent server.
+
+`backend/` contains the FastAPI + Mongo code (not needed for the Pages demo).
+
+---
+
+## Project Layout
+
+```
+Emegent-waterdrop-2d/
+├── frontend/          # The game (this is what you want for local/Pages)
+│   ├── Start-Waterdrop.bat
+│   └── ...
+├── backend/           # Full version only
+├── .github/workflows/deploy-pages.yml
+└── README.md
+```
+
+Open [frontend/README.md](./frontend/README.md) for the complete "how to clone + set up + publish" instructions.
