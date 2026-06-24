@@ -259,4 +259,72 @@ export const ADVANCED_CARDS = [
   { id: 'c_doublehit',   icon: '⚔️', name: 'Multistrike',     desc: '20% chance to double-hit',                       flag: 'doubleHit', amount: 0.20 },
   { id: 'c_grit',        icon: '🪨', name: 'Grit',            desc: 'When hit, -30% dmg for 2s',                      flag: 'grit' },
   { id: 'c_vision',      icon: '🔭', name: 'Eagle Vision',     desc: '+25% vision range (camera zoom out)',           flag: 'vision' },
-  { id: 'c_double_dmg',  icon: '🗡', name: 'Sharp Steel',      desc: '+25% da
+  { id: 'c_double_dmg',  icon: '🗡', name: 'Sharp Steel',      desc: '+25% damage permanently this run',              flag: 'sharpSteel' },
+  { id: 'c_speed',       icon: '💨', name: 'Bloodrush',        desc: '+15% move speed + reload',                      flag: 'bloodrush' },
+  { id: 'c_magnet',      icon: '🧲', name: 'Iron Pull',        desc: '+80% pickup range',                             flag: 'ironPull' },
+  // --- new passive auto-weapons & effects ---
+  { id: 'c_thunder',     icon: '🌩', name: 'Thunder Cult',      desc: 'Every 4s strike random foe for 60 dmg',         flag: 'thunderCult' },
+  { id: 'c_iceShard',    icon: '🧊', name: 'Ice Shards',        desc: 'Auto-launch homing ice shards every 1.6s',      flag: 'iceShards' },
+  { id: 'c_holyWater',   icon: '💧', name: 'Holy Water',        desc: 'Heal ring pulses every 6s (+15 HP)',            flag: 'holyWater' },
+  { id: 'c_swarm',       icon: '🐝', name: 'Swarm',             desc: 'Orbiting bees pierce + sting nearby foes',      flag: 'swarmAura' },
+  { id: 'c_spike',       icon: '🪤', name: 'Spike Plates',      desc: 'Drop spike traps on dash/spawn (60 dmg)',       flag: 'spikePlates' },
+  { id: 'c_overcharge',  icon: '⚡', name: 'Overcharge',        desc: 'Every 6th shot is double damage',               flag: 'overcharge' },
+  { id: 'c_railgun',     icon: '🎯', name: 'Railgun Stance',    desc: 'Standing still 1s+ = +60% damage',              flag: 'railStance' },
+  { id: 'c_juggernaut',  icon: '💪', name: 'Juggernaut',        desc: '+1 HP regen per 5 enemies in 200u',             flag: 'juggernaut' },
+];
+
+// ---------- CAMP CARD SHOP POOL (slot-machine pulls) ----------
+// Each pull = random pick from this pool weighted by rarity. Permanent boosts and skill unlocks.
+export const SHOP_CARD_POOL = [
+  // ── Passive stat cards ──
+  { id: 'sh_hp',    icon: '❤️', name: '+30 Max HP',      category:'passive', effect: { stat: 'maxHp', amount: 30 } },
+  { id: 'sh_dmg',   icon: '⚔️', name: '+8% Damage',      category:'passive', effect: { stat: 'dmg', amount: 0.08 } },
+  { id: 'sh_atks',  icon: '⏱', name: '+6% Atk Speed',   category:'passive', effect: { stat: 'atks', amount: 0.06 } },
+  { id: 'sh_crit',  icon: '🎯', name: '+3% Crit',        category:'passive', effect: { stat: 'crit', amount: 0.03 } },
+  { id: 'sh_spd',   icon: '💨', name: '+8% Move Speed',   category:'passive', effect: { stat: 'mspd', amount: 0.08 } },
+  // active / fun
+  { id: 'sh_light', icon: '⚡', name: 'Unlock Lightning Strike', category:'active', effect: { active: 'lightning' } },
+  { id: 'sh_aegis', icon: '🛡', name: 'Unlock Aegis Aura',        category:'active', effect: { active: 'aegis' } },
+];
+export function shopCardCost(pullCount) { return 12 + Math.floor(pullCount / 2) * 4; }
+export function rollShopPull3(save) {
+  // weighted roll 3 distinct from pool
+  const pool = SHOP_CARD_POOL;
+  const out = [];
+  const used = new Set();
+  for (let i=0; i<3; i++) {
+    const avail = pool.filter(p => !used.has(p.id));
+    if (!avail.length) break;
+    const w = avail.map(p => p.category==='active' ? 3 : 10);
+    const tot = w.reduce((a,b)=>a+b,0);
+    let r = Math.random()*tot, pick=null;
+    for (let j=0;j<avail.length;j++){ r-=w[j]; if(r<=0){pick=avail[j];break;} }
+    if (pick) { out.push(pick); used.add(pick.id); }
+  }
+  return out;
+}
+
+export const MILESTONE_BAR = [ 10,25,50,100,150 ];
+
+export const DAILY_CHALLENGE_POOL = [
+  { id:'dc_kills', name:'Kill 30 in a run', check:(s)=> (s.bestKills||0)>=30 , rwd:{gold:80} },
+  { id:'dc_time', name:'Survive 120s', check:(s)=>(s.bestRunTime||0)>=120 , rwd:{sp:1} },
+];
+export function getDailyChallenges(save) {
+  const d = save.daily || {};
+  if (!d.challenges || d.challenges.length===0) {
+    // roll 2
+    const pool = [...DAILY_CHALLENGE_POOL];
+    const a = pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+    const b = pool.length ? pool[Math.floor(Math.random()*pool.length)] : a;
+    return [a,b];
+  }
+  return d.challenges;
+}
+
+export const MAP_STAGES = [
+  { id:'m1', name:'Lake Outskirts', kills:12, time:90, reward:{gold:30,sp:1} },
+  { id:'m2', name:'Ruined Halls', kills:25, time:120, reward:{gold:60,sp:1} },
+  { id:'m3', name:'Void Annex', kills:40, time:150, reward:{gold:100,sp:2} },
+  { id:'m4', name:'A.I.D.A. Core', kills:60, time:180, reward:{gold:160,sp:3} },
+];
