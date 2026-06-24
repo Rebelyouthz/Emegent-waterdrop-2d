@@ -244,7 +244,7 @@ export function BattlePassPanel({ save, setSave }) {
         {unclaimed > 0 && <span className="bp-unclaimed">{unclaimed} rewards ready!</span>}
       </div>
       <div className="bp-desc">Earn XP from runs. Each {XP_PER_NODE} XP = 1 reward node. Tier up every 10 nodes (buy with tokens from account levels).</div>
-      <div className="bp-track" data-testid="bp-track">
+      <div className="bp-track" data-testid="bp-track" style={{display:'flex', flexWrap:'wrap', maxWidth:'100%', gap:'4px', overflowX:'auto'}}>
         {BP_REWARDS.map((rwd, i) => {
           const reached   = i <= reachedNode;
           const isClaimed = claimed.includes(i);
