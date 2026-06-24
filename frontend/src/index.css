@@ -2699,3 +2699,91 @@ canvas#game {
 .codex-entry-name { font-family:'VT323'; font-size:14px; color:#c0b0e0; letter-spacing:.1em; }
 .codex-entry-lore { font-size:11px; color:#5a4a7e; line-height:1.5; }
 .codex-entry-kills { font-family:'VT323'; font-size:11px; color:#4dffd4; margin-top:2px; }
+
+/* ═══════════════════════════════════════════
+   EYE OF HORUS notification badge
+═══════════════════════════════════════════ */
+.eye-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  position: absolute; top: -4px; right: -4px;
+  pointer-events: none;
+  animation: eyeGlow 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px #ffd700aa);
+  z-index: 10;
+}
+@keyframes eyeGlow {
+  0%,100% { filter: drop-shadow(0 0 3px #ffd70066); }
+  50%      { filter: drop-shadow(0 0 10px #ffd700dd); }
+}
+
+/* ═══════════════════════════════════════════
+   PATROL PANEL
+═══════════════════════════════════════════ */
+.patrol-panel { display:flex; flex-direction:column; gap:10px; height:100%; overflow-y:auto; }
+.patrol-header { display:flex; align-items:center; gap:14px; padding-bottom:6px; border-bottom:1px solid #1a0a30; }
+.patrol-title  { font-family:'VT323'; font-size:20px; color:#c890ff; letter-spacing:.3em; }
+.patrol-slots  { font-family:'VT323'; font-size:13px; color:#4a3a6e; }
+.patrol-pet-bonus { font-family:'VT323'; font-size:12px; color:#51cf66; background:#0a2010; border:1px solid #51cf6633; padding:3px 8px; }
+
+/* Active mission card */
+.patrol-mission {
+  display:flex; align-items:center; gap:12px; padding:12px 14px;
+  background:#0a0420; border:1px solid #1a0a30; transition:border-color .2s;
+}
+.patrol-mission.done { border-color:#ffd700; background:#12080a; animation: claimPulse 1.6s ease-in-out infinite; }
+.patrol-m-icon { font-size:28px; flex-shrink:0; }
+.patrol-m-info { flex:1; display:flex; flex-direction:column; gap:4px; }
+.patrol-m-name { font-family:'VT323'; font-size:16px; color:#c0b0e0; letter-spacing:.1em; }
+.patrol-m-status { font-family:'VT323'; font-size:12px; color:#6a5a8e; }
+.patrol-mission.done .patrol-m-status { color:#ffd700; }
+.patrol-bar { height:4px; background:#1a0a30; border-radius:2px; overflow:hidden; }
+.patrol-bar-fill { height:100%; background:#b362ff; transition:width 2s linear; }
+
+.patrol-btn { font-family:'VT323'; font-size:13px; padding:7px 14px; border:none; cursor:pointer; letter-spacing:.1em; transition:all .2s; white-space:nowrap; }
+.patrol-btn.claim  { background:#1a0830; border:1px solid #ffd700; color:#ffd700; }
+.patrol-btn.claim:hover { background:#2a1040; box-shadow:0 0 12px #ffd70044; }
+.patrol-btn.cancel { background:none; border:1px solid #2a1a4e; color:#4a3a6e; font-size:14px; }
+.patrol-btn.send   { background:#12083a; border:1px solid #b362ff; color:#c890ff; }
+.patrol-btn.send:hover:not(:disabled) { background:#1a0850; }
+.patrol-btn:disabled { opacity:.35; cursor:not-allowed; }
+
+.patrol-send-section { padding-top:8px; }
+.patrol-send-title { font-family:'VT323'; font-size:13px; color:#4a3a6e; letter-spacing:.2em; margin-bottom:8px; }
+.patrol-defs { display:flex; flex-direction:column; gap:6px; }
+.patrol-def {
+  display:flex; align-items:center; gap:12px; padding:10px 14px;
+  background:#08031a; border:1px solid #150825;
+}
+.patrol-def.running { opacity:.45; }
+.patrol-def-icon  { font-size:24px; flex-shrink:0; }
+.patrol-def-info  { flex:1; display:flex; flex-direction:column; gap:2px; }
+.patrol-def-name  { font-family:'VT323'; font-size:15px; color:#c0b0e0; letter-spacing:.1em; }
+.patrol-def-desc  { font-size:10px; color:#4a3a6e; }
+.patrol-def-rwd   { font-family:'VT323'; font-size:11px; color:#4dffd4; }
+.patrol-full { font-family:'VT323'; font-size:13px; color:#4a3a6e; text-align:center; padding:20px; letter-spacing:.15em; }
+
+/* ═══════════════════════════════════════════
+   CODEX — Achievements + Claim buttons
+═══════════════════════════════════════════ */
+.codex-claim-hint {
+  font-family:'VT323'; font-size:12px; background:#1a0830;
+  border:1px solid #ffd70055; color:#ffd700; padding:3px 10px;
+}
+.codex-claim-btn {
+  font-family:'VT323'; font-size:12px; padding:5px 10px; flex-shrink:0;
+  background:#0e0525; border:1px solid #4dffd4; color:#4dffd4;
+  cursor:pointer; letter-spacing:.05em; transition:all .2s; align-self:center;
+}
+.codex-claim-btn:hover { background:#0a2030; box-shadow:0 0 8px #4dffd422; }
+.codex-claim-btn.boss-claim { border-color:#ff3146; color:#ff3146; }
+.codex-claimed-badge {
+  font-family:'VT323'; font-size:14px; color:#4dffd4; flex-shrink:0; align-self:center;
+}
+.codex-entry.claimed-ach { opacity:.5; }
+.codex-ach-summary {
+  font-family:'VT323'; font-size:12px; color:#4a3a6e; letter-spacing:.15em;
+  padding:8px 0; margin-bottom:6px; border-bottom:1px solid #120820;
+}
+.ach-entry { cursor:default; }
+.codex-ach-rwd { display:flex; gap:8px; font-family:'VT323'; font-size:11px; color:#ffd700; margin-top:3px; flex-wrap:wrap; }
+.codex-ach-rwd span { background:#0a0520; border:1px solid #2a1a4e; padding:2px 6px; }

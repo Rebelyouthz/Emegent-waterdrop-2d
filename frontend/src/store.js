@@ -69,9 +69,11 @@ export const DEFAULT_SAVE = {
   gearInventory: [], // [{ id, slot, rarity, stat, val, name }]
   gearEquipped:  {}, // { helmet: itemId, chest: itemId, ... }
   // Codex
-  codex: { enemies: {}, weapons: {} }, // { enemies: { slime: { count:12 } }, weapons: { hydropistol: { count:3 } } }
+  codex: { enemies: {}, weapons: {}, claimedDiscoveries: [] },
   // Battle Pass
-  battlePass: { claimed: [] }, // { claimed: [0, 1, 3, ...] }
+  battlePass: { claimed: [] },
+  // Patrol missions
+  patrol: { missions: [] },
 };
 
 export function loadSave() {

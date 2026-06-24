@@ -239,6 +239,13 @@ export default function GameScreen({ save, setSave, onExit, onRunEnd, mission })
       const cnt = (enemies[enemyId]?.count || 0) + 1;
       initialSaveRef.current = { ...cur, codex: { ...cur.codex, enemies: { ...enemies, [enemyId]: { count: cnt } } } };
     };
+    // Track weapon usage for Codex
+    const weapId = opts.weapon?.id || opts.weaponId;
+    if (weapId) {
+      const cur = initialSaveRef.current;
+      const w = cur.codex?.weapons || {};
+      initialSaveRef.current = { ...cur, codex: { ...cur.codex, weapons: { ...w, [weapId]: { count: (w[weapId]?.count||0) + 1 } } } };
+    }
     gameRef.current = g;
     if (typeof window !== 'undefined') window.__game = g;
     return () => { g.destroy(); Audio.swapToMenuMusic(); };

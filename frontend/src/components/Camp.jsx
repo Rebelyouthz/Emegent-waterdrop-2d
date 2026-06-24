@@ -11,7 +11,8 @@ import TalentTree from './TalentTree';
 import CampaignPanel from './CampaignPanel';
 import PetPanel from './PetPanel';
 import GearPanel from './GearPanel';
-import { BattlePassPanel, CodexPanel } from './MetaFeatures';
+import { BattlePassPanel, CodexPanel, PatrolPanel, EyeBadge } from './MetaFeatures';
+import { ACHIEVEMENTS } from '../game/data_ext2';
 import { MissionsPanel, ChallengesPanel, AchievementsPanel, CardShopModal, ActiveLoadoutPanel, WeaponCrafting, SettingsPanel, PartsInventory, MapsPanel } from './CampPanels';
 import { Audio } from '../game/audio';
 
@@ -77,6 +78,26 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
 
   const avatar = AVATARS.find(a => a.id === save.profile.avatar) || AVATARS[0];
 
+  // ── Notification computations ────────────────
+  const _now = Date.now();
+  const _discovered = Object.keys(save.codex?.enemies||{}).length + Object.keys(save.codex?.weapons||{}).length;
+  const _claimed    = (save.codex?.claimedDiscoveries||[]).length;
+  const codexNew    = _discovered > _claimed;
+
+  const _reached    = Math.floor((save.profile?.xp||0) / 200);
+  const _passClaim  = (save.battlePass?.claimed||[]).length;
+  const passNew     = _reached > _passClaim;
+
+  const _pMissions  = save.patrol?.missions || [];
+  const patrolNew   = _pMissions.some(m => m.status === 'complete' || (m.status === 'active' && _now - m.startMs >= m.durationMs));
+
+  const _achDone    = ACHIEVEMENTS.filter(a => {
+    if (a.metric === 'skillsLearned') return Object.values(save.skills||{}).reduce((x,y)=>x+y,0) >= a.goal;
+    return (save[a.metric]||0) >= a.goal;
+  }).length;
+  const _achClaim   = Object.keys(save.achClaimed||{}).length;
+  const achNew      = _achDone > _achClaim;
+
   return (
     <div className="app-shell">
       <div className="camp" data-testid="camp-screen">
@@ -101,7 +122,7 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
             <button className={`camp-tab ${tab === 'maps' ? 'active' : ''}`} onClick={() => setTab('maps')} data-testid="tab-maps">🗺 MAPS</button>
             <button className={`camp-tab ${tab === 'missions' ? 'active' : ''}`} onClick={() => setTab('missions')} data-testid="tab-missions">📋 MISSIONS</button>
             <button className={`camp-tab ${tab === 'challenges' ? 'active' : ''}`} onClick={() => setTab('challenges')} data-testid="tab-challenges">🏆 CHALLENGES</button>
-            <button className={`camp-tab ${tab === 'achievements' ? 'active' : ''}`} onClick={() => setTab('achievements')} data-testid="tab-ach">🎖 ACHIEVEMENTS</button>
+            <button className={`camp-tab ${tab === 'achievements' ? 'active' : ''}`} onClick={() => setTab('achievements')} data-testid="tab-ach" style={{position:'relative'}}>🎖 ACHIEVEMENTS {achNew && <EyeBadge/>}</button>
             <button className={`camp-tab ${tab === 'milestones' ? 'active' : ''}`} onClick={() => setTab('milestones')} data-testid="tab-milestones">⭐ MILESTONES</button>
             <button className={`camp-tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')} data-testid="tab-stats">📊 STATS</button>
             <div className="camp-tab-divider" />
@@ -111,8 +132,9 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
             <button className="camp-tab" onClick={() => setSkillOpen(true)} data-testid="open-skills">🧠 SKILLS</button>
             <button className={`camp-tab ${tab==='cards'?'active':''}`} onClick={() => setTab('cards')} data-testid="tab-cards">💠 META</button>
             <button className={`camp-tab ${tab==='gear'?'active':''}`} onClick={() => setTab('gear')} data-testid="tab-gear">🪖 GEAR</button>
-            <button className={`camp-tab ${tab==='pass'?'active':''}`} onClick={() => setTab('pass')} data-testid="tab-pass">🎖 SEASON PASS</button>
-            <button className={`camp-tab ${tab==='codex'?'active':''}`} onClick={() => setTab('codex')} data-testid="tab-codex">📚 CODEX</button>
+            <button className={`camp-tab ${tab==='pass'?'active':''}`} onClick={() => setTab('pass')} data-testid="tab-pass" style={{position:'relative'}}>🎖 SEASON PASS {passNew && <EyeBadge/>}</button>
+            <button className={`camp-tab ${tab==='patrol'?'active':''}`} onClick={() => setTab('patrol')} data-testid="tab-patrol" style={{position:'relative'}}>🗺 PATROL {patrolNew && <EyeBadge/>}</button>
+            <button className={`camp-tab ${tab==='codex'?'active':''}`} onClick={() => setTab('codex')} data-testid="tab-codex" style={{position:'relative'}}>📚 CODEX {codexNew && <EyeBadge/>}</button>
             <div className="camp-tab-divider" />
             <button className="camp-tab" onClick={() => setShopOpen(true)} data-testid="open-card-shop">🎰 CARD SHOP</button>
             <button className="camp-tab" onClick={() => setForgeOpen(true)} data-testid="open-forge">🔨 SMITH</button>
@@ -206,6 +228,13 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
           )}
 
           {tab === 'campaign' && <CampaignPanel save={save} setSave={setSave} />}
+
+          {tab === 'patrol' && (
+            <>
+              <div className="camp-header"><h1>Patrol</h1><div className="camp-header-sub">Send on missions while you're away · Active pet gives +20% reward</div></div>
+              <PatrolPanel save={save} setSave={setSave} />
+            </>
+          )}
 
           {tab === 'gear' && (
             <>
