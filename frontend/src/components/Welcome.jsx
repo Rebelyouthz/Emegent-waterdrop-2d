@@ -76,6 +76,7 @@ export default function Welcome({ save, setSave, onContinue, onCamp }) {
     return (
       <div className="app-shell">
         <div className="menu" data-testid="welcome-create" style={{ width: 'min(720px, 92vw)' }}>
+          <div style={{position:'absolute', top:8, right:12, fontSize:10, opacity:0.6, fontFamily:'monospace'}}>GITHUB PAGES DEMO</div>
           <div className="title">CHOOSE YOUR FORM</div>
           <div className="subtitle">A.I.D.A. AWAKENS</div>
           <div className="avatar-grid">
@@ -115,6 +116,7 @@ export default function Welcome({ save, setSave, onContinue, onCamp }) {
 
   return (
     <div className="app-shell" style={{ alignItems: 'flex-start' }}>
+      <div style={{position:'absolute', top:6, right:10, fontSize:10, background:'#222', padding:'1px 6px', border:'1px solid #444', opacity:0.75, fontFamily:'monospace', letterSpacing:'0.5px'}}>GITHUB PAGES DEMO • OFFLINE</div>
       <AccountWidget openLb={() => setShowLb(true)} />
       <div className="welcome" data-testid="welcome-home">
         <div className="welcome-header">
