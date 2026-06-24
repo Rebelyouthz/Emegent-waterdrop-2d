@@ -191,15 +191,16 @@ function rwd_preview(def, mult = 1) {
 }
 
 // ─── BATTLE PASS ─────────────────────────────────────────
+// BALANCED: modest rewards for roguelike feel. Start weak, small gains.
 const BP_REWARDS = Array.from({ length: 40 }, (_, i) => {
   const n = i + 1;
-  if (n % 20 === 0) return { type:'gem',    amount:20,          icon:'💎', label:`${20} Gems` };
+  if (n % 20 === 0) return { type:'gem',    amount:2,           icon:'💎', label:`2 Gems` };
   if (n % 10 === 0) return { type:'shard',  amount:1,           icon:'🔮', label:`Shard` };
-  if (n % 5  === 0) return { type:'slot',   amount:3,           icon:'🎰', label:`3 Coins` };
-  if (n % 4  === 0) return { type:'gold',   amount:500+n*50,    icon:'💰', label:`${500+n*50}★` };
-  if (n % 3  === 0) return { type:'gem',    amount:5,           icon:'💎', label:`5 Gems` };
-  if (n % 2  === 0) return { type:'talent', amount:5,           icon:'◆',  label:`5 TP` };
-  return              { type:'gold',   amount:200+n*20,    icon:'💰', label:`${200+n*20}★` };
+  if (n % 5  === 0) return { type:'slot',   amount:1,           icon:'🎰', label:`1 Coin` };
+  if (n % 4  === 0) return { type:'gold',   amount:50 + n*5,    icon:'💰', label:`${50 + n*5}★` };
+  if (n % 3  === 0) return { type:'gem',    amount:1,           icon:'💎', label:`1 Gem` };
+  if (n % 2  === 0) return { type:'talent', amount:1,           icon:'◆',  label:`1 TP` };
+  return              { type:'gold',   amount:20 + n*2,    icon:'💰', label:`${20 + n*2}★` };
 });
 const XP_PER_NODE = 200;
 
@@ -208,6 +209,12 @@ export function BattlePassPanel({ save, setSave }) {
   const profileXp   = save.profile?.xp || 0;
   const reachedNode = Math.floor(profileXp / XP_PER_NODE);
   const unclaimed   = BP_REWARDS.filter((_, i) => i <= reachedNode && !claimed.includes(i)).length;
+
+  // Simple tier up after every 10 nodes (meta levels)
+  const currentTier = Math.floor(reachedNode / 10) + 1;
+  const tierTokens = save.tierUpTokens || 0;
+  const tierCost = currentTier * 5; // balanced cost
+  const canBuyTier = tierTokens >= tierCost;
 
   const claim = (i) => {
     if (i > reachedNode || claimed.includes(i)) return;
@@ -221,14 +228,22 @@ export function BattlePassPanel({ save, setSave }) {
     setSave(ns);
   };
 
+  const buyTierUp = () => {
+    if (!canBuyTier) return;
+    let ns = { ...save, tierUpTokens: tierTokens - tierCost };
+    ns.metaTier = (ns.metaTier || 1) + 1;
+    ns.metaTierBonus = (ns.metaTierBonus || 0) + 0.05; // small +5% all stats per tier
+    setSave(ns);
+  };
+
   return (
     <div className="bp-panel" data-testid="bp-panel">
       <div className="bp-header">
         <span className="bp-title">SEASON PASS</span>
-        <span className="bp-progress">XP: {profileXp} / {40 * XP_PER_NODE}</span>
+        <span className="bp-progress">XP: {profileXp} / {40 * XP_PER_NODE} (Tier {currentTier})</span>
         {unclaimed > 0 && <span className="bp-unclaimed">{unclaimed} rewards ready!</span>}
       </div>
-      <div className="bp-desc">Earn XP from runs. Each {XP_PER_NODE} XP = 1 reward node.</div>
+      <div className="bp-desc">Earn XP from runs. Each {XP_PER_NODE} XP = 1 reward node. Tier up every 10 nodes (buy with tokens from account levels).</div>
       <div className="bp-track" data-testid="bp-track">
         {BP_REWARDS.map((rwd, i) => {
           const reached   = i <= reachedNode;
@@ -246,6 +261,11 @@ export function BattlePassPanel({ save, setSave }) {
           );
         })}
       </div>
+      {canBuyTier && (
+        <button onClick={buyTierUp} className="tier-up-btn" style={{marginTop:10}}>
+          BUY TIER UP (Cost {tierCost} tokens) — +5% all stats
+        </button>
+      )}
     </div>
   );
 }
@@ -406,19 +426,20 @@ export function CodexPanel({ save, setSave }) {
 
       {tab === 'weapons' && (
         <div className="codex-grid">
-          {Object.entries(STARTER_WEAPONS || {}).map(([wid, w]) => {
-            const disc = (weapons[wid]?.count || 0) > 0;
-            const alrClaimed = claimed.includes(wid);
+          {STARTER_WEAPONS.map(id => {
+            const w = WEAPONS[id] || {name: id};
+            const disc = (weapons[id]?.count || 0) > 0;
+            const alrClaimed = claimed.includes(id);
             return (
-              <div key={wid} className={`codex-entry ${disc?'found':'unknown'}`} data-testid={`codex-weapon-${wid}`}>
-                <div className="codex-entry-icon" style={{color: disc ? '#ffd166' : '#2a1a4e', fontSize:20}}>⚙</div>
+              <div key={id} className={`codex-entry weapon ${disc?'found':'unknown'}`} data-testid={`codex-weapon-${id}`}>
+                <div className="codex-entry-icon" style={{color: disc ? '#ffd166' : '#2a1a4e'}}>🔫</div>
                 <div className="codex-entry-info">
-                  <div className="codex-entry-name">{disc ? (w.name||wid) : '???'}</div>
-                  <div className="codex-entry-lore">{disc ? (w.desc||'A weapon of the Lake.') : 'Use this weapon in a run.'}</div>
-                  {disc && <div className="codex-entry-kills" style={{color:'#ffd166'}}>Runs: {weapons[wid]?.count||0}×</div>}
+                  <div className="codex-entry-name">{disc ? w.name : '???'}</div>
+                  <div className="codex-entry-lore">{disc ? 'Unlocked weapon.' : 'Craft or find this weapon to reveal.'}</div>
+                  {disc && <div className="codex-entry-kills">Uses: {weapons[id]?.count||0}×</div>}
                 </div>
                 {disc && !alrClaimed && (
-                  <button className="codex-claim-btn" onClick={() => claimDiscovery(wid)} data-testid={`codex-claim-${wid}`}>
+                  <button className="codex-claim-btn" onClick={() => claimDiscovery(id)} data-testid={`codex-claim-${id}`}>
                     💎 +1
                   </button>
                 )}
@@ -430,38 +451,17 @@ export function CodexPanel({ save, setSave }) {
       )}
 
       {tab === 'ach' && (
-        <div className="codex-grid">
-          <div className="codex-ach-summary">
-            {achDone} / {ACHIEVEMENTS.length} completed · {achUnclaimed} rewards pending
-          </div>
+        <div className="codex-ach-list">
           {ACHIEVEMENTS.map(a => {
-            const v    = getAchMetric(save, a.metric);
-            const done = v >= a.goal;
-            const cls  = achClaimed[a.id];
-            const pct  = Math.min(100, (v / a.goal) * 100);
+            const done = getAchMetric(save, a.metric) >= a.goal;
+            const claimed = achClaimed[a.id];
             return (
-              <div key={a.id} className={`codex-entry ach-entry ${done?'found':''} ${cls?'claimed-ach':''}`}
-                data-testid={`codex-ach-${a.id}`}>
-                <div className="codex-entry-icon" style={{fontSize:20}}>{a.icon}</div>
-                <div className="codex-entry-info">
-                  <div className="codex-entry-name" style={{color: done ? '#e0d0ff' : '#5a4a7e'}}>{a.name}</div>
-                  <div className="codex-entry-lore">{a.desc}</div>
-                  <div style={{height:4, background:'#1a0a2e', borderRadius:2, margin:'4px 0', overflow:'hidden'}}>
-                    <div style={{width:pct+'%', height:'100%', background: done ? '#ffd700' : '#b362ff', transition:'width .3s'}}/>
-                  </div>
-                  <div style={{fontSize:10, color:'#4a3a6e'}}>{Math.min(v,a.goal)} / {a.goal}</div>
-                  <div className="codex-ach-rwd">
-                    {a.rwd.gold && <span>★ {a.rwd.gold}</span>}
-                    {a.rwd.sp   && <span>◆ {a.rwd.sp} SP</span>}
-                    {a.rwd.gems && <span>💎 {a.rwd.gems}</span>}
-                  </div>
-                </div>
-                {done && !cls && (
-                  <button className="codex-claim-btn" onClick={() => claimAch(a)} data-testid={`codex-claim-ach-${a.id}`}>
-                    CLAIM
-                  </button>
-                )}
-                {cls && <span className="codex-claimed-badge">✓</span>}
+              <div key={a.id} className={`codex-ach ${done ? 'done' : ''} ${claimed ? 'claimed' : ''}`} data-testid={`ach-${a.id}`}>
+                <span className="ach-icon">{a.icon}</span>
+                <span className="ach-name">{a.name}</span>
+                <span className="ach-desc">{a.desc} ({getAchMetric(save, a.metric)}/{a.goal})</span>
+                {done && !claimed && <button onClick={() => claimAch(a)}>CLAIM {a.rwd.gold ? a.rwd.gold+'★' : ''}{a.rwd.sp ? a.rwd.sp+'SP' : ''}{a.rwd.gems ? a.rwd.gems+'💎' : ''}</button>}
+                {claimed && <span className="ach-claimed">✓</span>}
               </div>
             );
           })}
