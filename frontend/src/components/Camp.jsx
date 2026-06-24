@@ -287,7 +287,7 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
             </>
           )}
 
-          <div className="camp-actions">
+          <div className="camp-actions" style={{position: 'fixed', bottom: '20px', right: '20px', zIndex: 100, background: 'rgba(7,6,12,0.85)', padding: '10px', borderRadius: '4px'}}>
             <button onClick={onBack} data-testid="camp-back">◂ Back</button>
             <button onClick={onStart} data-testid="camp-fight"
               style={{ borderColor: '#ff7a1a', boxShadow: 'var(--pixel-edge), 0 6px 0 #000, 0 0 28px #ff7a1a66' }}>▸ FIGHT</button>
@@ -318,10 +318,8 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
             gems: (save.gems || 0) + (r.gems || 0),
             slotCoins: (save.slotCoins || 0) + (r.slotCoins || 0),
             talentPoints: (save.talentPoints || 0) + (r.talentPoints || 0),
-            freeShopSpins: (save.freeShopSpins || 0) + (r.freeSpin ? 1 : 0),
-            character: { ...char, pieces: (char.pieces || 0) + (r.pieces || 0), shards: (char.shards || 0) + (r.shards || 0) },
+            character: { ...char, pieces: (char.pieces || 0) + (r.pieces || 0), shards: (char.shards || 0) + (r.shards || 0) }
           });
-          Audio.claimPing();
         }} />
       )}
     </div>
@@ -329,49 +327,21 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
 }
 
 function Stat({ label, val }) {
-  return (<div className="stat-cell"><div className="stat-lbl">{label}</div><div className="stat-val">{val}</div></div>);
+  return <div className="stat-row"><span>{label}</span><span>{val}</span></div>;
 }
-function fmtTime(t) { if (!t) return '00:00'; const m = Math.floor(t / 60); const s = Math.floor(t % 60); return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
-
-const _CF = [
-  {l:6,d:0,c:'#ff3146'},{l:14,d:.4,c:'#ffd166'},{l:23,d:.8,c:'#4dffd4'},
-  {l:33,d:.2,c:'#b362ff'},{l:44,d:1.1,c:'#ff8c00'},{l:55,d:.6,c:'#4dc4ff'},
-  {l:66,d:1.5,c:'#ffd700'},{l:76,d:.3,c:'#ff3146'},{l:85,d:.9,c:'#4dffd4'},
-  {l:93,d:.1,c:'#b362ff'},{l:10,d:1.8,c:'#ffd166'},{l:29,d:1.3,c:'#ff8c00'},
-  {l:50,d:1.0,c:'#4dc4ff'},{l:70,d:1.7,c:'#ff3146'},{l:88,d:.5,c:'#ffd700'},
-  {l:19,d:1.4,c:'#4dffd4'},
-];
-const _LASERS = [0,45,90,135,180,225,270,315];
 
 function LevelUpOverlay({ save, onCollect }) {
   const r = save.pendingLevelUp;
-  const av = AVATARS[save.profile.avatar] || AVATARS[0];
+  if (!r) return null;
   return (
-    <div className="lu-overlay" data-testid="levelup-overlay">
-      {_CF.map((c,i) => <div key={i} className="lu-confetti" style={{left:`${c.l}%`,animationDelay:`${c.d}s`,background:c.c}} />)}
-      {_LASERS.map(a => <div key={a} className="lu-laser" style={{transform:`translate(-50%,-50%) rotate(${a}deg)`}} />)}
-      <div className="lu-card">
-        <div className="lu-avatar">{av.icon}</div>
-        <div className="lu-title">RANK UP!</div>
-        <div className="lu-rank">★ RANK {r.level} ★</div>
-        <div className="lu-xp"><div className="lu-xp-fill" /></div>
-          <div className="lu-rewards">
-          <div className="lu-rwd">★ +{r.gold} Gold</div>
-          <div className="lu-rwd">◆ +{r.sp} SP</div>
-          {r.talentPoints > 0 && <div className="lu-rwd" style={{color:'#4dff91'}}>🌿 +{r.talentPoints} TP</div>}
-          {r.gems > 0 && <div className="lu-rwd" style={{color:'#4dffd4'}}>💎 +{r.gems} Gems</div>}
-          {r.slotCoins > 0 && <div className="lu-rwd" style={{color:'#ffcc00'}}>🎰 +{r.slotCoins} Slot Coin{r.slotCoins > 1 ? 's' : ''}!</div>}
-          {r.freeSpin && <div className="lu-rwd" style={{color:'#4dffd4',textShadow:'0 0 10px #4dffd4'}}>🎰 Free Shop Spin!</div>}
-          {r.pieces > 0 && <div className="lu-rwd" style={{color:'#b362ff',textShadow:'0 0 10px #b362ff88'}}>🔷 +{r.pieces} Char. Pieces</div>}
-          {r.shards > 0 && <div className="lu-rwd" style={{color:'#ff7a1a',textShadow:'0 0 10px #ff7a1a88'}}>💎 +{r.shards} Evo. Shards</div>}
-          {r.streakBonus && (
-            <div className="lu-rwd" style={{color:'#ffd700',textShadow:'0 0 16px #ffd700aa',fontSize:15,letterSpacing:'0.15em',marginTop:6,border:'1px solid #ffd70066',padding:'4px 10px',background:'#1a1200'}}>
-              ★ 2× STREAK BONUS! ★
-              <div style={{fontSize:11,opacity:0.7,letterSpacing:'0.1em'}}>3 rank-ups today</div>
-            </div>
-          )}
+    <div className="modal-overlay" data-testid="levelup-overlay">
+      <div className="levelup-mega" style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 28, color: 'var(--accent-2)' }}>LEVEL UP</div>
+        <div style={{ fontSize: 64, color: 'var(--rune)' }}>RANK {r.level}</div>
+        <div style={{ margin: '20px 0', fontFamily: 'VT323', fontSize: 22, color: 'var(--ink-dim)' }}>
+          +{r.gold} GOLD · +{r.sp} SP · +{r.gems||0} GEMS · +{r.talentPoints||0} TP · +{r.slotCoins||0} COINS
         </div>
-        <button className="lu-collect" onClick={onCollect} data-testid="levelup-collect">COLLECT ▸</button>
+        <button onClick={onCollect} data-testid="collect-levelup">CLAIM REWARDS</button>
       </div>
     </div>
   );
