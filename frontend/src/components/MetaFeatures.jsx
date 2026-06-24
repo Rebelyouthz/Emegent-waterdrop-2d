@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ENEMIES } from '../game/data';
+import { ENEMIES, WEAPONS } from '../game/data';
 import { STARTER_WEAPONS, ACHIEVEMENTS } from '../game/data_ext2';
 import { rollGearDrop } from '../game/gear';
 
-// ─── Eye of Horus badge SVG ───────────────────
+// ─── Eye of Horus badge SVG ─────────────────────
 export function EyeBadge({ size = 18 }) {
   return (
     <span className="eye-badge" title="New!">
@@ -26,7 +26,7 @@ export function EyeBadge({ size = 18 }) {
   );
 }
 
-// ─── PATROL SYSTEM ────────────────────────────
+// ─── PATROL SYSTEM ──────────────────────
 const PATROL_DEFS = [
   { id:'scavenge', name:'Scavenge',  icon:'🔍', dur:60*60*1000,   rwd:{ gold:800 },            desc:'1h — Search ruins for gold & supplies.' },
   { id:'explore',  name:'Explore',   icon:'🗺', dur:2*60*60*1000, rwd:{ gems:5 },              desc:'2h — Venture deep for rare gems.' },
@@ -190,7 +190,7 @@ function rwd_preview(def, mult = 1) {
   return ' — ' + parts.join(', ');
 }
 
-// ─── BATTLE PASS ─────────────────────────────────────────
+// ─── BATTLE PASS ────────────────────────────────
 // BALANCED: modest rewards for roguelike feel. Start weak, small gains.
 const BP_REWARDS = Array.from({ length: 40 }, (_, i) => {
   const n = i + 1;
@@ -270,14 +270,14 @@ export function BattlePassPanel({ save, setSave }) {
   );
 }
 
-// ─── CODEX ────────────────────────────────────────────────
+// ─── CODEX ─────────────────────────────────────
 const ENEMY_LORE = {
   slime:'A gelatinous organism mutated by Lake contamination. Weak, but legion.',
   bat:'Voidbat — phase-shifted creature drawn to dimensional rifts. Fast and unpredictable.',
   brute:'Mutant humanoid reinforced by crystallized water. Slow but devastating.',
   ranger:'A corrupted soldier armed with liquid-nitrogen projectile launchers.',
   charger:'Void-energy overload turns this creature into a living battering ram.',
-  ghoul:'Undead water-walker. Killed before — won\'t stay dead.',
+  ghoul:'Undead water-walker. Killed before — won't stay dead.',
   necron:'Necron: survived multiple extinction cycles. Treat with respect.',
   crystalite:'Crystal-armored insectoid. Energy attacks bounce off.',
   soulshard:'Fragmented consciousness crystallized into razor-sharp shards. Immune to knockback.',
@@ -426,7 +426,7 @@ export function CodexPanel({ save, setSave }) {
 
       {tab === 'weapons' && (
         <div className="codex-grid">
-          {STARTER_WEAPONS.map(id => {
+          {Object.keys(STARTER_WEAPONS).map(id => {  /* fixed: was .map on object; use keys */ 
             const w = WEAPONS[id] || {name: id};
             const disc = (weapons[id]?.count || 0) > 0;
             const alrClaimed = claimed.includes(id);
