@@ -21,6 +21,13 @@ const openChest = (chestId) => {
   return c ? rollChest(c, 0.5) : [];
 };
 
+function fmtTime(s) {
+  if (!s || s <= 0) return '0:00';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
 export default function Camp({ save, setSave, onBack, onStart, onMission }) {
   const [toast, setToast] = useState('');
   const [tab, setTab] = useState('cards');
@@ -78,7 +85,7 @@ export default function Camp({ save, setSave, onBack, onStart, onMission }) {
 
   const avatar = AVATARS.find(a => a.id === save.profile.avatar) || AVATARS[0];
 
-  // ── Notification computations ────────────────
+  // ── Notification computations ──────────────────
   const _now = Date.now();
   const _discovered = Object.keys(save.codex?.enemies||{}).length + Object.keys(save.codex?.weapons||{}).length;
   const _claimed    = (save.codex?.claimedDiscoveries||[]).length;
