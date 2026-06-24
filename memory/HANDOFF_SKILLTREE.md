@@ -79,6 +79,7 @@ Trädet är 1800px brett × 2400px högt (viewBox).
 ```
 
 ## TEKNISK APPROACH
+{% raw %}
 ```jsx
 // Pan/Zoom state
 const [viewBox, setViewBox] = useState({ x: 0, y: 0, scale: 1 });
@@ -93,6 +94,7 @@ const [viewBox, setViewBox] = useState({ x: 0, y: 0, scale: 1 });
 // Node data
 { id, name, icon, type, x, y, req, max, costPerLvl, stat, amount, desc, category }
 ```
+{% endraw %}
 
 ## IMPLEMENTATION ORDER
 1. Skapa `poe_tree.js` med alla 64+ noder + koordinater
