@@ -142,7 +142,8 @@ export const Audio = {
   startMusic() {
     const c = ctx(); if (!c || _musicNode) return;
     // Menu/Camp music: user-uploaded waterdrop survivor track
-    this._playUrl('/menu-music.mp3');
+    const base = process.env.PUBLIC_URL || '';
+    this._playUrl(base + '/menu-music.mp3');
   },
   swapToGameMusic() {
     this._stopMusicNode();
@@ -151,7 +152,8 @@ export const Audio = {
   },
   swapToMenuMusic() {
     this._stopMusicNode();
-    this._playUrl('/menu-music.mp3');
+    const base = process.env.PUBLIC_URL || '';
+    this._playUrl(base + '/menu-music.mp3');
   },
   stopMusic() { if (_musicNode) { try { _musicNode.disconnect(); } catch (e) {} _musicNode = null; } },
 };
