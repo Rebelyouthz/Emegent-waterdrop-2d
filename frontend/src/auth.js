@@ -9,13 +9,21 @@ const AuthCtx = createContext(null);
 // Configure axios to send cookies
 axios.defaults.withCredentials = true;
 
+// DEMO MODE for GitHub Pages / static: always paid, mock user
+const IS_DEMO = !API || process.env.NODE_ENV === 'production' && !window.location.hostname.includes('localhost');
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [paid, setPaid] = useState(false);
+  const [user, setUser] = useState(IS_DEMO ? { name: 'Demo Player', email: 'demo@pages' } : null);
+  const [paid, setPaid] = useState(IS_DEMO ? true : false);
   const [price, setPrice] = useState(1.99);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!IS_DEMO);
 
   const refresh = useCallback(async () => {
+    if (IS_DEMO) {
+      setPaid(true);
+      setLoading(false);
+      return;
+    }
     try {
       const r = await axios.get(`${API}/entitlement`);
       setUser(r.data.user || null);
@@ -30,6 +38,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    if (IS_DEMO) {
+      setLoading(false);
+      return;
+    }
     // CRITICAL: If returning from OAuth callback, skip the /me check.
     // AuthCallback will exchange the session_id and establish the session first.
     if (window.location.hash && window.location.hash.indexOf('session_id=') !== -1) {
@@ -40,12 +52,22 @@ export function AuthProvider({ children }) {
   }, [refresh]);
 
   const login = () => {
+    if (IS_DEMO) {
+      // In demo, just pretend logged in
+      setUser({ name: 'Demo Player', email: 'demo@pages' });
+      setPaid(true);
+      return;
+    }
     // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
     const redirectUrl = window.location.origin + '/';
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
   const logout = async () => {
+    if (IS_DEMO) {
+      setUser({ name: 'Demo Player' });
+      return;
+    }
     try { await axios.post(`${API}/auth/logout`); } catch (e) { console.error('logout', e); }
     setUser(null); setPaid(false);
   };
@@ -67,6 +89,7 @@ export function StripeReturnHandler({ children }) {
   const [pollMsg, setPollMsg] = useState('');
 
   useEffect(() => {
+    if (IS_DEMO) return; // no paywall in demo
     const params = new URLSearchParams(window.location.search);
     const sid = params.get('stripe_session_id');
     const cancelled = params.get('stripe_cancelled');
